@@ -17,21 +17,11 @@ using Amathus.Reader.Common.Feeds;
 using Amathus.Reader.News;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Server.Reader.FunctionalTests
+namespace Amathus.Reader.FunctionalTests
 {
     [TestClass]
     public class NewsItemTest
     {
-        //[TestMethod]
-        //public void Convert_DemokratBakis_Converts()
-        //{
-        //    var newsItem = Read(FeedId.DemokratBakis);
-
-        //    AssertCommonElements(newsItem);
-        //    Assert.IsTrue(!string.IsNullOrEmpty(newsItem.Summary));
-        //    Assert.IsNull(newsItem.ImageUrl);
-        //}
-
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
@@ -58,7 +48,6 @@ namespace Amathus.Server.Reader.FunctionalTests
             var newsItem = Read(FeedId.GundemKibris);
 
             AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
             Assert.IsNotNull(newsItem.ImageUrl);
         }
 
@@ -102,7 +91,8 @@ namespace Amathus.Server.Reader.FunctionalTests
             Assert.IsNotNull(newsItem.ImageUrl);
         }
 
-        [TestMethod]
+        // No RSS Feed anymore
+        [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
             var newsItem = Read(FeedId.KibrisPostasi);

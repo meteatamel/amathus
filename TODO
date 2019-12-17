@@ -1,15 +1,13 @@
-Fix JSONP
-Fix Hosted Service
-Compare to deployed amathus
----
-Update all projects to 3.0 and all libraries to latest
-Create Dockerfile for 3.0
+Create Dockerfile for 3.1
 Deploy the whole thing to Cloud Run
 Compare to deployed amathus
 --- 
+Fix JSONP
+Figure out logging
 Make sure Web project is using controllers correctly
-Fix Functional Tests
+Go through Functional Tests to see if they still make sense
+Create config file for the feeds
 ---
-Split the worker into a sepearate scheduled service, using an in-memory db
+Split the worker into a sepearate scheduled service, using a pluggable in-memory of CloudSQL DB
 ---
-
+Find more feeds

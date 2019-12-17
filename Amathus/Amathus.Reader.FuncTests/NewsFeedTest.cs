@@ -17,20 +17,11 @@ using Amathus.Reader.Common.Feeds;
 using Amathus.Reader.News;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Server.Reader.FunctionalTests
+namespace Amathus.Reader.FunctionalTests
 {
     [TestClass]
     public class NewsFeedTest
     {
-        //[TestMethod]
-        //public void Convert_DemokratBakis_Converts()
-        //{
-        //    var newsSource = Read(FeedId.DemokratBakis);
-
-        //    AssertCommonElements(newsSource);
-        //    Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
-        //}
-
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
@@ -94,7 +85,8 @@ namespace Amathus.Server.Reader.FunctionalTests
             Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
         }
 
-        [TestMethod]
+        // No RSS feed anymore
+        [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
             var newsSource = Read(FeedId.KibrisPostasi);

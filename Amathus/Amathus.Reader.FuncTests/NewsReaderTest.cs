@@ -15,7 +15,7 @@ using Amathus.Reader.Common.Feeds;
 using Amathus.Reader.News;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Server.Reader.FunctionalTests
+namespace Amathus.Reader.FunctionalTests
 {
     [TestClass]
     public class NewsReaderTest
