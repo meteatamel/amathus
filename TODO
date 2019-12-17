@@ -1,0 +1,15 @@
+Fix JSONP
+Fix Hosted Service
+Compare to deployed amathus
+---
+Update all projects to 3.0 and all libraries to latest
+Create Dockerfile for 3.0
+Deploy the whole thing to Cloud Run
+Compare to deployed amathus
+--- 
+Make sure Web project is using controllers correctly
+Fix Functional Tests
+---
+Split the worker into a sepearate scheduled service, using an in-memory db
+---
+
