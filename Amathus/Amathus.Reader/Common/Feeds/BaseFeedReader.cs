@@ -40,16 +40,21 @@ namespace Amathus.Reader.Common.Feeds
         {
             try
             {
+                _logger?.LogDebug($"Reading feed: {sourceId}");
                 var source = GetSource(sourceId);
                 var rawFeed = LoadFeed(source.Url);
+
+                _logger?.LogDebug($"Converting feed: {sourceId}");
                 var feed = source.Converter.Convert(source, rawFeed);
-                _logger?.LogDebug($"Feed source:{feed.Id} => {feed.AverageItemLength}");
+
+                _logger?.LogDebug($"Feed average item length: {feed.AverageItemLength}");
+
                 return feed;
 
             }
             catch (Exception ex)
             {
-                _logger?.LogError($"Error during feed read: {sourceId}", ex);
+                _logger?.LogError($"Reading failed for feed: {sourceId}", ex);
                 return null;
             }
         }

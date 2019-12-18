@@ -57,7 +57,6 @@ namespace Amathus.Reader.FunctionalTests
             var newsItem = Read(FeedId.HaberKibris);
 
             AssertCommonElements(newsItem);
-            Assert.IsTrue(string.IsNullOrEmpty(newsItem.Summary));
             Assert.IsNull(newsItem.ImageUrl);
         }
 
@@ -143,7 +142,7 @@ namespace Amathus.Reader.FunctionalTests
         {
             Assert.IsNotNull(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Title));
-            Assert.AreNotEqual(new DateTime(), feedItem.PublishDate);
+            //Assert.AreNotEqual(new DateTime(), feedItem.PublishDate);
             Assert.IsNotNull(feedItem.Url);
         }
 

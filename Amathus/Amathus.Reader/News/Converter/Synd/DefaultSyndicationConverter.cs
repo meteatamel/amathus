@@ -39,7 +39,7 @@ namespace Amathus.Reader.News.Converter.Synd
                 LastUpdatedTime = feed.LastUpdatedTime.UtcDateTime,
                 Url = feed.Links[0].Uri,
                 Items = feed.Items.Select(item => ItemConverter.Convert(item))
-                                  .Where(item => DateTime.Compare(item.PublishDate, DateTime.UtcNow) <= 0)
+                                  //.Where(item => DateTime.Compare(item.PublishDate, DateTime.UtcNow) <= 0)
                                   .OrderByDescending(item => item.PublishDate)
             };
 

@@ -1,9 +1,8 @@
 Fix JSONP
-Figure out logging
-Make sure Web project is using controllers correctly
-Go through Functional Tests to see if they still make sense
 Create config file for the feeds
 ---
-Split the worker into a separate scheduled service, using a pluggable in-memory of CloudSQL DB
+Split the worker into a separate scheduled service, using a pluggable backend
 ---
-Find more feeds
+Code: Go through it
+Functional Tests: Go through them
+Feeds: Find more
