@@ -15,6 +15,7 @@ using System;
 using Amathus.Web.HostedServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.Controllers
 {
@@ -22,7 +23,7 @@ namespace Amathus.Web.Controllers
     [Route("api/v1/[controller]")]
     public class NewsController : BaseController
     {
-        public NewsController(IMemoryCache cache) : base(cache)
+        public NewsController(IMemoryCache cache, ILogger<NewsController> logger) : base(cache, logger)
         {
         }
 

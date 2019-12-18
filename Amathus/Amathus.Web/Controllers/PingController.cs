@@ -11,20 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using log4net;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.Controllers
 {
     [Route("")]
     public class PingController : ControllerBase
     {
-        private readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly ILogger _logger;
+
+        public PingController(ILogger<PingController> logger)
+        {
+            _logger = logger; 
+        }
 
         [HttpGet]
         public IActionResult Ping()
         {
-            _logger.Info("Ping");
+            _logger.LogInformation("/Ping");
 
             return Ok("pong");
         }

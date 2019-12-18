@@ -18,22 +18,19 @@ using Amathus.Reader.Common.Feeds;
 using Amathus.Reader.Common.Sources;
 using Amathus.Reader.News.Sources;
 using Amathus.Reader.News.Xml;
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Reader.News
 {
     public class NewsReader : BaseFeedReader<SyndicationFeed>
     {
-        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        public NewsReader(ILogger logger = null):base(logger)
+        {
+        }
 
         protected override FeedId[] GetFeedIds()
         {
             return Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
-        }
-
-        protected override ILog GetLogger()
-        {
-            return Logger;
         }
 
         protected override Source<SyndicationFeed> GetSource(FeedId sourceId)

@@ -18,23 +18,31 @@ using Amathus.Reader.Common.Feeds;
 using Amathus.Reader.News.Picker;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.Controllers
 {
     public abstract class BaseController : ControllerBase
     {
-        protected abstract string GetKeyPrefix();   
-        
-        protected IMemoryCache Cache;
+        protected abstract string GetKeyPrefix();
 
-        protected BaseController(IMemoryCache cache) 
+        protected readonly ILogger _logger;
+        protected readonly IMemoryCache _cache;
+
+        protected BaseController(IMemoryCache cache, ILogger logger = null) 
         {
-            Cache = cache;
+            _cache = cache;
+            _logger = logger;
         }
 
         public IActionResult GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            if (limit != null && limit < 1) return BadRequest("Limit cannot be less than 1");
+            _logger.LogInformation($"GetAll limit: {limit}, from: {from}");
+
+            if (limit != null && limit < 1)
+            {
+                return BadRequest("Limit cannot be less than 1");
+            }
 
             var feeds = GetAllFromCache().ToList();
             if (!feeds.Any()) return NotFound();
@@ -104,7 +112,7 @@ namespace Amathus.Web.Controllers
 
         private Feed GetItemFromCache(string key)
         {
-            return (Feed)Cache.Get(GetKeyPrefix() + "_" + key.ToLowerInvariant());
+            return (Feed)_cache.Get(GetKeyPrefix() + "_" + key.ToLowerInvariant());
         }
     }
 }

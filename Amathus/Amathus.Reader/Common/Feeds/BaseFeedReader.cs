@@ -16,12 +16,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Amathus.Reader.Common.Sources;
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Reader.Common.Feeds
 {
     public abstract class BaseFeedReader<T> : IFeedReader
     {
+        private readonly ILogger _logger;
+
+        protected BaseFeedReader(ILogger logger = null)
+        {
+            _logger = logger;
+        }
+
         public async Task<IEnumerable<Feed>> Read()
         {
             var tasks = GetFeedIds().Select(feedId => Task.Run(() => Read(feedId)));
@@ -36,20 +43,18 @@ namespace Amathus.Reader.Common.Feeds
                 var source = GetSource(sourceId);
                 var rawFeed = LoadFeed(source.Url);
                 var feed = source.Converter.Convert(source, rawFeed);
-                GetLogger().DebugFormat($"News source:{feed.Id} => {feed.AverageItemLength}");
+                _logger?.LogDebug($"Feed source:{feed.Id} => {feed.AverageItemLength}");
                 return feed;
 
             }
             catch (Exception ex)
             {
-                GetLogger().Error("Error during feed read: " + sourceId, ex);
+                _logger?.LogError($"Error during feed read: {sourceId}", ex);
                 return null;
             }
         }
 
         protected abstract FeedId[] GetFeedIds();
-
-        protected abstract ILog GetLogger();
 
         protected abstract Source<T> GetSource(FeedId sourceId);
 

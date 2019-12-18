@@ -15,12 +15,12 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using log4net;
 using Microsoft.Extensions.Hosting;
 using Amathus.Reader.News;
 using System.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Amathus.Reader.Common.Feeds;
+using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.HostedServices
 {
@@ -28,22 +28,23 @@ namespace Amathus.Web.HostedServices
     {
         public const string KeyPrefix = "news";
 
-        private static readonly ILog Logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly ILogger _logger;
         private Timer _timer;
         private NewsReader _newsReader;
 
         private IMemoryCache _cache;
 
-        public NewsReaderService(IMemoryCache cache)
+        public NewsReaderService(IMemoryCache cache, ILogger<NewsReaderService> logger)
         {
             _cache = cache;
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _timer = new Timer(DoWork, null, TimeSpan.Zero,
                 TimeSpan.FromMinutes(10));
-            _newsReader = new NewsReader();
+            _newsReader = new NewsReader(_logger);
 
             return Task.CompletedTask;
         }
@@ -65,11 +66,11 @@ namespace Amathus.Web.HostedServices
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            Logger.Info("Fetching news feeds started");
+            _logger?.LogInformation("Fetching news feeds started");
             var feeds = _newsReader.Read().Result.ToList();
             feeds.ForEach(feed => InsertIntoCache(feed.Id.ToString(), feed));
             stopWatch.Stop();
-            Logger.Info("Fetching news feeds finished in '" + stopWatch.Elapsed.Seconds + "' seconds. Total feeds: " + feeds.Count);
+            _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
         }
 
         private void InsertIntoCache(string key, Feed feed)
