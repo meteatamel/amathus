@@ -1,6 +1,6 @@
 # Amathus
 
-Amathus is a RSS reader and transformer. Written in ASP.NET Core Web and deploy to Cloud Run on Google Cloud.
+Amathus reads RSS feeds of some news sources, transforms them into a common format and exposes them behind a Web API. Written in ASP.NET Core and deployed to Cloud Run on Google Cloud.
 
 ## Run code locally
 Inside `Amathus.Web` folder:
@@ -27,12 +27,22 @@ docker run -p 8080:8080 amathus
  
 ## Deploy to Cloud Run
 
-Go to `Amathus` folder where `Amathus.sln` is.
+Set some variables:
 
 ```bash
 export PROJECT_ID="$(gcloud config get-value core/project)"
 export SERVICE_NAME=amathus
 ```
+
+Enable Cloud Build and Cloud Run:
+
+```bash
+gcloud services enable --project ${PROJECT_ID} \
+    cloudbuild.googleapis.com \
+    run.googleapis.com
+```
+
+Inside `Amathus` folder where `Amathus.sln` is:
 
 Build:
 
