@@ -13,11 +13,9 @@
 // limitations under the License.
 using System.ServiceModel.Syndication;
 using Amathus.Reader.Feeds;
-using Amathus.Reader.Sources;
-using Amathus.Reader.News.Converter.Synd;
-using Amathus.Reader.News.Converter.SyndItem;
+using Amathus.Reader.Converter;
 
-namespace Amathus.Reader.News.Sources
+namespace Amathus.Reader.Sources
 {
     public static class NewsSourceBuilder
     {

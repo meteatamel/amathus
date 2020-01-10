@@ -9,4 +9,7 @@
     <PackageReference Include="System.ServiceModel.Syndication" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="News\Sources\NewsSourceBuilder.cs" />
+  </ItemGroup>
 </Project>

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
-using Amathus.Reader.News;
-using System.Diagnostics;
+using Amathus.Reader;
+using Amathus.Reader.Feeds;
 using Microsoft.Extensions.Caching.Memory;
-using Amathus.Reader.Common.Feeds;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.HostedServices

@@ -11,23 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.ServiceModel.Syndication;
 using Amathus.Reader.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Reader.FunctionalTests
+namespace Amathus.Reader.Converter
 {
-    [TestClass]
-    public class NewsReaderTest
+    public class SecondLinkSyncicationItemConverter : HtmlAndImageRemoverSyndicationItemConverter
     {
-
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
+        public override FeedItem Convert(SyndicationItem item)
         {
-            var reader = new NewsReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
+            var feedItem = base.Convert(item);
+            // Halkin Sesi uses the second link as the article url.
+            feedItem.Url = item.Links[1].Uri;
+            return feedItem;
         }
     }
 }

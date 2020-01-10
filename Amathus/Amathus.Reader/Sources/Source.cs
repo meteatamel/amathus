@@ -11,23 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
+using Amathus.Reader.Converter;
 using Amathus.Reader.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Reader.FunctionalTests
+namespace Amathus.Reader.Sources
 {
-    [TestClass]
-    public class NewsReaderTest
+    public class Source<T>
     {
+        public IConverter<T> Converter { get; set; }
 
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
-        {
-            var reader = new NewsReader();
+        public FeedId Id { get; set; }
 
-            var source = reader.Read(FeedId.Diyalog);
+        public Uri LogoUrl { get; set; }
 
-            Assert.IsNotNull(source);
-        }
+        public Uri Url { get; set; }
     }
 }

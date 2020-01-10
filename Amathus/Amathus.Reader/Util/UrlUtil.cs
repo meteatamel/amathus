@@ -11,23 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using Amathus.Reader.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
-namespace Amathus.Reader.FunctionalTests
+namespace Amathus.Reader.Util
 {
-    [TestClass]
-    public class NewsReaderTest
+    public static class UrlUtil
     {
-
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
+        public static Uri GetUrl(string text)
         {
-            var reader = new NewsReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
+            return string.IsNullOrEmpty(text) ? null : new Uri(text);
         }
     }
 }

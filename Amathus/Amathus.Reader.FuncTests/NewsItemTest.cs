@@ -11,10 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Linq;
-using Amathus.Reader.Common.Feeds;
-using Amathus.Reader.News;
+using Amathus.Reader.Feeds;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Amathus.Reader.FunctionalTests

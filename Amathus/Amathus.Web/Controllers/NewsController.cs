@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Amathus.Reader.Feeds;
+using Amathus.Reader.Picker;
 using Amathus.Web.HostedServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -21,27 +25,96 @@ namespace Amathus.Web.Controllers
 {
     [Produces("application/json")]
     [Route("api/v1/[controller]")]
-    public class NewsController : BaseController
+    public class NewsController : ControllerBase
     {
-        public NewsController(IMemoryCache cache, ILogger<NewsController> logger) : base(cache, logger)
+        protected readonly ILogger _logger;
+        protected readonly IMemoryCache _cache;
+
+        public NewsController(IMemoryCache cache, ILogger<NewsController> logger)
         {
+            _cache = cache;
+            _logger = logger;
         }
 
         [HttpGet]
         public IActionResult GetAllNews([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            return GetAll(limit, from);
+            _logger.LogInformation($"GetAll limit: {limit}, from: {from}");
+
+            if (limit != null && limit < 1)
+            {
+                return BadRequest("Limit cannot be less than 1");
+            }
+
+            var feeds = GetAllFromCache().ToList();
+            if (!feeds.Any()) return NotFound();
+
+            var copies = feeds.Select(feed => feed.Copy()).ToList();
+
+            if (from != null)
+            {
+                var sinceUtc = ((DateTime)from).ToUniversalTime();
+                copies = copies.Select(feed =>
+                {
+                    feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc);
+                    return feed;
+                }).ToList();
+            }
+
+            if (limit == null) return Ok(copies);
+
+            //var picker = new FairNewsPicker(copies);
+            var picker = new WeightedNewsPicker(copies);
+            var pickedNews = picker.Pick((int)limit);
+            return Ok(pickedNews);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetNewsById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            return GetById(id, limit, from);
+            if (!Enum.TryParse(id, true, out FeedId sourceId)) return BadRequest("Id is not valid");
+            if (limit != null && limit < 1) return BadRequest("Limit cannot be less than 1");
+
+            var feed = GetItemFromCache(id);
+            if (feed == null) return NotFound();
+
+            var copy = feed.Copy();
+
+            if (from != null)
+            {
+                var sinceUtc = ((DateTime)from).ToUniversalTime();
+                copy.Items = copy.Items.Where(item => item.PublishDate >= sinceUtc);
+            }
+
+            if (limit != null)
+            {
+                copy.Items = copy.Items.Take((int)limit);
+            }
+
+            return Ok(copy);
         }
 
-        protected override string GetKeyPrefix()
+        private IEnumerable<Feed> GetAllFromCache()
         {
-            return NewsReaderService.KeyPrefix;
+            var feeds = new List<Feed>();
+
+            var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
+            foreach (var feedId in feedIds)
+            {
+                var feed = GetItemFromCache(feedId.ToString());
+                if (feed != null)
+                {
+                    feeds.Add(feed);
+                }
+            }
+
+            feeds = feeds.OrderByDescending(feed => feed.AverageItemLength).ToList();
+            return feeds;
+        }
+
+        private Feed GetItemFromCache(string key)
+        {
+            return (Feed)_cache.Get(NewsReaderService.KeyPrefix + "_" + key.ToLowerInvariant());
         }
     }
 }

@@ -13,8 +13,7 @@
 // limitations under the License.
 using System;
 using System.Linq;
-using Amathus.Reader.Common.Feeds;
-using Amathus.Reader.News;
+using Amathus.Reader.Feeds;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Amathus.Reader.FunctionalTests
