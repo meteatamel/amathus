@@ -44,7 +44,7 @@ namespace Amathus.Web
 
             services
                 .AddMemoryCache()
-                .AddHostedService<NewsReaderService>();
+                .AddHostedService<FeedReaderService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

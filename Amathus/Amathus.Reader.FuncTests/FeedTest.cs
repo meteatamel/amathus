@@ -19,7 +19,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Amathus.Reader.FunctionalTests
 {
     [TestClass]
-    public class NewsFeedTest
+    public class FeedTest
     {
         [TestMethod]
         public void Convert_DetayKibris_Converts()
@@ -141,7 +141,7 @@ namespace Amathus.Reader.FunctionalTests
 
         private static Feed Read(FeedId sourceId)
         {
-            var reader = new NewsReader();
+            var reader = new FeedReader();
             return reader.Read(sourceId);
         }
 

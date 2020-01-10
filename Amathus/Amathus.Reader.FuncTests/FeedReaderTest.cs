@@ -17,13 +17,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Amathus.Reader.FunctionalTests
 {
     [TestClass]
-    public class NewsReaderTest
+    public class FeedReaderTest
     {
 
         [TestMethod]
         public void Read_Basic_ReturnsNonEmptyFeed()
         {
-            var reader = new NewsReader();
+            var reader = new FeedReader();
 
             var source = reader.Read(FeedId.Diyalog);
 

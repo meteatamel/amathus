@@ -14,17 +14,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
 using Amathus.Reader.Sources;
 using Microsoft.Extensions.Logging;
 
 namespace Amathus.Reader.Feeds
 {
-    public abstract class BaseFeedReader<T> : IFeedReader
+    public class FeedReader : IFeedReader
     {
         private readonly ILogger _logger;
 
-        protected BaseFeedReader(ILogger logger = null)
+        public FeedReader(ILogger logger = null)
         {
             _logger = logger;
         }
@@ -59,10 +60,22 @@ namespace Amathus.Reader.Feeds
             }
         }
 
-        protected abstract FeedId[] GetFeedIds();
+        private FeedId[] GetFeedIds()
+        {
+            return Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
+        }
 
-        protected abstract Source<T> GetSource(FeedId sourceId);
+        private Source<SyndicationFeed> GetSource(FeedId sourceId)
+        {
+            return NewsSourceBuilder.Build(sourceId);
+        }
 
-        protected abstract T LoadFeed(Uri sourceUrl);
+        private SyndicationFeed LoadFeed(Uri sourceUrl)
+        {
+            var reader = new DateInvariantXmlReader(sourceUrl.ToString());
+            var rawFeed = SyndicationFeed.Load(reader);
+            reader.Close();
+            return rawFeed;
+        }
     }
 }

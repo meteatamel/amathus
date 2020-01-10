@@ -16,7 +16,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Amathus.Reader;
 using Amathus.Reader.Feeds;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
@@ -24,17 +23,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.HostedServices
 {
-    public class NewsReaderService : IHostedService, IDisposable
+    public class FeedReaderService : IHostedService, IDisposable
     {
         public const string KeyPrefix = "news";
 
         private readonly ILogger _logger;
         private Timer _timer;
-        private NewsReader _newsReader;
+        private FeedReader _newsReader;
 
         private IMemoryCache _cache;
 
-        public NewsReaderService(IMemoryCache cache, ILogger<NewsReaderService> logger)
+        public FeedReaderService(IMemoryCache cache, ILogger<FeedReaderService> logger)
         {
             _cache = cache;
             _logger = logger;
@@ -44,7 +43,7 @@ namespace Amathus.Web.HostedServices
         {
             _timer = new Timer(DoWork, null, TimeSpan.Zero,
                 TimeSpan.FromMinutes(10));
-            _newsReader = new NewsReader(_logger);
+            _newsReader = new FeedReader(_logger);
 
             return Task.CompletedTask;
         }

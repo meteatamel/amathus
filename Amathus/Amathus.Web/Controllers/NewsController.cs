@@ -114,7 +114,7 @@ namespace Amathus.Web.Controllers
 
         private Feed GetItemFromCache(string key)
         {
-            return (Feed)_cache.Get(NewsReaderService.KeyPrefix + "_" + key.ToLowerInvariant());
+            return (Feed)_cache.Get(FeedReaderService.KeyPrefix + "_" + key.ToLowerInvariant());
         }
     }
 }

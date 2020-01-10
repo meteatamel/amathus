@@ -16,7 +16,7 @@ using System;
 using System.Globalization;
 using System.Xml;
 
-namespace Amathus.Reader.Xml
+namespace Amathus.Reader.Feeds
 {
     /// <summary>
     /// XmlTextReader implementation that reads any date format and does not enforce the RSS date format.
