@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using Amathus.Web.HostedServices;
+using Amathus.Web.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -42,9 +44,19 @@ namespace Amathus.Web
                     options.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
 
-            services
-                .AddMemoryCache()
-                .AddHostedService<FeedReaderService>();
+            services.AddHostedService<FeedReaderService>();
+
+            var backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
+
+            switch (backend)
+            {
+                case FeedStoreBackend.InMemory:
+                    services.AddSingleton<IFeedStore, InMemoryFeedStore>();
+                    break;
+                default:
+                    throw new NotImplementedException(backend.ToString());
+            }
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

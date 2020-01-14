@@ -17,7 +17,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
-using Microsoft.Extensions.Caching.Memory;
+using Amathus.Web.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -25,17 +25,15 @@ namespace Amathus.Web.HostedServices
 {
     public class FeedReaderService : IHostedService, IDisposable
     {
-        public const string KeyPrefix = "news";
-
         private readonly ILogger _logger;
+        private readonly IFeedStore _feedStore;
+
         private Timer _timer;
-        private FeedReader _newsReader;
-
-        private IMemoryCache _cache;
-
-        public FeedReaderService(IMemoryCache cache, ILogger<FeedReaderService> logger)
+        private FeedReader _feedReader;
+        
+        public FeedReaderService(IFeedStore feedStore, ILogger<FeedReaderService> logger)
         {
-            _cache = cache;
+            _feedStore = feedStore;
             _logger = logger;
         }
 
@@ -43,7 +41,7 @@ namespace Amathus.Web.HostedServices
         {
             _timer = new Timer(DoWork, null, TimeSpan.Zero,
                 TimeSpan.FromMinutes(10));
-            _newsReader = new FeedReader(_logger);
+            _feedReader = new FeedReader(_logger);
 
             return Task.CompletedTask;
         }
@@ -66,17 +64,10 @@ namespace Amathus.Web.HostedServices
             stopWatch.Start();
 
             _logger?.LogInformation("Fetching news feeds started");
-            var feeds = _newsReader.Read().Result.ToList();
-            feeds.ForEach(feed => InsertIntoCache(feed.Id.ToString(), feed));
+            var feeds = _feedReader.Read().Result.ToList();
+            feeds.ForEach(feed => _feedStore.Insert(feed));
             stopWatch.Stop();
             _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
-        }
-
-        private void InsertIntoCache(string key, Feed feed)
-        {
-            if (key == null || feed == null) return;
-
-            _cache.Set(KeyPrefix + "_" + key.ToLowerInvariant(), feed);
         }
     }
 }

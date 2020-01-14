@@ -16,28 +16,28 @@ using System.Collections.Generic;
 using System.Linq;
 using Amathus.Reader.Feeds;
 using Amathus.Reader.Picker;
-using Amathus.Web.HostedServices;
+using Amathus.Web.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Amathus.Web.Controllers
 {
     [Produces("application/json")]
-    [Route("api/v1/[controller]")]
-    public class NewsController : ControllerBase
+    //[Route("api/v1/[controller]")]
+    [Route("api/v1/news")]
+    public class FeedsController : ControllerBase
     {
-        protected readonly ILogger _logger;
-        protected readonly IMemoryCache _cache;
+        private readonly ILogger _logger;
+        private readonly IFeedStore _feedStore;
 
-        public NewsController(IMemoryCache cache, ILogger<NewsController> logger)
+        public FeedsController(IFeedStore feedStore, ILogger<FeedsController> logger)
         {
-            _cache = cache;
+            _feedStore = feedStore;
             _logger = logger;
         }
 
         [HttpGet]
-        public IActionResult GetAllNews([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public IActionResult GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
             _logger.LogInformation($"GetAll limit: {limit}, from: {from}");
 
@@ -70,13 +70,23 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetNewsById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public IActionResult GetById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            if (!Enum.TryParse(id, true, out FeedId sourceId)) return BadRequest("Id is not valid");
-            if (limit != null && limit < 1) return BadRequest("Limit cannot be less than 1");
+            if (!Enum.TryParse(id, true, out FeedId feedId))
+            {
+                return BadRequest("Id is not valid");
+            }
 
-            var feed = GetItemFromCache(id);
-            if (feed == null) return NotFound();
+            if (limit != null && limit < 1)
+            {
+                return BadRequest("Limit cannot be less than 1");
+            }
+
+            var feed = _feedStore.Read(feedId);
+            if (feed == null)
+            {
+                return NotFound();
+            }
 
             var copy = feed.Copy();
 
@@ -101,7 +111,7 @@ namespace Amathus.Web.Controllers
             var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
             foreach (var feedId in feedIds)
             {
-                var feed = GetItemFromCache(feedId.ToString());
+                var feed = _feedStore.Read(feedId);
                 if (feed != null)
                 {
                     feeds.Add(feed);
@@ -110,11 +120,6 @@ namespace Amathus.Web.Controllers
 
             feeds = feeds.OrderByDescending(feed => feed.AverageItemLength).ToList();
             return feeds;
-        }
-
-        private Feed GetItemFromCache(string key)
-        {
-            return (Feed)_cache.Get(FeedReaderService.KeyPrefix + "_" + key.ToLowerInvariant());
         }
     }
 }
