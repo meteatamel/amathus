@@ -16,7 +16,7 @@ Go to `Amathus` folder where `Amathus.sln` is.
 Build image:
 
 ```bash
-docker build -t amathus . 
+docker build -t amathus .
 ```
 
 Run image:
@@ -24,38 +24,25 @@ Run image:
 ```bash
 docker run -p 8080:8080 amathus
 ```
- 
+
 ## Deploy to Cloud Run
 
-Set some variables:
+Make sure `gcloud` points to the right project and you're in `Amathus` folder where `Amathus.sln` is.
+
+Enable Cloud Build and Cloud Run (one time):
 
 ```bash
-export PROJECT_ID="$(gcloud config get-value core/project)"
-export SERVICE_NAME=amathus
+scripts/enable
 ```
-
-Enable Cloud Build and Cloud Run:
-
-```bash
-gcloud services enable --project ${PROJECT_ID} \
-    cloudbuild.googleapis.com \
-    run.googleapis.com
-```
-
-Inside `Amathus` folder where `Amathus.sln` is:
 
 Build:
 
 ```bash
-gcloud builds submit \
-  --tag gcr.io/${PROJECT_ID}/${SERVICE_NAME}
+scripts/build
 ```
 
 Deploy:
 
 ```bash
-gcloud run deploy ${SERVICE_NAME} \
-  --image gcr.io/${PROJECT_ID}/${SERVICE_NAME} \
-  --platform managed \
-  --allow-unauthenticated
+scripts/deploy
 ```

@@ -1,8 +1,0 @@
-Fix JSONP
-Create config file for the feeds
----
-Split the worker into a separate scheduled service, using a pluggable backend
----
-Code: Go through it
-Functional Tests: Go through them
-Feeds: Find more
