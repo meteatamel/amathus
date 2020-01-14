@@ -17,9 +17,9 @@ using Amathus.Reader.Feeds;
 
 namespace Amathus.Reader.Sources
 {
-    public class Source<T>
+    public class Source
     {
-        public IConverter<T> Converter { get; set; }
+        public IConverter Converter { get; set; }
 
         public FeedId Id { get; set; }
 

@@ -65,7 +65,7 @@ namespace Amathus.Reader.Feeds
             return Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
         }
 
-        private Source<SyndicationFeed> GetSource(FeedId sourceId)
+        private Source GetSource(FeedId sourceId)
         {
             return NewsSourceBuilder.Build(sourceId);
         }

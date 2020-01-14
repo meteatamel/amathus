@@ -18,7 +18,7 @@ using Amathus.Reader.Sources;
 
 namespace Amathus.Reader.Converter
 {
-    public class DefaultSyndicationConverter : IConverter<SyndicationFeed>
+    public class DefaultSyndicationConverter : IConverter
     {
         protected IItemConverter<SyndicationItem> ItemConverter;
 
@@ -27,7 +27,7 @@ namespace Amathus.Reader.Converter
             ItemConverter = itemConverter ?? new DefaultSyndicationItemConverter();
         }
 
-        public virtual Feed Convert(Source<SyndicationFeed> source, SyndicationFeed feed)
+        public virtual Feed Convert(Source source, SyndicationFeed feed)
         {
             var newsFeed = new Feed
             {

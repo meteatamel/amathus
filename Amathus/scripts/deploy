@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -v
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+# Deploy to Cloud Run
+
+gcloud run deploy ${SERVICE_NAME} \
+  --image gcr.io/${PROJECT_ID}/${SERVICE_NAME} \
+  --platform managed \
+  --allow-unauthenticated

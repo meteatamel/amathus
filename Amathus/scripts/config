@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PROJECT_ID="$(gcloud config get-value core/project)"
+SERVICE_NAME=amathus

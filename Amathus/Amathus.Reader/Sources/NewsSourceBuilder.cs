@@ -19,9 +19,9 @@ namespace Amathus.Reader.Sources
 {
     public static class NewsSourceBuilder
     {
-        public static Source<SyndicationFeed> Build(FeedId sourceId)
+        public static Source Build(FeedId sourceId)
         {
-            var source = new Source<SyndicationFeed>
+            var source = new Source
             {
                 Converter = new DefaultSyndicationConverter(),
                 Id = sourceId

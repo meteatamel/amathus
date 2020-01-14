@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -v
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+# Enable Cloud Build and Cloud Run:
+
+gcloud services enable --project ${PROJECT_ID} \
+    cloudbuild.googleapis.com \
+    run.googleapis.com

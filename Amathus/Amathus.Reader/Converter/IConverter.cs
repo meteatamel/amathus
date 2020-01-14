@@ -11,13 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.ServiceModel.Syndication;
 using Amathus.Reader.Feeds;
 using Amathus.Reader.Sources;
 
 namespace Amathus.Reader.Converter
 {
-    public interface IConverter<T>
+    public interface IConverter
     {
-        Feed Convert(Source<T> source, T rawFeed);
+        Feed Convert(Source source, SyndicationFeed rawFeed);
     }
 }
