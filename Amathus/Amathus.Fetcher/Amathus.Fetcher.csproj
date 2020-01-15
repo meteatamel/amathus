@@ -4,6 +4,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Amathus.Web' ">
+    <StartAction>Project</StartAction>
+    <ApplicationURL>http://localhost:5002</ApplicationURL>
+  </PropertyGroup>
   <ItemGroup>
   </ItemGroup>
 
@@ -13,11 +17,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="HostedServices\" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Google.Cloud.Firestore" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.0" />
-    <PackageReference Include="WebApiContrib.Core.Formatter.Jsonp" Version="2.1.0" />
   </ItemGroup>
 </Project>

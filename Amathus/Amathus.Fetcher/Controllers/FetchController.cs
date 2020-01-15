@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+﻿// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,63 +11,44 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 using Amathus.Reader.Models;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Amathus.Web.HostedServices
+namespace Amathus.Fetcher.Controllers
 {
-    public class FeedReaderService : IHostedService, IDisposable
+    [Route("api/v1/[controller]")]
+    public class FetchController : ControllerBase
     {
         private readonly ILogger _logger;
         private readonly IFeedStore _feedStore;
+        private readonly FeedReader _feedReader;
 
-        private Timer _timer;
-        private FeedReader _feedReader;
-
-        public FeedReaderService(IFeedStore feedStore, ILogger<FeedReaderService> logger)
+        public FetchController(IFeedStore feedStore, ILogger<FetchController> logger)
         {
             _feedStore = feedStore;
             _logger = logger;
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            _timer = new Timer(DoWork, null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(10));
             _feedReader = new FeedReader(_logger);
-
-            return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        [HttpGet]
+        public async Task<IActionResult> Fetch()
         {
-            _timer?.Change(Timeout.Infinite, 0);
-
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            _timer?.Dispose();
-        }
-
-        private void DoWork(object state)
-        {
+            _logger?.LogInformation("Fetching feeds");
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            _logger?.LogInformation("Fetching news feeds started");
-            var feeds = _feedReader.Read().Result.ToList();
+            var feeds = (await _feedReader.Read()).ToList();
             feeds.ForEach(feed => _feedStore.InsertAsync(feed));
+
             stopWatch.Stop();
             _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
+
+            return Ok();
         }
     }
 }

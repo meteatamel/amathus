@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 
-namespace Amathus.Web.Models
+namespace Amathus.Reader.Models
 {
     public class InMemoryFeedStore : IFeedStore
     {

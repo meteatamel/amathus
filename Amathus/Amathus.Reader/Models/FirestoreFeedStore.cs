@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 using Google.Cloud.Firestore;
 
-namespace Amathus.Web.Models
+namespace Amathus.Reader.Models
 {
     public class FirestoreFeedStore : IFeedStore
     {

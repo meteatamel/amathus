@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using Amathus.Web.HostedServices;
 using Amathus.Reader.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -20,10 +19,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Serialization;
-using WebApiContrib.Core.Formatter.Jsonp;
 
-namespace Amathus.Web
+namespace Amathus.Fetcher
 {
     public class Startup
     {
@@ -36,26 +33,12 @@ namespace Amathus.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // TODO: jsonp
-            services.AddControllers()
-                .AddNewtonsoftJson(options =>
-                {
-                    // To get upper case in Json
-                    options.SerializerSettings.ContractResolver = new DefaultContractResolver();
-                });
+            services.AddControllers();
 
             var backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
 
             switch (backend)
             {
-                // InMemory is for local testing. When it's used, it sets up a
-                // an local hosted service that reads the feeds and saves into
-                // memory.
-                case FeedStoreBackend.InMemory:
-                    services.AddSingleton<IFeedStore, InMemoryFeedStore>();
-                    services.AddHostedService<FeedReaderService>();
-                    break;
-                // Firestore backedend. It assumes that the backend is already populated.
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
                         new FirestoreFeedStore(

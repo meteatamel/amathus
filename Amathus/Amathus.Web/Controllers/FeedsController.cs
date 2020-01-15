@@ -17,7 +17,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 using Amathus.Reader.Picker;
-using Amathus.Web.Models;
+using Amathus.Reader.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 

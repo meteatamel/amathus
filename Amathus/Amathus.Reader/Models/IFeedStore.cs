@@ -14,7 +14,7 @@
 using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 
-namespace Amathus.Web.Models
+namespace Amathus.Reader.Models
 {
     public interface IFeedStore
     {
