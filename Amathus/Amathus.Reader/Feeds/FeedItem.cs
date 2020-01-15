@@ -12,22 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using Google.Cloud.Firestore;
 using Newtonsoft.Json;
 
 namespace Amathus.Reader.Feeds
 {
+    [FirestoreData]
     public class FeedItem
     {
+        [FirestoreProperty]
         public string Title { get; set; }
 
+        [FirestoreProperty]
         public DateTime PublishDate { get; set; }
 
+        [FirestoreProperty]
         public string Summary { get; set; }
 
+        [FirestoreProperty]
         public string Detail { get; set; }
 
+        [FirestoreProperty(ConverterType = typeof(UriConverter))]
         public Uri ImageUrl { get; set; }
 
+        [FirestoreProperty(ConverterType = typeof(UriConverter))]
         public Uri Url { get; set; }
 
         [JsonIgnore]
@@ -42,7 +50,6 @@ namespace Amathus.Reader.Feeds
         private static int GetLength(string key)
         {
             return key?.Length ?? 0;
-            //return key == null ? 0 : key.Length;
         }
     }
 }

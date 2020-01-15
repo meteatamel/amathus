@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 using Amathus.Reader.Picker;
 using Amathus.Web.Models;
@@ -37,7 +38,7 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public async Task<IActionResult> GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
             _logger.LogInformation($"GetAll limit: {limit}, from: {from}");
 
@@ -46,7 +47,8 @@ namespace Amathus.Web.Controllers
                 return BadRequest("Limit cannot be less than 1");
             }
 
-            var feeds = GetAllFromCache().ToList();
+            var feeds = await GetAllFromCache();
+            feeds = feeds.ToList();
             if (!feeds.Any()) return NotFound();
 
             var copies = feeds.Select(feed => feed.Copy()).ToList();
@@ -56,7 +58,7 @@ namespace Amathus.Web.Controllers
                 var sinceUtc = ((DateTime)from).ToUniversalTime();
                 copies = copies.Select(feed =>
                 {
-                    feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc);
+                    feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
                     return feed;
                 }).ToList();
             }
@@ -70,7 +72,7 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
             if (!Enum.TryParse(id, true, out FeedId feedId))
             {
@@ -82,36 +84,37 @@ namespace Amathus.Web.Controllers
                 return BadRequest("Limit cannot be less than 1");
             }
 
-            var feed = _feedStore.Read(feedId);
+            var feed = await _feedStore.ReadAsync(feedId);
             if (feed == null)
             {
                 return NotFound();
             }
 
+            // TODO - I don't think we need to copy anymore.
             var copy = feed.Copy();
 
             if (from != null)
             {
                 var sinceUtc = ((DateTime)from).ToUniversalTime();
-                copy.Items = copy.Items.Where(item => item.PublishDate >= sinceUtc);
+                copy.Items = copy.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
             }
 
             if (limit != null)
             {
-                copy.Items = copy.Items.Take((int)limit);
+                copy.Items = copy.Items.Take((int)limit).ToList();
             }
 
-            return Ok(copy);
+            return Ok(feed);
         }
 
-        private IEnumerable<Feed> GetAllFromCache()
+        private async Task<IEnumerable<Feed>> GetAllFromCache()
         {
             var feeds = new List<Feed>();
 
             var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
             foreach (var feedId in feedIds)
             {
-                var feed = _feedStore.Read(feedId);
+                var feed = await _feedStore.ReadAsync(feedId);
                 if (feed != null)
                 {
                     feeds.Add(feed);

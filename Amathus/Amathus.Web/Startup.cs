@@ -53,10 +53,14 @@ namespace Amathus.Web
                 case FeedStoreBackend.InMemory:
                     services.AddSingleton<IFeedStore, InMemoryFeedStore>();
                     break;
+                case FeedStoreBackend.Firestore:
+                    services.AddSingleton<IFeedStore>(provider =>
+                        new FirestoreFeedStore(
+                            Configuration["FirestoreProjectId"]));
+                    break;
                 default:
                     throw new NotImplementedException(backend.ToString());
             }
-
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

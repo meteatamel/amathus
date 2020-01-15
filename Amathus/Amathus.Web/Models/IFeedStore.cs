@@ -11,14 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.Threading.Tasks;
 using Amathus.Reader.Feeds;
 
 namespace Amathus.Web.Models
 {
     public interface IFeedStore
     {
-        void Insert(Feed feed);
+        Task InsertAsync(Feed feed);
 
-        Feed Read(FeedId id);
+        Task<Feed> ReadAsync(FeedId id);
     }
 }

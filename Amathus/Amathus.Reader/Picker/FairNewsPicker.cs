@@ -32,12 +32,12 @@ namespace Amathus.Reader.Picker
             {
                 if (remainingNewsItems > 0)
                 {
-                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource + 1);
+                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource + 1).ToList();
                     remainingNewsItems--;
                 }
                 else
                 {
-                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource);
+                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource).ToList();
                 }
             }
             return NewsFeeds;

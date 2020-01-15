@@ -30,7 +30,7 @@ namespace Amathus.Web.HostedServices
 
         private Timer _timer;
         private FeedReader _feedReader;
-        
+
         public FeedReaderService(IFeedStore feedStore, ILogger<FeedReaderService> logger)
         {
             _feedStore = feedStore;
@@ -65,7 +65,7 @@ namespace Amathus.Web.HostedServices
 
             _logger?.LogInformation("Fetching news feeds started");
             var feeds = _feedReader.Read().Result.ToList();
-            feeds.ForEach(feed => _feedStore.Insert(feed));
+            feeds.ForEach(feed => _feedStore.InsertAsync(feed));
             stopWatch.Stop();
             _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
         }

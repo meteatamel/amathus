@@ -37,7 +37,7 @@ namespace Amathus.Reader.Picker
                 var actualPerc = Math.Max(perc, MinPercentage);
                 var count = (int)Math.Round(limit * actualPerc);
                 var actualCount = Math.Min(remaining, count);
-                newsFeed.Items = newsFeed.Items.Take(actualCount);
+                newsFeed.Items = newsFeed.Items.Take(actualCount).ToList();
                 remaining -= actualCount;
             }
             return NewsFeeds.OrderByDescending(feed => feed.Items.Count()).ThenBy(feed => feed.Id).ToList();

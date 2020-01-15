@@ -11,34 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Amathus.Reader.Feeds;
+using System;
+using Google.Cloud.Firestore;
 
-namespace Amathus.Web.Models
+namespace Amathus.Reader.Feeds
 {
-    public class InMemoryFeedStore : IFeedStore
+    public class UriConverter : IFirestoreConverter<Uri>
     {
-        Dictionary<FeedId, Feed> _feeds;
-    
-        public InMemoryFeedStore()
-        {
-            _feeds = new Dictionary<FeedId, Feed>();
-        }
+        public object ToFirestore(Uri value) => value.ToString();
 
-        public Task InsertAsync(Feed feed)
+        public Uri FromFirestore(object value)
         {
-            if (feed != null)
+            switch (value)
             {
-                _feeds[feed.Id] = feed;
+                case string uri: return new Uri(uri);
+                case null: throw new ArgumentNullException(nameof(value));
+                default: throw new ArgumentException($"Unexpected data: {value.GetType()}");
             }
-            return Task.CompletedTask;
-        }
-
-        public Task<Feed> ReadAsync(FeedId id)
-        {
-            var result = _feeds.ContainsKey(id) ? _feeds[id] : null;
-            return Task.FromResult(result);
         }
     }
 }

@@ -14,28 +14,36 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Google.Cloud.Firestore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace Amathus.Reader.Feeds
 {
+    [FirestoreData]
     public class Feed
     {
         [JsonConverter(typeof(StringEnumConverter))]
+        [FirestoreProperty]
         public FeedId Id { get; set; }
 
+        [FirestoreProperty]
         public string Title
         {
             get { return Id.ToFriendlyString(); }
         }
 
+        [FirestoreProperty]
         public DateTime LastUpdatedTime { get; set; }
 
+        [FirestoreProperty(ConverterType = typeof(UriConverter))]
         public Uri ImageUrl { get; set; }
 
+        [FirestoreProperty(ConverterType = typeof(UriConverter))]
         public Uri Url { get; set; }
 
-        public IEnumerable<FeedItem> Items { get; set; }
+        [FirestoreProperty]
+        public List<FeedItem> Items { get; set; }
 
         [JsonIgnore]
         public double AverageItemLength
