@@ -1,0 +1,10 @@
+# docker build -t amathus.web -f Amathus.Web/Dockerfile .
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}', '-f', '${_SERVICE_SRC}/Dockerfile', '.' ]
+images:
+- 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}'
+substitutions:
+    _SERVICE_NAME: unused
+    _SERVICE_SRC: used
+

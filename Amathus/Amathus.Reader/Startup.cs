@@ -24,6 +24,8 @@ namespace Amathus.Reader
 {
     public class Startup
     {
+        private FeedStoreBackend _backend;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -35,9 +37,9 @@ namespace Amathus.Reader
         {
             services.AddControllers();
 
-            var backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
+            _backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
 
-            switch (backend)
+            switch (_backend)
             {
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
@@ -45,7 +47,7 @@ namespace Amathus.Reader
                             Configuration["FirestoreProjectId"]));
                     break;
                 default:
-                    throw new NotImplementedException(backend.ToString());
+                    throw new ArgumentException("Backend cannot be initialized");
             }
         }
 
@@ -57,6 +59,7 @@ namespace Amathus.Reader
             }
 
             logger.LogInformation("Starting...");
+            logger.LogInformation("Backend: " + _backend);
 
             app.UseRouting();
 

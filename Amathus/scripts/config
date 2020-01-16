@@ -1,4 +1,19 @@
 #!/bin/bash
 
+# Amathus.Web
+if [ "$1" == "web" ]; then
+  SERVICE_SRC=Amathus.Web
+  SERVICE_NAME=amathus-web
+# Amathus.Reader
+elif [ "$1" == "reader" ]; then
+  SERVICE_SRC=Amathus.Reader
+  SERVICE_NAME=amathus-reader
+else
+  echo "Error: No service specified"
+  exit 1
+fi
+
+echo "SERVICE_NAME: $SERVICE_NAME"
+echo "SERVICE_SRC: $SERVICE_SRC"
+
 PROJECT_ID="$(gcloud config get-value core/project)"
-SERVICE_NAME=amathus

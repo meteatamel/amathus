@@ -1,11 +1,10 @@
 #!/bin/bash
 
-set -v
-
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-# Build Docker image
+set -v
 
 gcloud builds submit \
-  --tag gcr.io/${PROJECT_ID}/${SERVICE_NAME}
+  --config scripts/cloudbuild.yaml \
+  --substitutions=_SERVICE_NAME="${SERVICE_NAME}",_SERVICE_SRC="${SERVICE_SRC}"

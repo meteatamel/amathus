@@ -27,6 +27,8 @@ namespace Amathus.Web
 {
     public class Startup
     {
+        private FeedStoreBackend _backend;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -44,9 +46,9 @@ namespace Amathus.Web
                     options.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
 
-            var backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
+            _backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
 
-            switch (backend)
+            switch (_backend)
             {
                 // InMemory is for local testing. When it's used, it sets up a
                 // an local hosted service that reads the feeds and saves into
@@ -62,7 +64,7 @@ namespace Amathus.Web
                             Configuration["FirestoreProjectId"]));
                     break;
                 default:
-                    throw new NotImplementedException(backend.ToString());
+                    throw new ArgumentException("Backend cannot be initialized");
             }
         }
 
@@ -74,6 +76,7 @@ namespace Amathus.Web
             }
 
             logger.LogInformation("Starting...");
+            logger.LogInformation("Backend: " + _backend);
 
             app.UseRouting();
 

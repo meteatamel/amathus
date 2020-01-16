@@ -8,11 +8,11 @@ COPY . ./
 
 # Install production dependencies
 # Restore as distinct layers
+RUN dotnet restore Amathus.Common
 RUN dotnet restore Amathus.Reader
-RUN dotnet restore Amathus.Web
 
 # Build a release artifact.
-RUN dotnet publish Amathus.Web -c Release -o out
+RUN dotnet publish Amathus.Reader -c Release -o out
 
 # Use Microsoft's official runtime .NET image.
 # https://hub.docker.com/_/microsoft-dotnet-core-aspnet/
@@ -22,4 +22,4 @@ WORKDIR /app
 COPY --from=build /app/out .
 
 # Run the web service on container startup.
-ENTRYPOINT ["dotnet", "Amathus.Web.dll"]
+ENTRYPOINT ["dotnet", "Amathus.Reader.dll"]
