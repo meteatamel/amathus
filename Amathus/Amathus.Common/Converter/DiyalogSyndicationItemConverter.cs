@@ -11,23 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.ServiceModel.Syndication;
+using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Amathus.Common.Util;
 
-namespace Amathus.FunctionalTests
+namespace Amathus.Common.Converter
 {
-    [TestClass]
-    public class FeedReaderTest
+    public class DiyalogSyndicationItemConverter : IItemConverter<SyndicationItem>
     {
-
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
+        public FeedItem Convert(SyndicationItem item)
         {
-            var reader = new FeedReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
+            return new FeedItem
+            {
+                Title = item.Title.Text,
+                PublishDate = item.PublishDate.UtcDateTime,
+                Summary = TextUtil.RemoveHtml(item.Summary.Text),
+                ImageUrl = item.Links[0].Uri,
+                Url = item.Links[1].Uri,
+            };
         }
     }
 }

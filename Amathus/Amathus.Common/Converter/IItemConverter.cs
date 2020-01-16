@@ -12,22 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using Amathus.Common.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.FunctionalTests
+namespace Amathus.Common.Converter
 {
-    [TestClass]
-    public class FeedReaderTest
+    public interface IItemConverter<T>
     {
-
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
-        {
-            var reader = new FeedReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
-        }
+        FeedItem Convert(T rawFeed);
     }
 }

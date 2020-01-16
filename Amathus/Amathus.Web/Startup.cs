@@ -13,7 +13,7 @@
 // limitations under the License.
 using System;
 using Amathus.Web.HostedServices;
-using Amathus.Reader.Models;
+using Amathus.Common.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

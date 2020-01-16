@@ -11,23 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Amathus.Common.Sources;
 
-namespace Amathus.FunctionalTests
+namespace Amathus.Common.Converter
 {
-    [TestClass]
-    public class FeedReaderTest
+    public interface IConverter
     {
-
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
-        {
-            var reader = new FeedReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
-        }
+        Feed Convert(Source source, SyndicationFeed rawFeed);
     }
 }

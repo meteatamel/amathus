@@ -15,9 +15,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Amathus.Reader.Feeds;
-using Amathus.Reader.Picker;
-using Amathus.Reader.Models;
+using Amathus.Common.Feeds;
+using Amathus.Common.Picker;
+using Amathus.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 

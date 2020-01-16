@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Reader", "Amathus.Reader\Amathus.Reader.csproj", "{12C0544C-1445-4204-BF5C-1FFCC8C321EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Common", "Amathus.Common\Amathus.Common.csproj", "{12C0544C-1445-4204-BF5C-1FFCC8C321EC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Web", "Amathus.Web\Amathus.Web.csproj", "{097AD09E-8FD9-49BA-999E-41A5EC239FD9}"
 EndProject

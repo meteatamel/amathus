@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Amathus.Reader\Amathus.Reader.csproj" />
+    <ProjectReference Include="..\Amathus.Common\Amathus.Common.csproj" />
   </ItemGroup>
 </Project>

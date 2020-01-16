@@ -11,23 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
+using System.Collections.Generic;
 using Amathus.Common.Feeds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.FunctionalTests
+namespace Amathus.Common.Picker
 {
-    [TestClass]
-    public class FeedReaderTest
+    public abstract class BaseNewsPicker : INewsPicker
     {
+        protected static readonly int NumberOfNewsSources = Enum.GetValues(typeof(FeedId)).Length;
 
-        [TestMethod]
-        public void Read_Basic_ReturnsNonEmptyFeed()
+        protected List<Feed> NewsFeeds;
+
+        protected BaseNewsPicker(List<Feed> newsFeeds)
         {
-            var reader = new FeedReader();
-
-            var source = reader.Read(FeedId.Diyalog);
-
-            Assert.IsNotNull(source);
+            NewsFeeds = newsFeeds;
         }
+
+        public abstract List<Feed> Pick(int limit);
     }
 }
