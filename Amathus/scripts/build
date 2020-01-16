@@ -3,6 +3,8 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+set_service $1
+
 set -v
 
 gcloud builds submit \

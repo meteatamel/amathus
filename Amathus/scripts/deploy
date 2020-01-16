@@ -3,9 +3,13 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+set_service $1
+
 set -v
 
 gcloud run deploy ${SERVICE_NAME} \
   --image gcr.io/${PROJECT_ID}/${SERVICE_NAME} \
   --platform managed \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --timeout 900
+  --memory 2Gi

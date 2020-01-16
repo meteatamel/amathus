@@ -89,3 +89,9 @@ Deploy:
 ```bash
 scripts/deploy reader
 ```
+
+Deploy Scheduler job to invoke it:
+
+```bash
+scripts/schedule reader
+```

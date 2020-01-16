@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Amathus.Reader.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("")]
     public class ReadController : ControllerBase
     {
         private readonly ILogger _logger;

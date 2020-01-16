@@ -1,13 +1,13 @@
 #!/bin/bash
 
-set -v
-
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-# Enable Cloud Build and Cloud Run:
+set -v
 
 gcloud services enable --project ${PROJECT_ID} \
     cloudbuild.googleapis.com \
-    run.googleapis.com
-    firestore.googleapis.com
+    run.googleapis.com \
+    firestore.googleapis.com \
+    cloudscheduler.googleapis.com
+
