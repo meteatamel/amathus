@@ -37,14 +37,13 @@ namespace Amathus.Reader
         {
             services.AddControllers();
 
-            _backend = Enum.Parse<FeedStoreBackend>(Configuration["FeedStore"], ignoreCase: true);
-
+            _backend = Enum.Parse<FeedStoreBackend>(Configuration["Amathus:FeedStore"], ignoreCase: true);
             switch (_backend)
             {
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
                         new FirestoreFeedStore(
-                            Configuration["FirestoreProjectId"]));
+                            Configuration["Amathus:FirestoreProjectId"]));
                     break;
                 default:
                     throw new ArgumentException("Backend cannot be initialized");
