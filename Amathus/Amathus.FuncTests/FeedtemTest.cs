@@ -15,7 +15,7 @@ using System.Linq;
 using Amathus.Reader.Feeds;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Amathus.Reader.FunctionalTests
+namespace Amathus.FunctionalTests
 {
     [TestClass]
     public class FeedItemTest
