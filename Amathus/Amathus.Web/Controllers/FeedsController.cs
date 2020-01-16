@@ -40,33 +40,34 @@ namespace Amathus.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            _logger.LogInformation($"GetAll limit: {limit}, from: {from}");
-
             if (limit != null && limit < 1)
             {
                 return BadRequest("Limit cannot be less than 1");
             }
 
             var feeds = await GetAllFromCache();
-            feeds = feeds.ToList();
-            if (!feeds.Any()) return NotFound();
-
-            var copies = feeds.Select(feed => feed.Copy()).ToList();
+            if (!feeds.Any())
+            {
+                return NotFound();
+            }
 
             if (from != null)
             {
                 var sinceUtc = ((DateTime)from).ToUniversalTime();
-                copies = copies.Select(feed =>
+                feeds = feeds.Select(feed =>
                 {
                     feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
                     return feed;
                 }).ToList();
             }
 
-            if (limit == null) return Ok(copies);
+            if (limit == null)
+            {
+                return Ok(feeds);
+            }
 
-            //var picker = new FairNewsPicker(copies);
-            var picker = new WeightedNewsPicker(copies);
+            var picker = new FairNewsPicker(feeds);
+            //var picker = new WeightedNewsPicker(feeds);
             var pickedNews = picker.Pick((int)limit);
             return Ok(pickedNews);
         }
@@ -90,24 +91,22 @@ namespace Amathus.Web.Controllers
                 return NotFound();
             }
 
-            // TODO - I don't think we need to copy anymore.
-            var copy = feed.Copy();
 
             if (from != null)
             {
                 var sinceUtc = ((DateTime)from).ToUniversalTime();
-                copy.Items = copy.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
+                feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
             }
 
             if (limit != null)
             {
-                copy.Items = copy.Items.Take((int)limit).ToList();
+                feed.Items = feed.Items.Take((int)limit).ToList();
             }
 
             return Ok(feed);
         }
 
-        private async Task<IEnumerable<Feed>> GetAllFromCache()
+        private async Task<List<Feed>> GetAllFromCache()
         {
             var feeds = new List<Feed>();
 

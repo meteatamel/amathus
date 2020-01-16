@@ -37,7 +37,9 @@ namespace Amathus.Common.Models
 
         public Task<Feed> ReadAsync(FeedId id)
         {
-            var result = _feeds.ContainsKey(id) ? _feeds[id] : null;
+            // Making a copy before returning, so filtering from contrllers
+            // can work indepdently.
+            var result = _feeds.ContainsKey(id) ? _feeds[id].Copy(): null;
             return Task.FromResult(result);
         }
     }
