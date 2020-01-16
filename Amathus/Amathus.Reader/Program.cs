@@ -15,7 +15,7 @@ using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace Amathus.Fetcher
+namespace Amathus.Reader
 {
     public class Program
     {

@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Fetcher", "Amathus.Fetcher\Amathus.Fetcher.csproj", "{F3C456F1-BAA2-4EF5-9370-62F8F2DC65CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Reader", "Amathus.Reader\Amathus.Reader.csproj", "{F3C456F1-BAA2-4EF5-9370-62F8F2DC65CF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.FuncTests", "Amathus.FuncTests\Amathus.FuncTests.csproj", "{7F018DCB-A236-428B-AFD0-1C494682C6DC}"
 EndProject

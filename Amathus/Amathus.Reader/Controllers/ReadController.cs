@@ -19,16 +19,16 @@ using Amathus.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Amathus.Fetcher.Controllers
+namespace Amathus.Reader.Controllers
 {
     [Route("api/v1/[controller]")]
-    public class FetchController : ControllerBase
+    public class ReadController : ControllerBase
     {
         private readonly ILogger _logger;
         private readonly IFeedStore _feedStore;
         private readonly FeedReader _feedReader;
 
-        public FetchController(IFeedStore feedStore, ILogger<FetchController> logger)
+        public ReadController(IFeedStore feedStore, ILogger<ReadController> logger)
         {
             _feedStore = feedStore;
             _logger = logger;
@@ -36,7 +36,7 @@ namespace Amathus.Fetcher.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Fetch()
+        public async Task<IActionResult> Read()
         {
             _logger?.LogInformation("Fetching feeds");
             var stopWatch = new Stopwatch();

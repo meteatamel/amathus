@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Amathus.Fetcher
+namespace Amathus.Reader
 {
     public class Startup
     {
