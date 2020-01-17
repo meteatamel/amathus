@@ -3,8 +3,8 @@
     "Sources": [
       {
         "Id": "DetayKibris",
-        "Url": "http://www.google.com",
-        "LogoUrl": "http://www.google.com/me.jpeg"
+        "Url": "http://www.detaykibris.com/rss/",
+        "LogoUrl": "http://www.detaykibris.com/s/i/logo.png"
       },
       {
         "Id": "Diyalog",
@@ -49,7 +49,7 @@
       {
         "Id": "KibrisTime",
         "Url": "http://www.kibristime.com/rss.php",
-        "LogoUrl": "ttps://www.kibristime.com/images/banner/ktimepng_1.png"
+        "LogoUrl": "https://www.kibristime.com/images/banner/ktimepng_1.png"
       },
       {
         "Id": "YeniCag",

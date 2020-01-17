@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
 
 namespace Amathus.Common.Sources
 {
     public class Source
     {
-        public IConverter Converter { get; set; }
-
         public FeedId Id { get; set; }
 
         public Uri LogoUrl { get; set; }

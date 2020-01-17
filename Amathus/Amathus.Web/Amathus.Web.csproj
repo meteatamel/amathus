@@ -20,4 +20,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.0" />
     <PackageReference Include="WebApiContrib.Core.Formatter.Jsonp" Version="2.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shared\amathussources.json">
+      <Link>amathussources.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

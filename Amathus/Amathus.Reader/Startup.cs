@@ -13,6 +13,7 @@
 // limitations under the License.
 using System;
 using System.Collections.Generic;
+using Amathus.Common.Feeds;
 using Amathus.Common.Models;
 using Amathus.Common.Sources;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ namespace Amathus.Reader
     public class Startup
     {
         private FeedStoreBackend _backend;
+        private List<Source> _sources;
 
         public Startup(IConfiguration configuration)
         {
@@ -50,6 +52,9 @@ namespace Amathus.Reader
                 default:
                     throw new ArgumentException("Backend cannot be initialized");
             }
+
+            _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
+            services.AddSingleton<IFeedReader>(provider => new FeedReader(_sources));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
@@ -61,9 +66,7 @@ namespace Amathus.Reader
 
             logger.LogInformation("Starting...");
             logger.LogInformation("Backend: " + _backend);
-
-            var sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
-            logger.LogInformation("Sources: " + sources.Count);
+            logger.LogInformation("Sources: " + _sources?.Count);
 
             app.UseRouting();
 

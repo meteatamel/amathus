@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Amathus.Web
@@ -30,6 +32,15 @@ namespace Amathus.Web
             var url = string.Concat("http://0.0.0.0:", port);
 
             return Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    // When running locally
+                    var shared = Path.Combine(hostingContext.HostingEnvironment.ContentRootPath, "..", "Shared");
+                    config.AddJsonFile(Path.Combine(shared, "amathussources.json"), optional: true, reloadOnChange: false);
+
+                    // When running published
+                    config.AddJsonFile("amathussources.json", optional: true, reloadOnChange: false);
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>().UseUrls(url);

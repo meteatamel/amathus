@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Amathus.Common.Feeds;
+using Amathus.Common.Sources;
+using Amathus.FuncTests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Amathus.FunctionalTests
@@ -21,6 +24,14 @@ namespace Amathus.FunctionalTests
     [TestClass]
     public class FeedTest
     {
+        private static List<Source> _sources;
+
+        [ClassInitialize]
+        public static void Init(TestContext context)
+        {
+            _sources = TestHelper.GetSources();
+        }
+
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
@@ -141,8 +152,10 @@ namespace Amathus.FunctionalTests
 
         private static Feed Read(FeedId sourceId)
         {
-            var reader = new FeedReader();
-            return reader.Read(sourceId);
+            var reader = new FeedReader(_sources);
+            var source = _sources.Find(source => source.Id == sourceId);
+            var feed = reader.Read(source);
+            return feed;
         }
 
     }

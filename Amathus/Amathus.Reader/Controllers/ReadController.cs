@@ -26,13 +26,13 @@ namespace Amathus.Reader.Controllers
     {
         private readonly ILogger _logger;
         private readonly IFeedStore _feedStore;
-        private readonly FeedReader _feedReader;
+        private readonly IFeedReader _feedReader;
 
-        public ReadController(IFeedStore feedStore, ILogger<ReadController> logger)
+        public ReadController(IFeedReader feedReader, IFeedStore feedStore, ILogger<ReadController> logger)
         {
+            _feedReader = feedReader;
             _feedStore = feedStore;
             _logger = logger;
-            _feedReader = new FeedReader(_logger);
         }
 
         [HttpGet]
@@ -42,7 +42,7 @@ namespace Amathus.Reader.Controllers
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var feeds = (await _feedReader.Read()).ToList();
+            var feeds = (await _feedReader.ReadAll()).ToList();
             feeds.ForEach(feed => _feedStore.InsertAsync(feed));
 
             stopWatch.Stop();

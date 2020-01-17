@@ -11,8 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Amathus.Common.Feeds;
+using Amathus.Common.Sources;
+using Amathus.FuncTests;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Amathus.FunctionalTests
@@ -20,6 +26,14 @@ namespace Amathus.FunctionalTests
     [TestClass]
     public class FeedItemTest
     {
+        private static List<Source> _sources;
+
+        [ClassInitialize]
+        public static void Init(TestContext context)
+        {
+            _sources = TestHelper.GetSources();
+        }
+
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
@@ -146,9 +160,10 @@ namespace Amathus.FunctionalTests
 
         private static FeedItem Read(FeedId sourceId)
         {
-            var reader = new FeedReader();
-            var newsSource = reader.Read(sourceId);
-            return newsSource.Items.First();
+            var reader = new FeedReader(_sources);
+            var source = _sources.Find(source => source.Id == sourceId);
+            var feed = reader.Read(source);
+            return feed.Items.First();
         }
     }
 }

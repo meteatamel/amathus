@@ -13,13 +13,14 @@
 // limitations under the License.
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Amathus.Common.Sources;
 
 namespace Amathus.Common.Feeds
 {
     public interface IFeedReader
     {
-        Task<IEnumerable<Feed>> Read();
+        Task<IEnumerable<Feed>> ReadAll();
 
-        Feed Read(FeedId sourceId);
+        Feed Read(Source source);
     }
 }

@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
+using Amathus.Common.Converter;
 using Amathus.Common.Sources;
 using Microsoft.Extensions.Logging;
 
@@ -23,40 +24,41 @@ namespace Amathus.Common.Feeds
 {
     public class FeedReader : IFeedReader
     {
+        private readonly List<Source> _sources;
         private readonly ILogger _logger;
 
-        public FeedReader(ILogger logger = null)
+        // TODO - Add Logger
+        public FeedReader(List<Source> sources, ILogger logger = null)
         {
+            _sources = sources;
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Feed>> Read()
+        public async Task<IEnumerable<Feed>> ReadAll()
         {
-            var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
-            var tasks = feedIds.Select(feedId => Task.Run(() => Read(feedId)));
+            var tasks = _sources.Select(source => Task.Run(() => Read(source)));
             var results = await Task.WhenAll(tasks);
             return results.Where(feed => feed != null);
         }
 
-        public Feed Read(FeedId sourceId)
+        public Feed Read(Source source)
         {
             try
             {
-                _logger?.LogDebug($"Reading feed: {sourceId}");
-                var source = SourceBuilder.Build(sourceId);
+                _logger?.LogDebug($"Reading feed: {source.Id}");
                 var rawFeed = LoadFeed(source.Url);
 
-                _logger?.LogDebug($"Converting feed: {sourceId}");
-                var feed = source.Converter.Convert(source, rawFeed);
+                _logger?.LogDebug($"Converting feed: {source.Id}");
+                var converter = ConverterBuilder.Build(source.Id);
+                var feed = converter.Convert(source, rawFeed);
 
                 _logger?.LogDebug($"Feed average item length: {feed.AverageItemLength}");
 
                 return feed;
-
             }
             catch (Exception ex)
             {
-                _logger?.LogError($"Reading failed for feed: {sourceId}", ex);
+                _logger?.LogError($"Reading failed for feed: {source.Id}", ex);
                 return null;
             }
         }
