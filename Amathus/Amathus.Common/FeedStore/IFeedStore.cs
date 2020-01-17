@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+﻿// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,16 @@
 // limitations under the License.
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Amathus.Common.Sources;
+using Amathus.Common.Feeds;
 
-namespace Amathus.Common.Feeds
+namespace Amathus.Common.FeedStore
 {
-    public interface IFeedReader
+    public interface IFeedStore
     {
-        Task<IEnumerable<Feed>> ReadAll();
+        Task InsertAsync(Feed feed);
 
-        Feed Read(Source source);
+        Task<Feed> ReadAsync(string feedId);
+
+        Task<List<Feed>> ReadAllAsync();
     }
 }

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using Amathus.Common.FeedStore;
 using Google.Cloud.Firestore;
 using Newtonsoft.Json;
 

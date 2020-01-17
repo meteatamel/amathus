@@ -13,7 +13,7 @@
 // limitations under the License.
 using System;
 using Amathus.Web.HostedServices;
-using Amathus.Common.Models;
+using Amathus.Common.FeedStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +22,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
 using WebApiContrib.Core.Formatter.Jsonp;
-using Amathus.Common.Feeds;
+using Amathus.Common.Reader;
 using System.Collections.Generic;
 using Amathus.Common.Sources;
 

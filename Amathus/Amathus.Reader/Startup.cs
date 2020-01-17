@@ -13,8 +13,8 @@
 // limitations under the License.
 using System;
 using System.Collections.Generic;
-using Amathus.Common.Feeds;
-using Amathus.Common.Models;
+using Amathus.Common.Reader;
+using Amathus.Common.FeedStore;
 using Amathus.Common.Sources;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

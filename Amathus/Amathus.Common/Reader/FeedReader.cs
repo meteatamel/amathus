@@ -17,10 +17,11 @@ using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
 using Amathus.Common.Converter;
+using Amathus.Common.Feeds;
 using Amathus.Common.Sources;
 using Microsoft.Extensions.Logging;
 
-namespace Amathus.Common.Feeds
+namespace Amathus.Common.Reader
 {
     public class FeedReader : IFeedReader
     {

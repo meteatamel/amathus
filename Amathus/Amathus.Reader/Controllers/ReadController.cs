@@ -14,8 +14,8 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Amathus.Common.Feeds;
-using Amathus.Common.Models;
+using Amathus.Common.Reader;
+using Amathus.Common.FeedStore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 

@@ -16,8 +16,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Amathus.Common.Feeds;
-using Amathus.Common.Models;
+using Amathus.Common.Reader;
+using Amathus.Common.FeedStore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

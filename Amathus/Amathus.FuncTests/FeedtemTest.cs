@@ -14,6 +14,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Amathus.Common.Feeds;
+using Amathus.Common.Reader;
 using Amathus.Common.Sources;
 using Amathus.FuncTests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

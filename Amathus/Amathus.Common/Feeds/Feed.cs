@@ -14,9 +14,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Amathus.Common.FeedStore;
 using Google.Cloud.Firestore;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Amathus.Common.Feeds
 {
