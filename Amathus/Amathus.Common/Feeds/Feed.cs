@@ -23,15 +23,11 @@ namespace Amathus.Common.Feeds
     [FirestoreData]
     public class Feed
     {
-        [JsonConverter(typeof(StringEnumConverter))]
         [FirestoreProperty]
-        public FeedId Id { get; set; }
+        public string Id { get; set; }
 
         [FirestoreProperty]
-        public string Title
-        {
-            get { return Id.ToFriendlyString(); }
-        }
+        public string Title { get; set; }
 
         [FirestoreProperty]
         public DateTime LastUpdatedTime { get; set; }

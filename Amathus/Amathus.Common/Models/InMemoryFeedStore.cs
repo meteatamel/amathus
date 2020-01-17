@@ -19,11 +19,11 @@ namespace Amathus.Common.Models
 {
     public class InMemoryFeedStore : IFeedStore
     {
-        Dictionary<FeedId, Feed> _feeds;
+        Dictionary<string, Feed> _feeds;
     
         public InMemoryFeedStore()
         {
-            _feeds = new Dictionary<FeedId, Feed>();
+            _feeds = new Dictionary<string, Feed>();
         }
 
         public Task InsertAsync(Feed feed)
@@ -35,12 +35,22 @@ namespace Amathus.Common.Models
             return Task.CompletedTask;
         }
 
-        public Task<Feed> ReadAsync(FeedId id)
+        public Task<Feed> ReadAsync(string id)
         {
             // Making a copy before returning, so filtering from contrllers
             // can work indepdently.
-            var result = _feeds.ContainsKey(id) ? _feeds[id].Copy(): null;
-            return Task.FromResult(result);
+            var feed = _feeds.ContainsKey(id) ? _feeds[id].Copy(): null;
+            return Task.FromResult(feed);
+        }
+
+        public Task<List<Feed>> ReadAllAsync()
+        {
+            var feeds = new List<Feed>();
+            foreach(var feed in _feeds.Values)
+            {
+                feeds.Add(feed.Copy());
+            }
+            return Task.FromResult(feeds);
         }
     }
 }

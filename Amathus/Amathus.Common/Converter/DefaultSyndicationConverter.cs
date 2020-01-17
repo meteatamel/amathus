@@ -27,20 +27,21 @@ namespace Amathus.Common.Converter
             ItemConverter = itemConverter ?? new DefaultSyndicationItemConverter();
         }
 
-        public virtual Feed Convert(Source source, SyndicationFeed feed)
+        public virtual Feed Convert(Source source, SyndicationFeed syncFeed)
         {
-            var newsFeed = new Feed
+            var feed = new Feed
             {
                 Id = source.Id,
+                Title = source.Title,
                 ImageUrl = source.LogoUrl,
-                LastUpdatedTime = feed.LastUpdatedTime.UtcDateTime,
-                Url = feed.Links[0].Uri,
-                Items = feed.Items.Select(item => ItemConverter.Convert(item))
+                LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime,
+                Url = syncFeed.Links[0].Uri,
+                Items = syncFeed.Items.Select(item => ItemConverter.Convert(item))
                                   //.Where(item => DateTime.Compare(item.PublishDate, DateTime.UtcNow) <= 0)
                                   .OrderByDescending(item => item.PublishDate).ToList<FeedItem>()
             };
 
-            return newsFeed;
+            return feed;
         }
     }
 }

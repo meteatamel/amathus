@@ -35,110 +35,110 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
-            var newsSource = Read(FeedId.DetayKibris);
+            var feed = Read("DetayKibris");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_Diyalog_Converts()
         {
-            var newsSource = Read(FeedId.Diyalog);
+            var feed = Read("Diyalog");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_GundemKibris_Converts()
         {
-            var newsSource = Read(FeedId.GundemKibris);
+            var feed = Read("GundemKibris");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_HaberKibris_Converts()
         {
-            var newsSource = Read(FeedId.HaberKibris);
+            var feed = Read("HaberKibris");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
-            var newsSource = Read(FeedId.HalkinSesi);
+            var feed = Read("HalkinSesi");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_Havadis_Converts()
         {
-            var newsSource = Read(FeedId.Havadis);
+            var feed = Read("Havadis");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
-            var newsSource = Read(FeedId.KibrisAda);
+            var feed = Read("KibrisAda");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         // No RSS feed anymore
         [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
-            var newsSource = Read(FeedId.KibrisPostasi);
+            var feed = Read("KibrisPostasi");
 
-            AssertCommonElements(newsSource);
-            Assert.AreEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
-            var newsSource = Read(FeedId.KibrisSonDakika);
+            var feed = Read("KibrisSonDakika");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
-            var newsSource = Read(FeedId.KibrisTime);
+            var feed = Read("KibrisTime");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_YeniCag_Converts()
         {
-            var newsSource = Read(FeedId.YeniCag);
+            var feed = Read("YeniCag");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
-            var newsSource = Read(FeedId.YeniDuzen);
+            var feed = Read("YeniDuzen");
 
-            AssertCommonElements(newsSource);
-            Assert.AreNotEqual(new DateTime(), newsSource.LastUpdatedTime);
+            AssertCommonElements(feed);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
         }
 
         private static void AssertCommonElements(Feed source)
@@ -150,7 +150,7 @@ namespace Amathus.FunctionalTests
             Assert.IsTrue(source.Items.Any());
         }
 
-        private static Feed Read(FeedId sourceId)
+        private static Feed Read(string sourceId)
         {
             var reader = new FeedReader(_sources);
             var source = _sources.Find(source => source.Id == sourceId);

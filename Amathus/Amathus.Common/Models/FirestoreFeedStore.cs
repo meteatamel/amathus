@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
 using Google.Cloud.Firestore;
@@ -39,9 +40,9 @@ namespace Amathus.Common.Models
             await docRef.SetAsync(feed, SetOptions.Overwrite);
         }
 
-        public async Task<Feed> ReadAsync(FeedId id)
+        public async Task<Feed> ReadAsync(string id)
         {
-            var snapshot = await _feeds.Document(id.ToString()).GetSnapshotAsync();
+            var snapshot = await _feeds.Document(id).GetSnapshotAsync();
             if (!snapshot.Exists)
             {
                 return null;
@@ -49,6 +50,20 @@ namespace Amathus.Common.Models
 
             var feed = snapshot.ConvertTo<Feed>();
             return feed;
+        }
+
+        public async Task<List<Feed>> ReadAllAsync()
+        {
+            var feeds = new List<Feed>();
+
+            var collection = await _feeds.GetSnapshotAsync();
+            foreach (DocumentSnapshot document in collection.Documents)
+            {
+                var feed = document.ConvertTo<Feed>();
+                feeds.Add(feed);
+            }
+
+            return feeds;
         }
     }
 }

@@ -19,13 +19,11 @@ namespace Amathus.Common.Picker
 {
     public abstract class BaseNewsPicker : INewsPicker
     {
-        protected static readonly int NumberOfNewsSources = Enum.GetValues(typeof(FeedId)).Length;
+        protected List<Feed> Feeds;
 
-        protected List<Feed> NewsFeeds;
-
-        protected BaseNewsPicker(List<Feed> newsFeeds)
+        protected BaseNewsPicker(List<Feed> feeds)
         {
-            NewsFeeds = newsFeeds;
+            Feeds = feeds;
         }
 
         public abstract List<Feed> Pick(int limit);

@@ -18,7 +18,9 @@ namespace Amathus.Common.Sources
 {
     public class Source
     {
-        public FeedId Id { get; set; }
+        public string Id { get; set; }
+
+        public string Title { get; set; }
 
         public Uri LogoUrl { get; set; }
 

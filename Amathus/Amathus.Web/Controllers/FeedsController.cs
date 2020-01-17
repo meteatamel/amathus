@@ -75,17 +75,12 @@ namespace Amathus.Web.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
         {
-            if (!Enum.TryParse(id, true, out FeedId feedId))
-            {
-                return BadRequest("Id is not valid");
-            }
-
             if (limit != null && limit < 1)
             {
                 return BadRequest("Limit cannot be less than 1");
             }
 
-            var feed = await _feedStore.ReadAsync(feedId);
+            var feed = await _feedStore.ReadAsync(id);
             if (feed == null)
             {
                 return NotFound();
@@ -108,18 +103,7 @@ namespace Amathus.Web.Controllers
 
         private async Task<List<Feed>> GetAllFromCache()
         {
-            var feeds = new List<Feed>();
-
-            var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
-            foreach (var feedId in feedIds)
-            {
-                var feed = await _feedStore.ReadAsync(feedId);
-                if (feed != null)
-                {
-                    feeds.Add(feed);
-                }
-            }
-
+            var feeds = await _feedStore.ReadAllAsync();
             feeds = feeds.OrderByDescending(feed => feed.AverageItemLength).ToList();
             return feeds;
         }

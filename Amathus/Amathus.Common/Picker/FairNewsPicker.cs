@@ -19,28 +19,28 @@ namespace Amathus.Common.Picker
 {
     public class FairNewsPicker : BaseNewsPicker
     {
-        public FairNewsPicker(List<Feed> newsFeeds) : base(newsFeeds)
+        public FairNewsPicker(List<Feed> feeds) : base(feeds)
         {
         }
 
         public override List<Feed> Pick(int limit)
         {
-            var numberOfNewsItemsPerSource = limit / NumberOfNewsSources;
-            var remainingNewsItems = limit % NumberOfNewsSources;
+            var numberOfNewsItemsPerSource = limit / Feeds.Count;
+            var remainingNewsItems = limit % Feeds.Count;
             
-            foreach (var newsFeed in NewsFeeds)
+            foreach (var feed in Feeds)
             {
                 if (remainingNewsItems > 0)
                 {
-                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource + 1).ToList();
+                    feed.Items = feed.Items.Take(numberOfNewsItemsPerSource + 1).ToList();
                     remainingNewsItems--;
                 }
                 else
                 {
-                    newsFeed.Items = newsFeed.Items.Take(numberOfNewsItemsPerSource).ToList();
+                    feed.Items = feed.Items.Take(numberOfNewsItemsPerSource).ToList();
                 }
             }
-            return NewsFeeds;
+            return Feeds;
         }
 
 

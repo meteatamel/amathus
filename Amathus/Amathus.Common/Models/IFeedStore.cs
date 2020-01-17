@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
 
@@ -20,6 +21,8 @@ namespace Amathus.Common.Models
     {
         Task InsertAsync(Feed feed);
 
-        Task<Feed> ReadAsync(FeedId id);
+        Task<Feed> ReadAsync(string feedId);
+
+        Task<List<Feed>> ReadAllAsync();
     }
 }

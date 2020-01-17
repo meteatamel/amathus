@@ -18,22 +18,22 @@ namespace Amathus.Common.Converter
 {
     public static class ConverterBuilder
     {
-        public static IConverter Build(FeedId sourceId)
+        public static IConverter Build(string sourceId)
         {
             switch (sourceId)
             {
-                case FeedId.DetayKibris:
-                case FeedId.GundemKibris:
-                case FeedId.Havadis:
-                case FeedId.KibrisAda:
-                case FeedId.KibrisSonDakika:
-                case FeedId.YeniCag:
-                case FeedId.YeniDuzen:
+                case "DetayKibris":
+                case "GundemKibris":
+                case "Havadis":
+                case "KibrisAda":
+                case "KibrisSonDakika":
+                case "YeniCag":
+                case "YeniDuzen":
                     return new DefaultSyndicationConverter(new HtmlAndImageRemoverSyndicationItemConverter());
-                case FeedId.Diyalog:
+                case "Diyalog":
                     return new DefaultSyndicationConverter(new DiyalogSyndicationItemConverter());
-                case FeedId.HalkinSesi:
-                case FeedId.KibrisTime:
+                case "HalkinSesi":
+                case "KibrisTime":
                     return new DefaultSyndicationConverter(new SecondLinkSyncicationItemConverter());
                 default:
                 //case FeedId.HaberKibris:

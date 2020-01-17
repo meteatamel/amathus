@@ -11,14 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Amathus.Common.Feeds;
 using Amathus.Common.Sources;
 using Amathus.FuncTests;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Amathus.FunctionalTests
@@ -37,56 +34,56 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
-            var newsItem = Read(FeedId.DetayKibris);
+            var feedItem = Read("DetayKibris");
 
-            AssertCommonElements(newsItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(newsItem.Summary));
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
         public void Convert_Diyalog_Converts()
         {
-            var newsItem = Read(FeedId.Diyalog);
+            var feedItem = Read("Diyalog");
 
-            AssertCommonElements(newsItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(newsItem.Summary));
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
         public void Convert_GundemKibris_Converts()
         {
-            var newsItem = Read(FeedId.GundemKibris);
+            var feedItem = Read("GundemKibris");
 
-            AssertCommonElements(newsItem);
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
         public void Convert_HaberKibris_Converts()
         {
-            var newsItem = Read(FeedId.HaberKibris);
+            var feedItem = Read("HaberKibris");
 
-            AssertCommonElements(newsItem);
-            Assert.IsNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
-            var newsItem = Read(FeedId.HalkinSesi);
+            var feedItem = Read("HalkinSesi");
 
-            AssertCommonElements(newsItem);
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
         public void Convert_Havadis_Converts()
         {
-            var newsItem = Read(FeedId.Havadis);
+            var feedItem = Read("Havadis");
 
-            AssertCommonElements(newsItem);
+            AssertCommonElements(feedItem);
             //Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
             //Assert.IsNotNull(newsItem.ImageUrl);
         }
@@ -95,59 +92,59 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
-            var newsItem = Read(FeedId.KibrisAda);
+            var feedItem = Read("KibrisAda");
 
-            AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         // No RSS Feed anymore
         [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
-            var newsItem = Read(FeedId.KibrisPostasi);
+            var feedItem = Read("KibrisPostasi");
 
-            AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
+            AssertCommonElements(feedItem);
+            Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
-            var newsItem = Read(FeedId.KibrisSonDakika);
+            var feedItem = Read("KibrisSonDakika");
 
-            AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
+            AssertCommonElements(feedItem);
+            Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
         }
 
 
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
-            var newsItem = Read(FeedId.KibrisTime);
+            var feedItem = Read("KibrisTime");
 
-            AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
+            AssertCommonElements(feedItem);
+            Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]
         public void Convert_YeniCag_Converts()
         {
-            var newsItem = Read(FeedId.YeniCag);
+            var feedItem = Read("YeniCag");
 
-            AssertCommonElements(newsItem);
-            Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
+            AssertCommonElements(feedItem);
+            Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
-            var newsItem = Read(FeedId.YeniDuzen);
+            var feedItem = Read("YeniDuzen");
 
-            AssertCommonElements(newsItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(newsItem.Summary));
-            Assert.IsNotNull(newsItem.ImageUrl);
+            AssertCommonElements(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         private static void AssertCommonElements(FeedItem feedItem)
@@ -158,7 +155,7 @@ namespace Amathus.FunctionalTests
             Assert.IsNotNull(feedItem.Url);
         }
 
-        private static FeedItem Read(FeedId sourceId)
+        private static FeedItem Read(string sourceId)
         {
             var reader = new FeedReader(_sources);
             var source = _sources.Find(source => source.Id == sourceId);
