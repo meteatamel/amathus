@@ -72,7 +72,11 @@ namespace Amathus.Web
             }
 
             _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
-            services.AddSingleton<IFeedReader>(provider => new FeedReader(_sources));
+            services.AddSingleton<IFeedReader>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<IFeedReader>>();
+                return new FeedReader(_sources, logger);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

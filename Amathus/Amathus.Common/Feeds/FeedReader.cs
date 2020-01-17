@@ -27,7 +27,6 @@ namespace Amathus.Common.Feeds
         private readonly List<Source> _sources;
         private readonly ILogger _logger;
 
-        // TODO - Add Logger
         public FeedReader(List<Source> sources, ILogger logger = null)
         {
             _sources = sources;
