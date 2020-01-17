@@ -25,6 +25,7 @@ using WebApiContrib.Core.Formatter.Jsonp;
 using Amathus.Common.Reader;
 using System.Collections.Generic;
 using Amathus.Common.Sources;
+using Amathus.Common.Converter;
 
 namespace Amathus.Web
 {
@@ -76,6 +77,11 @@ namespace Amathus.Web
             {
                 var logger = container.GetRequiredService<ILogger<IFeedReader>>();
                 return new FeedReader(_sources, logger);
+            });
+            services.AddSingleton<IFeedConverter>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
+                return new FeedConverter(_sources, logger);
             });
         }
 

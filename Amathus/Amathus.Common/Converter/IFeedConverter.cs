@@ -16,14 +16,8 @@ using Amathus.Common.Feeds;
 
 namespace Amathus.Common.Converter
 {
-    public class SecondLinkSyncicationItemConverter : HtmlAndImageRemoverSyndicationItemConverter
+    public interface IFeedConverter
     {
-        public override FeedItem Convert(SyndicationItem item)
-        {
-            var feedItem = base.Convert(item);
-            // Halkin Sesi uses the second link as the article url.
-            feedItem.Url = item.Links[1].Uri;
-            return feedItem;
-        }
+        Feed Convert(string sourceId, SyndicationFeed rawFeed);
     }
 }

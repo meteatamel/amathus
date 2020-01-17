@@ -11,24 +11,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
+using System.Net;
 using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
-using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class DiyalogSyndicationItemConverter : IItemConverter<SyndicationItem>
+    public class DefaultFeedItemConverter : IFeedItemConverter
     {
         public FeedItem Convert(SyndicationItem item)
         {
-            return new FeedItem
+            var newsItem =  new FeedItem
             {
-                Title = item.Title.Text,
+                Title = WebUtility.HtmlDecode(item.Title.Text),
                 PublishDate = item.PublishDate.UtcDateTime,
-                Summary = TextUtil.RemoveHtml(item.Summary.Text),
-                ImageUrl = item.Links[0].Uri,
-                Url = item.Links[1].Uri,
+                Summary = WebUtility.HtmlDecode(item.Summary.Text),
+                Url = item.Links[0].Uri
             };
+
+            // If the publish date is in the future, set it to UtcNow
+            if (DateTime.Compare(newsItem.PublishDate, DateTime.UtcNow) > 0)
+            {
+                newsItem.PublishDate = DateTime.UtcNow;
+            }
+
+            return newsItem;
         }
     }
 }

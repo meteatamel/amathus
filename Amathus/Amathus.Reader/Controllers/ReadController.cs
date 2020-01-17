@@ -18,6 +18,7 @@ using Amathus.Common.Reader;
 using Amathus.Common.FeedStore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Amathus.Common.Converter;
 
 namespace Amathus.Reader.Controllers
 {
@@ -25,13 +26,15 @@ namespace Amathus.Reader.Controllers
     public class ReadController : ControllerBase
     {
         private readonly ILogger _logger;
-        private readonly IFeedStore _feedStore;
-        private readonly IFeedReader _feedReader;
+        private readonly IFeedReader _reader;
+        private readonly IFeedConverter _converter;
+        private readonly IFeedStore _store;
 
-        public ReadController(IFeedReader feedReader, IFeedStore feedStore, ILogger<ReadController> logger)
+        public ReadController(IFeedReader reader, IFeedConverter converter, IFeedStore store, ILogger<ReadController> logger)
         {
-            _feedReader = feedReader;
-            _feedStore = feedStore;
+            _reader = reader;
+            _converter = converter;
+            _store = store;
             _logger = logger;
         }
 
@@ -42,11 +45,15 @@ namespace Amathus.Reader.Controllers
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var feeds = (await _feedReader.ReadAll()).ToList();
-            feeds.ForEach(feed => _feedStore.InsertAsync(feed));
+            var rawFeeds = (await _reader.ReadAll()).ToList();
+            rawFeeds.ForEach(rawFeed =>
+            {
+                var feed = _converter.Convert(rawFeed.Id, rawFeed);
+                _store.InsertAsync(feed);
+            });
 
             stopWatch.Stop();
-            _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
+            _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {rawFeeds.Count}");
 
             return Ok();
         }

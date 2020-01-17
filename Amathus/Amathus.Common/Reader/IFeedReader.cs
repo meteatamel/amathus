@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System.Collections.Generic;
+using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
-using Amathus.Common.Feeds;
 using Amathus.Common.Sources;
 
 namespace Amathus.Common.Reader
 {
     public interface IFeedReader
     {
-        Task<IEnumerable<Feed>> ReadAll();
+        Task<IEnumerable<SyndicationFeed>> ReadAll();
 
-        Feed Read(Source source);
+        SyndicationFeed Read(Source source);
     }
 }

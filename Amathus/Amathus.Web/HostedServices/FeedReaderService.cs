@@ -20,21 +20,24 @@ using Amathus.Common.Reader;
 using Amathus.Common.FeedStore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Amathus.Common.Converter;
 
 namespace Amathus.Web.HostedServices
 {
     public class FeedReaderService : IHostedService, IDisposable
     {
-        private readonly IFeedReader _feedReader;
-        private readonly IFeedStore _feedStore;
+        private readonly IFeedReader _reader;
+        private readonly IFeedConverter _converter;
+        private readonly IFeedStore _store;
         private readonly ILogger _logger;
 
         private Timer _timer;
 
-        public FeedReaderService(IFeedReader feedReader, IFeedStore feedStore, ILogger<FeedReaderService> logger)
+        public FeedReaderService(IFeedReader reader, IFeedConverter converter, IFeedStore store, ILogger<FeedReaderService> logger)
         {
-            _feedReader = feedReader;
-            _feedStore = feedStore;
+            _reader = reader;
+            _converter = converter;
+            _store = store;
             _logger = logger;
         }
 
@@ -64,10 +67,14 @@ namespace Amathus.Web.HostedServices
             stopWatch.Start();
 
             _logger?.LogInformation("Fetching news feeds started");
-            var feeds = _feedReader.ReadAll().Result.ToList();
-            feeds.ForEach(feed => _feedStore.InsertAsync(feed));
+            var rawFeeds = _reader.ReadAll().Result.ToList();
+            rawFeeds.ForEach(rawFeed => {
+                
+                var feed = _converter.Convert(rawFeed.Id, rawFeed);
+                _store.InsertAsync(feed);
+            });
             stopWatch.Stop();
-            _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {feeds.Count}");
+            _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {rawFeeds.Count}");
         }
     }
 }

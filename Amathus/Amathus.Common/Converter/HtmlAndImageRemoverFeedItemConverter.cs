@@ -11,12 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
+using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public interface IItemConverter<T>
-    {
-        FeedItem Convert(T rawFeed);
+    public class HtmlAndImageRemoverFeedItemConverter : IFeedItemConverter
+    { 
+        public virtual FeedItem Convert(SyndicationItem item)
+        {
+            return new FeedItem
+            {
+                Title = item.Title.Text,
+                PublishDate = item.PublishDate.UtcDateTime,
+                Summary = TextUtil.RemoveHtmlTabAndNewLine(item.Summary.Text),
+                ImageUrl = UrlUtil.GetUrl(TextUtil.ExtractImgSrc(item.Summary.Text)),
+                Url = item.Links[0].Uri,
+            };
+        }
     }
 }

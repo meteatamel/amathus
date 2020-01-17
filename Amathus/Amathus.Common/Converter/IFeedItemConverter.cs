@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System.ServiceModel.Syndication;
-using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
-using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class HtmlAndImageRemoverSyndicationItemConverter : IItemConverter<SyndicationItem>
+    public interface IFeedItemConverter
     {
-        public virtual FeedItem Convert(SyndicationItem item)
-        {
-            return new FeedItem
-            {
-                Title = item.Title.Text,
-                PublishDate = item.PublishDate.UtcDateTime,
-                Summary = TextUtil.RemoveHtmlTabAndNewLine(item.Summary.Text),
-                ImageUrl = UrlUtil.GetUrl(TextUtil.ExtractImgSrc(item.Summary.Text)),
-                Url = item.Links[0].Uri,
-            };
-        }
+        FeedItem Convert(SyndicationItem rawFeedItem);
     }
 }

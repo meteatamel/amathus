@@ -22,6 +22,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Amathus.Common.Converter;
 
 namespace Amathus.Reader
 {
@@ -58,6 +59,11 @@ namespace Amathus.Reader
             {
                 var logger = container.GetRequiredService<ILogger<IFeedReader>>();
                 return new FeedReader(_sources, logger);
+            });
+            services.AddSingleton<IFeedConverter>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
+                return new FeedConverter(_sources, logger);
             });
         }
 

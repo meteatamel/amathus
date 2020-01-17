@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
 using Amathus.Common.Reader;
 using Amathus.Common.Sources;
@@ -153,9 +154,15 @@ namespace Amathus.FunctionalTests
 
         private static Feed Read(string sourceId)
         {
-            var reader = new FeedReader(_sources);
+
             var source = _sources.Find(source => source.Id == sourceId);
-            var feed = reader.Read(source);
+
+            var reader = new FeedReader(_sources);
+            var rawFeed = reader.Read(source);
+
+            var converter = new FeedConverter(_sources);
+            var feed = converter.Convert(source.Id, rawFeed);
+
             return feed;
         }
 

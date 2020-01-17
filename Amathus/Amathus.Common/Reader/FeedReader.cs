@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
-using Amathus.Common.Converter;
-using Amathus.Common.Feeds;
 using Amathus.Common.Sources;
 using Microsoft.Extensions.Logging;
 
@@ -34,26 +32,20 @@ namespace Amathus.Common.Reader
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Feed>> ReadAll()
+        public async Task<IEnumerable<SyndicationFeed>> ReadAll()
         {
             var tasks = _sources.Select(source => Task.Run(() => Read(source)));
             var results = await Task.WhenAll(tasks);
             return results.Where(feed => feed != null);
         }
 
-        public Feed Read(Source source)
+        public SyndicationFeed Read(Source source)
         {
             try
             {
                 _logger?.LogDebug($"Reading feed: {source.Id}");
-                var rawFeed = LoadFeed(source.Url);
-
-                _logger?.LogDebug($"Converting feed: {source.Id}");
-                var converter = ConverterBuilder.Build(source.Id);
-                var feed = converter.Convert(source, rawFeed);
-
-                _logger?.LogDebug($"Feed average item length: {feed.AverageItemLength}");
-
+                var feed = LoadFeed(source.Url);
+                feed.Id = source.Id;
                 return feed;
             }
             catch (Exception ex)
