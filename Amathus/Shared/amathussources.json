@@ -1,0 +1,66 @@
+﻿{
+  "Amathus": {
+    "Sources": [
+      {
+        "Id": "DetayKibris",
+        "Url": "http://www.google.com",
+        "LogoUrl": "http://www.google.com/me.jpeg"
+      },
+      {
+        "Id": "Diyalog",
+        "Url": "http://www.diyaloggazetesi.com/rss.php",
+        "LogoUrl": "http://www.diyaloggazetesi.com/images/banner/hslogo_1_1.png"
+      },
+      {
+        "Id": "GundemKibris",
+        "Url": "http://www.gundemkibris.com/rss",
+        "LogoUrl": "https://www.gundemkibris.com/images/banner/analogo.png"
+      },
+      {
+        "Id": "HaberKibris",
+        "Url": "http://haberkibris.com/rss.php",
+        "LogoUrl": "http://www.haberkibris.com/tplimages/logo.png"
+      },
+      {
+        "Id": "HalkinSesi",
+        "Url": "http://www.halkinsesikibris.com/rss",
+        "LogoUrl": "http://www.halkinsesikibris.com/images/banner/HALKIN_SESI_CMYK_1.jpg"
+      },
+      {
+        "Id": "Havadis",
+        "Url": "http://www.havadiskibris.com/feed",
+        "LogoUrl": "http://www.havadiskibris.com/wp-content/uploads/2016/04/havadisweblogo.jpg"
+      },
+      {
+        "Id": "KibrisAda",
+        "Url": "http://www.kibrisadahaber.com/rss",
+        "LogoUrl": "http://www.kibrisadahaber.com/wp-content/uploads/2015/01/LOGO-kibrisadahaber_10.png"
+      },
+      {
+        "Id": "KibrisPostasi",
+        "Url": "http://www.kibrispostasi.com/rss.xml",
+        "LogoUrl": "http://www.kibrispostasi.com/images/logo-tr.jpg"
+      },
+      {
+        "Id": "KibrisSonDakika",
+        "Url": "http://kibrissondakika.com/feed",
+        "LogoUrl": "http://www.kibrissondakika.com/wp-content/uploads/2015/09/logo.png"
+      },
+      {
+        "Id": "KibrisTime",
+        "Url": "http://www.kibristime.com/rss.php",
+        "LogoUrl": "ttps://www.kibristime.com/images/banner/ktimepng_1.png"
+      },
+      {
+        "Id": "YeniCag",
+        "Url": "http://www.ykp.org.cy/feed/",
+        "LogoUrl": "http://www.ykp.org.cy/wp-content/uploads/2018/04/ykp-544-180-400x133.jpg"
+      },
+      {
+        "Id": "YeniDuzen",
+        "Url": "http://www.yeniduzen.com/rss",
+        "LogoUrl": "http://s.yeniduzen.com/i/logo.png"
+      }
+    ]
+  }
+}

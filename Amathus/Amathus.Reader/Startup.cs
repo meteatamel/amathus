@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Collections.Generic;
 using Amathus.Common.Models;
+using Amathus.Common.Sources;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -59,6 +61,9 @@ namespace Amathus.Reader
 
             logger.LogInformation("Starting...");
             logger.LogInformation("Backend: " + _backend);
+
+            var sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
+            logger.LogInformation("Sources: " + sources.Count);
 
             app.UseRouting();
 

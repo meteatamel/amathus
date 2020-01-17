@@ -17,7 +17,7 @@ using Amathus.Common.Converter;
 
 namespace Amathus.Common.Sources
 {
-    public static class NewsSourceBuilder
+    public static class SourceBuilder
     {
         public static Source Build(FeedId sourceId)
         {

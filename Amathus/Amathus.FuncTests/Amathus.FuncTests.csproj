@@ -13,9 +13,16 @@
     <PackageReference Include="coverlet.collector" Version="1.1.0"><IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 <PrivateAssets>all</PrivateAssets>
 </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Amathus.Common\Amathus.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shared\amathussources.json">
+      <Link>amathussources.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

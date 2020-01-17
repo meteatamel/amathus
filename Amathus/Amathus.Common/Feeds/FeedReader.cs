@@ -32,7 +32,8 @@ namespace Amathus.Common.Feeds
 
         public async Task<IEnumerable<Feed>> Read()
         {
-            var tasks = GetFeedIds().Select(feedId => Task.Run(() => Read(feedId)));
+            var feedIds = Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
+            var tasks = feedIds.Select(feedId => Task.Run(() => Read(feedId)));
             var results = await Task.WhenAll(tasks);
             return results.Where(feed => feed != null);
         }
@@ -42,7 +43,7 @@ namespace Amathus.Common.Feeds
             try
             {
                 _logger?.LogDebug($"Reading feed: {sourceId}");
-                var source = GetSource(sourceId);
+                var source = SourceBuilder.Build(sourceId);
                 var rawFeed = LoadFeed(source.Url);
 
                 _logger?.LogDebug($"Converting feed: {sourceId}");
@@ -58,16 +59,6 @@ namespace Amathus.Common.Feeds
                 _logger?.LogError($"Reading failed for feed: {sourceId}", ex);
                 return null;
             }
-        }
-
-        private FeedId[] GetFeedIds()
-        {
-            return Enum.GetValues(typeof(FeedId)).Cast<FeedId>().ToArray();
-        }
-
-        private Source GetSource(FeedId sourceId)
-        {
-            return NewsSourceBuilder.Build(sourceId);
         }
 
         private SyndicationFeed LoadFeed(Uri sourceUrl)
