@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System.ServiceModel.Syndication;
-using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
 using Amathus.Common.Util;
 

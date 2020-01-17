@@ -11,9 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using Amathus.Common.Feeds;
-using Amathus.Common.Converter;
-
 namespace Amathus.Common.Converter
 {
     public static class ConverterBuilder
@@ -36,8 +33,8 @@ namespace Amathus.Common.Converter
                 case "KibrisTime":
                     return new DefaultSyndicationConverter(new SecondLinkSyncicationItemConverter());
                 default:
-                //case FeedId.HaberKibris:
-                //case FeedId.KibrisPostasi:
+                //case "HaberKibris":
+                //case "KibrisPostasi":
                     return new DefaultSyndicationConverter();
             }
         }

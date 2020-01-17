@@ -11,5 +11,5 @@ gcloud run deploy ${SERVICE_NAME} \
   --image gcr.io/${PROJECT_ID}/${SERVICE_NAME} \
   --platform managed \
   --allow-unauthenticated \
-  --timeout 900
+  --timeout 900 \
   --memory 2Gi
