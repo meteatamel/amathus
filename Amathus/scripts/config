@@ -19,3 +19,4 @@ set_service() {
 }
 
 PROJECT_ID="$(gcloud config get-value core/project)"
+REGION="europe-west1"

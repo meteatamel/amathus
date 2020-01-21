@@ -9,6 +9,7 @@ set -v
 
 gcloud run deploy ${SERVICE_NAME} \
   --image gcr.io/${PROJECT_ID}/${SERVICE_NAME} \
+  --region ${REGION} \
   --platform managed \
   --allow-unauthenticated \
   --timeout 900 \
