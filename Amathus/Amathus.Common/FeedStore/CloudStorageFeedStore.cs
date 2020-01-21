@@ -65,7 +65,7 @@ namespace Amathus.Common.FeedStore
 
             var client = StorageClient.Create();
 
-            var objectName = feedId.ToLowerInvariant() + "2.xml";
+            var objectName = feedId.ToLowerInvariant();
             _logger?.LogInformation($"Reading {objectName} from bucket {_bucketId}");
 
             var stream = new MemoryStream();

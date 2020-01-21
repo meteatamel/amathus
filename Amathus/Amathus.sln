@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Reader", "Amathus.R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.FuncTests", "Amathus.FuncTests\Amathus.FuncTests.csproj", "{7F018DCB-A236-428B-AFD0-1C494682C6DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amathus.Converter", "Amathus.Converter\Amathus.Converter.csproj", "{42066EB4-A14B-4191-999B-4689A16023C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{7F018DCB-A236-428B-AFD0-1C494682C6DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F018DCB-A236-428B-AFD0-1C494682C6DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F018DCB-A236-428B-AFD0-1C494682C6DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42066EB4-A14B-4191-999B-4689A16023C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42066EB4-A14B-4191-999B-4689A16023C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42066EB4-A14B-4191-999B-4689A16023C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42066EB4-A14B-4191-999B-4689A16023C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

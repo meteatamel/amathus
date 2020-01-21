@@ -61,6 +61,17 @@ namespace Amathus.Web
                 case FeedStoreBackend.InMemory:
                     services.AddSingleton<IFeedStore, InMemoryFeedStore>();
                     services.AddHostedService<FeedReaderService>();
+                    _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
+                    services.AddSingleton<IFeedReader>(container =>
+                    {
+                        var logger = container.GetRequiredService<ILogger<IFeedReader>>();
+                        return new FeedReader(_sources, logger);
+                    });
+                    services.AddSingleton<IFeedConverter>(container =>
+                    {
+                        var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
+                        return new FeedConverter(_sources, logger);
+                    });
                     break;
                 // Firestore backedend. It assumes that the backend is already populated.
                 case FeedStoreBackend.Firestore:
@@ -71,18 +82,6 @@ namespace Amathus.Web
                 default:
                     throw new ArgumentException("Backend cannot be initialized");
             }
-
-            _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
-            services.AddSingleton<IFeedReader>(container =>
-            {
-                var logger = container.GetRequiredService<ILogger<IFeedReader>>();
-                return new FeedReader(_sources, logger);
-            });
-            services.AddSingleton<IFeedConverter>(container =>
-            {
-                var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
-                return new FeedConverter(_sources, logger);
-            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

@@ -20,6 +20,14 @@ Inside `Amathus.Reader` folder:
 dotnet run
 ```
 
+### Amathus.Converter
+
+Inside 'Amathus.Converter' folder:
+
+```bash
+dotnet run
+```
+
 ## Run Docker image locally
 
 Inside `Amathus` folder where `Amathus.sln` is.
@@ -50,6 +58,20 @@ Run image:
 
 ```bash
 docker run -p 8080:8080 amathus-reader
+```
+
+### Amathus.Converter
+
+Build image:
+
+```bash
+docker build -t amathus-converter -f Amathus.Converter/Dockerfile .
+```
+
+Run image:
+
+```bash
+docker run -p 8080:8080 amathus-converter
 ```
 
 ## Deploy to Cloud Run
@@ -90,8 +112,25 @@ Deploy:
 scripts/deploy reader
 ```
 
-Deploy Scheduler job to invoke it:
+(One time) Deploy Scheduler job to invoke it:
 
 ```bash
 scripts/schedule reader
 ```
+
+### Amathus.Converter
+
+Build:
+
+```bash
+scripts/build converter
+```
+
+Deploy:
+
+```bash
+scripts/deploy converter
+```
+
+TODO: Setup Cloud Storage and Pub/Sub
+

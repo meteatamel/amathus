@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Amathus.Web
 set_service() {
+  # Amathus.Web
   if [ "$1" == "web" ]; then
     SERVICE_SRC=Amathus.Web
     SERVICE_NAME=amathus-web
@@ -9,6 +9,10 @@ set_service() {
   elif [ "$1" == "reader" ]; then
     SERVICE_SRC=Amathus.Reader
     SERVICE_NAME=amathus-reader
+  # Amathus.Converter
+  elif [ "$1" == "converter" ]; then
+    SERVICE_SRC=Amathus.Converter
+    SERVICE_NAME=amathus-converter
   else
     echo "Error: No service specified"
     exit 1
