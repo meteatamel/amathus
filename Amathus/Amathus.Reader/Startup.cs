@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Collections.Generic;
 using Amathus.Common.Reader;
 using Amathus.Common.FeedStore;
@@ -22,13 +21,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Amathus.Common.Converter;
 
 namespace Amathus.Reader
 {
     public class Startup
     {
-        private FeedStoreBackend _backend;
         private List<Source> _sources;
 
         public Startup(IConfiguration configuration)
@@ -42,28 +39,19 @@ namespace Amathus.Reader
         {
             services.AddControllers();
 
-            _backend = Enum.Parse<FeedStoreBackend>(Configuration["Amathus:FeedStore"], ignoreCase: true);
-            switch (_backend)
-            {
-                case FeedStoreBackend.Firestore:
-                    services.AddSingleton<IFeedStore>(provider =>
-                        new FirestoreFeedStore(
-                            Configuration["Amathus:FirestoreProjectId"]));
-                    break;
-                default:
-                    throw new ArgumentException("Backend cannot be initialized");
-            }
-
             _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();
             services.AddSingleton<IFeedReader>(container =>
             {
                 var logger = container.GetRequiredService<ILogger<IFeedReader>>();
                 return new FeedReader(_sources, logger);
             });
-            services.AddSingleton<IFeedConverter>(container =>
+
+            services.AddSingleton<ISyndFeedStore>(container =>
             {
-                var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
-                return new FeedConverter(_sources, logger);
+                var projectId = Configuration["Amathus:ProjectId"];
+                var bucketId = Configuration["Amathus:BucketId"];
+                var logger = container.GetRequiredService<ILogger<ISyndFeedStore>>();
+                return new CloudStorageSyndFeedStore(projectId, bucketId, logger);
             });
         }
 
@@ -75,7 +63,6 @@ namespace Amathus.Reader
             }
 
             logger.LogInformation("Starting...");
-            logger.LogInformation("Backend: " + _backend);
             logger.LogInformation("Sources: " + _sources?.Count);
 
             app.UseRouting();

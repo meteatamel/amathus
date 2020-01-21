@@ -14,6 +14,7 @@
 // limitations under the License.
 using System;
 using System.Globalization;
+using System.IO;
 using System.Xml;
 
 namespace Amathus.Common.Reader
@@ -28,6 +29,11 @@ namespace Amathus.Common.Reader
         private static readonly CultureInfo TurkishCultureInfo = CultureInfo.CreateSpecificCulture("tr-TR");
 
         private bool _readingDate;
+
+        public DateInvariantXmlReader(Stream input): base(input)
+        {
+            // No-op.
+        }
 
         public DateInvariantXmlReader(string inputUri): base(inputUri)
         {

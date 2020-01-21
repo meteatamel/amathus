@@ -18,7 +18,6 @@ using Amathus.Common.Reader;
 using Amathus.Common.FeedStore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Amathus.Common.Converter;
 
 namespace Amathus.Reader.Controllers
 {
@@ -27,14 +26,12 @@ namespace Amathus.Reader.Controllers
     {
         private readonly ILogger _logger;
         private readonly IFeedReader _reader;
-        private readonly IFeedConverter _converter;
-        private readonly IFeedStore _store;
+        private readonly ISyndFeedStore _syncStore;
 
-        public ReadController(IFeedReader reader, IFeedConverter converter, IFeedStore store, ILogger<ReadController> logger)
+        public ReadController(IFeedReader reader, ISyndFeedStore syncStore, ILogger<ReadController> logger)
         {
             _reader = reader;
-            _converter = converter;
-            _store = store;
+            _syncStore = syncStore;
             _logger = logger;
         }
 
@@ -46,10 +43,9 @@ namespace Amathus.Reader.Controllers
             stopWatch.Start();
 
             var rawFeeds = (await _reader.ReadAll()).ToList();
-            rawFeeds.ForEach(rawFeed =>
+            rawFeeds.ForEach(async rawFeed =>
             {
-                var feed = _converter.Convert(rawFeed.Id, rawFeed);
-                _store.InsertAsync(feed);
+                await _syncStore.InsertAsync(rawFeed);
             });
 
             stopWatch.Stop();

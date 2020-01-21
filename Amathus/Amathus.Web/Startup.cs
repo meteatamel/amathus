@@ -66,7 +66,7 @@ namespace Amathus.Web
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
                         new FirestoreFeedStore(
-                            Configuration["Amathus:FirestoreProjectId"]));
+                            Configuration["Amathus:ProjectId"]));
                     break;
                 default:
                     throw new ArgumentException("Backend cannot be initialized");
