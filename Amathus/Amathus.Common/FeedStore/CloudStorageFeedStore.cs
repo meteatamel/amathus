@@ -25,12 +25,10 @@ namespace Amathus.Common.FeedStore
     public class CloudStorageSyndFeedStore : ISyndFeedStore
     {
         private readonly string _bucketId;
-        private readonly string _projectId;
         private readonly ILogger _logger;
 
-        public CloudStorageSyndFeedStore(string projectId, string bucketId, ILogger logger = null)
+        public CloudStorageSyndFeedStore(string bucketId, ILogger logger = null)
         {
-            _projectId = projectId;
             _bucketId = bucketId;
             _logger = logger;
         }
@@ -39,9 +37,9 @@ namespace Amathus.Common.FeedStore
         {
             var client = StorageClient.Create();
 
-            await CreateBucketIfNeeded(client);
+            //await CheckBucketExists();
 
-            var objectName = feed.Id.ToLowerInvariant() + ".xml";
+            var objectName = feed.Id.ToLowerInvariant();
             _logger?.LogInformation($"Uploading {objectName} to bucket {_bucketId}");
 
             var stream = GetStream(feed);
@@ -57,11 +55,7 @@ namespace Amathus.Common.FeedStore
                 throw new ArgumentNullException();
             }
 
-            var bucketExists = await BucketExists();
-            if (!bucketExists)
-            {
-                throw new ArgumentException("Bucket does not exist yet");
-            }
+            //await CheckBucketExists();
 
             var client = StorageClient.Create();
 
@@ -100,23 +94,7 @@ namespace Amathus.Common.FeedStore
         }
 
 
-        private async Task CreateBucketIfNeeded(StorageClient client)
-        {
-            var exists = await BucketExists();
-            if (exists)
-            {
-                _logger?.LogInformation($"Bucket exists: {_bucketId}");
-
-            }
-            else
-            {
-                _logger?.LogInformation($"Bucked does not exist, creating bucket: {_bucketId}");
-
-                await client.CreateBucketAsync(_projectId, _bucketId);
-            }
-        }
-
-        private async Task<bool> BucketExists()
+        private async Task CheckBucketExists()
         {
             if (string.IsNullOrEmpty(_bucketId))
             {
@@ -128,13 +106,10 @@ namespace Amathus.Common.FeedStore
                 var client = StorageClient.Create();
 
                 await client.GetBucketAsync(_bucketId);
-
-                return true;
-
             }
             catch (Exception)
             {
-                return false;
+                throw new ArgumentException("Bucket does not exist yet");
             }
         }
 

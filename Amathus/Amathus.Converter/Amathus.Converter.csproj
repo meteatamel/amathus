@@ -6,11 +6,11 @@
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Amathus.Reader' ">
     <StartAction>Project</StartAction>
-    <ApplicationURL>http://localhost:5000</ApplicationURL>
+    <ApplicationURL>http://localhost:5001</ApplicationURL>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Amathus.Web' ">
     <StartAction>Project</StartAction>
-    <ApplicationURL>http://localhost:5000</ApplicationURL>
+    <ApplicationURL>http://localhost:5002</ApplicationURL>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Amathus.Common\Amathus.Common.csproj">

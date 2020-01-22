@@ -44,10 +44,9 @@ namespace Amathus.Converter
 
             services.AddSingleton<ISyndFeedStore>(container =>
             {
-                var projectId = Configuration["Amathus:ProjectId"];
                 var bucketId = Configuration["Amathus:BucketId"];
                 var logger = container.GetRequiredService<ILogger<ISyndFeedStore>>();
-                return new CloudStorageSyndFeedStore(projectId, bucketId, logger);
+                return new CloudStorageSyndFeedStore(bucketId, logger);
             });
 
             _sources = Configuration.GetSection("Amathus:Sources").Get<List<Source>>();

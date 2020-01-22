@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -43,10 +44,6 @@ namespace Amathus.Converter.Controllers
         [HttpPost]
         public async Task<IActionResult> Convert()
         {
-            _logger?.LogInformation("Converting feeds");
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-
             using (var reader = new StreamReader(HttpContext.Request.Body))
             {
                 var content = await reader.ReadToEndAsync();
@@ -61,19 +58,29 @@ namespace Amathus.Converter.Controllers
                     return Ok();
                 }
 
-                var feedId = (string)attributes.objectId;
-               _logger.LogInformation($"Reading raw feed: {feedId}");
-               var rawFeed = await _syndStore.ReadAsync(feedId);
+                try
+                {
+                    var stopWatch = new Stopwatch();
+                    stopWatch.Start();
 
-                _logger.LogInformation($"Converting raw feed: {feedId}");
-               var feed = _converter.Convert(feedId, rawFeed);
+                    var feedId = (string)attributes.objectId;
+                    _logger.LogInformation($"Reading raw feed: {feedId}");
+                    var rawFeed = await _syndStore.ReadAsync(feedId);
 
-                _logger.LogInformation($"Inserting into backend: {feedId}");
-               await _store.InsertAsync(feed);
+                    _logger.LogInformation($"Converting raw feed: {feedId}");
+                    var feed = _converter.Convert(feedId, rawFeed);
+
+                    _logger.LogInformation($"Inserting into backend: {feedId}");
+                    await _store.InsertAsync(feed);
+
+                    stopWatch.Stop();
+                    _logger?.LogInformation($"Converting feed finished in {stopWatch.Elapsed.Seconds} seconds.");
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError($"Error reading or converting feed: {e.Message}");
+                }
             }
-
-            stopWatch.Stop();
-            _logger?.LogInformation($"Converting feed finished in {stopWatch.Elapsed.Seconds} seconds.");
 
             return Ok();
         }
