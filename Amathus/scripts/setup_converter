@@ -1,0 +1,40 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+set_service "converter"
+
+set -v -x
+
+# Create a Pub/Sub topic
+gcloud pubsub topics create ${TOPIC_NAME}
+
+# Uncomment if the service is private
+
+# Setup service account for Pub/Sub
+export SERVICE_ACCOUNT=${SERVICE_NAME}-pubsub-sa
+
+gcloud iam service-accounts create ${SERVICE_ACCOUNT} \
+    --display-name "${SERVICE_NAME} PubSub Service Account"
+
+gcloud run services add-iam-policy-binding ${SERVICE_NAME} \
+   --member=serviceAccount:${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
+   --role=roles/run.invoker \
+   --platform managed \
+   --region ${REGION}
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+     --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
+     --role=roles/iam.serviceAccountTokenCreator
+
+SERVICE_URL="$(gcloud run services list --platform managed --filter=${SERVICE_NAME} --format='value(URL)')"
+
+# Setup Pub/Sub
+
+gcloud beta pubsub subscriptions create ${TOPIC_NAME}-subscription --topic ${TOPIC_NAME} \
+   --push-endpoint=${SERVICE_URL} \
+   --push-auth-service-account=${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com
+
+# Create Pub/Sub notifications on the bucket
+gsutil notification create -t ${TOPIC_NAME} -f json gs://${BUCKET_ID}

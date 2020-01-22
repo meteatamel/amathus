@@ -1,87 +1,59 @@
 # Amathus
 
-Amathus reads RSS feeds of some news sources, transforms them into a common format and exposes them behind a Web API. Written in ASP.NET Core and deployed to Cloud Run on Google Cloud.
+Amathus reads RSS feeds, transforms them into a common feed format, and exposes them behind a Web API. Written in ASP.NET Core and deployed as 3 separate Cloud Run microservices on Google Cloud.
 
-## Run locally
+## Architecture
 
-### Amathus.Web
+TODO
 
-Inside `Amathus.Web` folder:
+## Setup
 
-```bash
-dotnet run
-```
+Make sure `gcloud` points to the right project and you're in [Amathus](Amathus) folder where [Amathus.sln](Amathus/Amathus.sln) is.
 
-### Amathus.Reader
-
-Inside `Amathus.Reader` folder:
-
-```bash
-dotnet run
-```
-
-### Amathus.Converter
-
-Inside 'Amathus.Converter' folder:
-
-```bash
-dotnet run
-```
-
-## Run Docker image locally
-
-Inside `Amathus` folder where `Amathus.sln` is.
-
-### Amathus.Web
-
-Build image:
-
-```bash
-docker build -t amathus-web -f Amathus.Web/Dockerfile .
-```
-
-Run image:
-
-```bash
-docker run -p 8080:8080 amathus-web
-```
-
-### Amathus.Reader
-
-Build image:
-
-```bash
-docker build -t amathus-reader -f Amathus.Reader/Dockerfile .
-```
-
-Run image:
-
-```bash
-docker run -p 8080:8080 amathus-reader
-```
-
-### Amathus.Converter
-
-Build image:
-
-```bash
-docker build -t amathus-converter -f Amathus.Converter/Dockerfile .
-```
-
-Run image:
-
-```bash
-docker run -p 8080:8080 amathus-converter
-```
-
-## Deploy to Cloud Run
-
-Make sure `gcloud` points to the right project and you're in `Amathus` folder where `Amathus.sln` is.
-
-Enable Cloud Build and Cloud Run (one time):
+(One time) Enable Google Cloud services needed:
 
 ```bash
 scripts/enable
+```
+
+### Amathus.Reader
+
+Build:
+
+```bash
+scripts/build reader
+```
+
+Deploy service (public):
+
+```bash
+scripts/deploy reader
+```
+
+(One time) Create a Cloud Storage bucket and a Scheduler job to invoke the service:
+
+```bash
+scripts/setup_reader
+```
+
+### Amathus.Converter
+
+Build:
+
+```bash
+scripts/build converter
+```
+
+Deploy service (private):
+
+```bash
+scripts/deploy converter private
+```
+
+(One time) Set converter to receive Pub/Sub messages with bucket changes:
+
+```bash
+scripts/setup_converter
 ```
 
 ### Amathus.Web
@@ -98,39 +70,28 @@ Deploy:
 scripts/deploy web
 ```
 
-### Amathus.Reader
+## Debugging
 
-Build:
+## Run locally
 
-```bash
-scripts/build reader
-```
-
-Deploy:
+Inside [Amathus.Reader](Amathus/Amathus.Reader), [Amathus.Converter](Amathus/Amathus.Converter), or [Amathus.Web](Amathus/Amathus.Web) folder:
 
 ```bash
-scripts/deploy reader
+dotnet run
 ```
 
-(One time) Deploy Scheduler job to invoke it:
+## Build and run Docker image locally
+
+Inside [Amathus](Amathus) folder, you can build and run the image for each service. For example, for `Amathus.Web`:
+
+Build image:
 
 ```bash
-scripts/schedule reader
+docker build -t amathus-web -f Amathus.Web/Dockerfile .
 ```
 
-### Amathus.Converter
-
-Build:
+Run image:
 
 ```bash
-scripts/build converter
+docker run -p 8080:8080 amathus-web
 ```
-
-Deploy:
-
-```bash
-scripts/deploy converter
-```
-
-TODO: Setup Cloud Storage and Pub/Sub
-
