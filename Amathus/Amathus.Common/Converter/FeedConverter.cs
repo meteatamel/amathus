@@ -36,7 +36,7 @@ namespace Amathus.Common.Converter
         {
             _logger?.LogDebug($"Converting feed: {sourceId}");
 
-            var source = _sources.Find(source => source.Id.ToLowerInvariant() == sourceId);
+            var source = _sources.Find(source => source.Id.ToLowerInvariant() == sourceId.ToLowerInvariant());
             var itemConverter = GetFeedItemConverter(source.Id);
 
             try
