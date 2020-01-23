@@ -4,7 +4,7 @@ Amathus reads RSS feeds, transforms them into a common feed format, and exposes 
 
 ## Architecture
 
-TODO
+![Archictecture](./Amathus/Shared/architecture.png)
 
 ## Setup
 
