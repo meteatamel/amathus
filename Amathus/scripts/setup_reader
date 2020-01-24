@@ -10,19 +10,17 @@ set -v -x
 # Create a Cloud Storage bucket
 gsutil mb gs://${BUCKET_ID}
 
-# Uncomment if the service is private
-
 # Setup service account for the scheduler
-#export SERVICE_ACCOUNT=${SERVICE_NAME}-scheduler-sa
+export SERVICE_ACCOUNT=${SERVICE_NAME}-scheduler-sa
 
-# gcloud iam service-accounts create ${SERVICE_ACCOUNT} \
-#    --display-name "${SERVICE_NAME} Scheduler Service Account"
+gcloud iam service-accounts create ${SERVICE_ACCOUNT} \
+    --display-name "${SERVICE_NAME} Scheduler Service Account"
 
-# gcloud run services add-iam-policy-binding ${SERVICE_NAME} \
-#    --member=serviceAccount:${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
-#    --role=roles/run.invoker \
-#    --platform managed \
-#    --region ${REGION}
+gcloud run services add-iam-policy-binding ${SERVICE_NAME} \
+   --member=serviceAccount:${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
+   --role=roles/run.invoker \
+   --platform managed \
+   --region ${REGION}
 
 SERVICE_URL="$(gcloud run services list --platform managed --filter=${SERVICE_NAME} --format='value(URL)')"
 
@@ -30,6 +28,6 @@ SERVICE_URL="$(gcloud run services list --platform managed --filter=${SERVICE_NA
 
 gcloud beta scheduler jobs create http ${SERVICE_NAME}-job --schedule "*/10 * * * *" \
    --http-method=GET \
-   --uri=${SERVICE_URL} # \
-   # --oidc-service-account-email=${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
-   # --oidc-token-audience=${SERVICE_URL}
+   --uri=${SERVICE_URL} \
+   --oidc-service-account-email=${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
+   --oidc-token-audience=${SERVICE_URL}

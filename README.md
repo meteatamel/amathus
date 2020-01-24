@@ -24,10 +24,10 @@ Build:
 scripts/build reader
 ```
 
-Deploy service (public):
+Deploy service (private):
 
 ```bash
-scripts/deploy reader
+scripts/deploy reader private
 ```
 
 (One time) Create a Cloud Storage bucket and a Scheduler job to invoke the service:
