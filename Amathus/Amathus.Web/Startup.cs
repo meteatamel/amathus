@@ -43,7 +43,16 @@ namespace Amathus.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // TODO: jsonp
+            services.AddCors(options =>
+            {
+                options.AddPolicy("MyPolicy", policyBuilder =>
+                {
+                    policyBuilder.AllowAnyHeader();
+                    policyBuilder.AllowAnyMethod();
+                    policyBuilder.AllowAnyOrigin();
+                });
+            });
+
             services.AddControllers()
                 .AddNewtonsoftJson(options =>
                 {
@@ -96,6 +105,8 @@ namespace Amathus.Web
             logger.LogInformation("Sources: {0}", _sources?.Count ?? 0);
 
             app.UseRouting();
+
+            app.UseCors("MyPolicy");
 
             app.UseEndpoints(endpoints =>
             {
