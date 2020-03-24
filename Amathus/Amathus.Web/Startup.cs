@@ -43,6 +43,8 @@ namespace Amathus.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // Enable Cors. You can test by running this in console:
+            // fetch('<replace with service url>', ()=> {debugger});
             services.AddCors(options =>
             {
                 options.AddPolicy("MyPolicy", policyBuilder =>
