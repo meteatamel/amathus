@@ -35,7 +35,7 @@
         "Id": "Havadis",
         "Title": "Havadis",
         "Url": "http://www.havadiskibris.com/feed",
-        "LogoUrl": "http://www.havadiskibris.com/wp-content/uploads/2016/04/havadisweblogo.jpg"
+        "LogoUrl": "https://www.havadiskibris.com/wp-content/uploads/2018/12/logonew.jpg"
       },
       {
         "Id": "KibrisAda",
@@ -53,7 +53,7 @@
         "Id": "KibrisSonDakika",
         "Title": "Kıbrıs Son Dakika",
         "Url": "http://kibrissondakika.com/feed",
-        "LogoUrl": "http://www.kibrissondakika.com/wp-content/uploads/2015/09/logo.png"
+        "LogoUrl": "https://kibrissondakika.com/wp-content/uploads/2018/01/kiblog-1yeni.png"
       },
       {
         "Id": "KibrisTime",
