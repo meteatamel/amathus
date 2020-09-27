@@ -10,7 +10,7 @@
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:label="Kibris Haber"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher_amathus">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

@@ -38,6 +38,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_name: "^0.0.1"
+  flutter_launcher_icons: "^0.8.0"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -83,3 +84,8 @@ flutter:
 
 flutter_launcher_name:
   name: "Kibris Haber"
+
+flutter_icons:
+  android: "ic_launcher_amathus"
+  ios: "Icon-App-Amathus"
+  image_path: "assets/launcher/icon.png"
