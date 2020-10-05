@@ -69,7 +69,12 @@ class _FeedsViewState extends State<FeedsView> {
               } else {
                 // TODO
               }
-              return CircularProgressIndicator();
+              return Center(child: SizedBox(
+                  height: 200.0,
+                  width: 200.0,
+                  child:
+                  CircularProgressIndicator()
+              ));
             }));
   }
 }
