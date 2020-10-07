@@ -2,73 +2,73 @@
   "Amathus": {
     "Sources": [
       {
-        "Id": "DetayKibris",
+        "Id": "detaykibris",
         "Title": "Detay Kıbrıs",
         "Url": "http://www.detaykibris.com/rss/",
         "LogoUrl": "http://www.detaykibris.com/s/i/logo.png"
       },
       {
-        "Id": "Diyalog",
+        "Id": "diyalog",
         "Title": "Diyalog",
         "Url": "http://www.diyaloggazetesi.com/rss.php",
         "LogoUrl": "http://www.diyaloggazetesi.com/images/banner/hslogo_1_1.png"
       },
       {
-        "Id": "GundemKibris",
+        "Id": "gundemkibris",
         "Title": "Gündem Kıbrıs",
         "Url": "http://www.gundemkibris.com/rss",
         "LogoUrl": "https://www.gundemkibris.com/images/banner/analogo.png"
       },
       {
-        "Id": "HaberKibris",
+        "Id": "haberkibris",
         "Title": "Haber Kıbrıs",
         "Url": "http://haberkibris.com/rss.php",
         "LogoUrl": "http://www.haberkibris.com/tplimages/logo.png"
       },
       {
-        "Id": "HalkinSesi",
+        "Id": "halkinsesi",
         "Title": "Halkın Sesi",
         "Url": "http://www.halkinsesikibris.com/rss",
         "LogoUrl": "http://www.halkinsesikibris.com/images/banner/HALKIN_SESI_CMYK_1.jpg"
       },
       {
-        "Id": "Havadis",
+        "Id": "havadis",
         "Title": "Havadis",
         "Url": "http://www.havadiskibris.com/feed",
         "LogoUrl": "https://www.havadiskibris.com/wp-content/uploads/2018/12/logonew.jpg"
       },
       {
-        "Id": "KibrisAda",
+        "Id": "kibrisada",
         "Title": "Kıbrıs Ada",
         "Url": "http://www.kibrisadahaber.com/rss",
         "LogoUrl": "http://www.kibrisadahaber.com/wp-content/uploads/2015/01/LOGO-kibrisadahaber_10.png"
       },
       {
-        "Id": "KibrisPostasi",
+        "Id": "kibrispostasi",
         "Title": "Kıbrıs Postası",
         "Url": "http://www.kibrispostasi.com/rss.xml",
         "LogoUrl": "http://www.kibrispostasi.com/images/logo-tr.jpg"
       },
       {
-        "Id": "KibrisSonDakika",
+        "Id": "kibrissondakika",
         "Title": "Kıbrıs Son Dakika",
         "Url": "http://kibrissondakika.com/feed",
         "LogoUrl": "https://kibrissondakika.com/wp-content/uploads/2018/01/kiblog-1yeni.png"
       },
       {
-        "Id": "KibrisTime",
+        "Id": "kibristime",
         "Title": "Kıbrıs Time",
         "Url": "http://www.kibristime.com/rss.php",
         "LogoUrl": "https://www.kibristime.com/images/banner/ktimepng_1.png"
       },
       {
-        "Id": "YeniCag",
+        "Id": "yenicag",
         "Title": "Yeniçağ",
         "Url": "http://www.ykp.org.cy/feed/",
         "LogoUrl": "http://www.ykp.org.cy/wp-content/uploads/2018/04/ykp-544-180-400x133.jpg"
       },
       {
-        "Id": "YeniDuzen",
+        "Id": "yeniduzen",
         "Title": "Yenidüzen",
         "Url": "http://www.yeniduzen.com/rss",
         "LogoUrl": "http://s.yeniduzen.com/i/logo.png"

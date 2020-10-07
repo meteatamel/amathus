@@ -80,6 +80,8 @@ namespace Amathus.Web.Controllers
                 return BadRequest("Limit cannot be less than 1");
             }
 
+            id = id.ToLowerInvariant();
+
             var feed = await _feedStore.ReadAsync(id);
             if (feed == null)
             {
