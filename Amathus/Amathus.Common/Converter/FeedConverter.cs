@@ -68,22 +68,22 @@ namespace Amathus.Common.Converter
         {
             switch (sourceId)
             {
-                case "DetayKibris":
-                case "GundemKibris":
-                case "Havadis":
-                case "KibrisAda":
-                case "KibrisSonDakika":
-                case "YeniCag":
-                case "YeniDuzen":
+                case Source.DetayKibris:
+                case Source.GundemKibris:
+                case Source.Havadis:
+                case Source.KibrisAda:
+                case Source.KibrisSonDakika:
+                case Source.YeniCag:
+                case Source.YeniDuzen:
                     return new HtmlAndImageRemoverFeedItemConverter();
-                case "Diyalog":
+                case Source.Diyalog:
                     return new DiyalogFeedItemConverter();
-                case "HalkinSesi":
-                case "KibrisTime":
+                case Source.HalkinSesi:
+                case Source.KibrisTime:
                     return new SecondLinkFeedItemConverter();
                 default:
-                    //case "HaberKibris":
-                    //case "KibrisPostasi":
+                    //case Source.HaberKibris:
+                    //case Source.KibrisPostasi:
                     return new DefaultFeedItemConverter();
             }
         }

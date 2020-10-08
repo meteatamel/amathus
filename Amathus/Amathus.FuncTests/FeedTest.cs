@@ -37,7 +37,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
-            var feed = Read("DetayKibris");
+            var feed = Read(Source.DetayKibris);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -46,7 +46,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_Diyalog_Converts()
         {
-            var feed = Read("Diyalog");
+            var feed = Read(Source.Diyalog);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -55,7 +55,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_GundemKibris_Converts()
         {
-            var feed = Read("GundemKibris");
+            var feed = Read(Source.GundemKibris);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -64,7 +64,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_HaberKibris_Converts()
         {
-            var feed = Read("HaberKibris");
+            var feed = Read(Source.HaberKibris);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -73,7 +73,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
-            var feed = Read("HalkinSesi");
+            var feed = Read(Source.HalkinSesi);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -82,7 +82,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_Havadis_Converts()
         {
-            var feed = Read("Havadis");
+            var feed = Read(Source.Havadis);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -91,7 +91,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
-            var feed = Read("KibrisAda");
+            var feed = Read(Source.KibrisAda);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -101,7 +101,7 @@ namespace Amathus.FunctionalTests
         [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
-            var feed = Read("KibrisPostasi");
+            var feed = Read(Source.KibrisPostasi);
 
             AssertCommonElements(feed);
             Assert.AreEqual(new DateTime(), feed.LastUpdatedTime);
@@ -110,7 +110,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
-            var feed = Read("KibrisSonDakika");
+            var feed = Read(Source.KibrisSonDakika);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -119,7 +119,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
-            var feed = Read("KibrisTime");
+            var feed = Read(Source.KibrisTime);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -128,7 +128,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_YeniCag_Converts()
         {
-            var feed = Read("YeniCag");
+            var feed = Read(Source.YeniCag);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -137,7 +137,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
-            var feed = Read("YeniDuzen");
+            var feed = Read(Source.YeniDuzen);
 
             AssertCommonElements(feed);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
@@ -154,7 +154,7 @@ namespace Amathus.FunctionalTests
 
         private static Feed Read(string sourceId)
         {
-
+            sourceId = sourceId.ToLowerInvariant();
             var source = _sources.Find(source => source.Id == sourceId);
 
             var reader = new FeedReader(_sources);

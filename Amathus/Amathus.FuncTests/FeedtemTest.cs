@@ -36,7 +36,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
-            var feedItem = Read("DetayKibris");
+            var feedItem = Read(Source.DetayKibris);
 
             AssertCommonElements(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
@@ -46,7 +46,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_Diyalog_Converts()
         {
-            var feedItem = Read("Diyalog");
+            var feedItem = Read(Source.Diyalog);
 
             AssertCommonElements(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
@@ -56,7 +56,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_GundemKibris_Converts()
         {
-            var feedItem = Read("GundemKibris");
+            var feedItem = Read(Source.GundemKibris);
 
             AssertCommonElements(feedItem);
             Assert.IsNotNull(feedItem.ImageUrl);
@@ -65,7 +65,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_HaberKibris_Converts()
         {
-            var feedItem = Read("HaberKibris");
+            var feedItem = Read(Source.HaberKibris);
 
             AssertCommonElements(feedItem);
             Assert.IsNull(feedItem.ImageUrl);
@@ -74,7 +74,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
-            var feedItem = Read("HalkinSesi");
+            var feedItem = Read(Source.HalkinSesi);
 
             AssertCommonElements(feedItem);
             Assert.IsNotNull(feedItem.ImageUrl);
@@ -83,7 +83,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_Havadis_Converts()
         {
-            var feedItem = Read("Havadis");
+            var feedItem = Read(Source.Havadis);
 
             AssertCommonElements(feedItem);
             //Assert.IsFalse(string.IsNullOrEmpty(newsItem.Summary));
@@ -94,7 +94,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
-            var feedItem = Read("KibrisAda");
+            var feedItem = Read(Source.KibrisAda);
 
             AssertCommonElements(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
@@ -105,7 +105,7 @@ namespace Amathus.FunctionalTests
         [TestMethod, Ignore]
         public void Convert_KibrisPostasi_Converts()
         {
-            var feedItem = Read("KibrisPostasi");
+            var feedItem = Read(Source.KibrisPostasi);
 
             AssertCommonElements(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
@@ -114,7 +114,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
-            var feedItem = Read("KibrisSonDakika");
+            var feedItem = Read(Source.KibrisSonDakika);
 
             AssertCommonElements(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
@@ -124,7 +124,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
-            var feedItem = Read("KibrisTime");
+            var feedItem = Read(Source.KibrisTime);
 
             AssertCommonElements(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
@@ -133,7 +133,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_YeniCag_Converts()
         {
-            var feedItem = Read("YeniCag");
+            var feedItem = Read(Source.YeniCag);
 
             AssertCommonElements(feedItem);
             Assert.IsFalse(string.IsNullOrEmpty(feedItem.Summary));
@@ -142,7 +142,7 @@ namespace Amathus.FunctionalTests
         [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
-            var feedItem = Read("YeniDuzen");
+            var feedItem = Read(Source.YeniDuzen);
 
             AssertCommonElements(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
@@ -159,6 +159,8 @@ namespace Amathus.FunctionalTests
 
         private static FeedItem Read(string sourceId)
         {
+            sourceId = sourceId.ToLowerInvariant();
+
             var source = _sources.Find(source => source.Id == sourceId);
 
             var reader = new FeedReader(_sources);
