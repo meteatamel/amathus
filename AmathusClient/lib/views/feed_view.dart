@@ -1,47 +1,79 @@
+import 'package:amathus/controllers/feed_controller.dart';
 import 'package:amathus/models/feed_model.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-class FeedView extends StatelessWidget {
+class FeedView extends StatefulWidget {
   final Feed feed;
 
   FeedView({Key key, @required this.feed}) : super(key: key);
 
   @override
+  _FeedViewState createState() => _FeedViewState();
+}
+
+class _FeedViewState extends State<FeedView> {
+  Future<Feed> futureFeed;
+
+  @override
+  void initState() {
+    super.initState();
+    futureFeed = fetchFeed(widget.feed.id);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: new Text(feed.title)),
-      body: ListView.separated(
-        itemCount: feed.items.length,
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
-        itemBuilder: (context, index) {
-          final item = feed.items[index];
+        appBar: AppBar(centerTitle: true, title: new Text(widget.feed.title)),
+        body: FutureBuilder<Feed>(
+            future: futureFeed,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var feedItems = snapshot.data.items;
+                return ListView.separated(
+                  itemCount: feedItems.length,
+                  separatorBuilder: (BuildContext context, int index) =>
+                      const Divider(),
+                  itemBuilder: (context, index) {
+                    final item = feedItems[index];
 
-          return ListTile(
-            //contentPadding: EdgeInsets.symmetric(horizontal: 16),
-              title: Text(item.title),
-              subtitle: Text(timeago.format(item.publishDate, locale: 'tr')),
-              leading: SizedBox(
-                  width: 100.0,
-                  child: item.imageUrl != null
-                      ? CachedNetworkImage(
-                      imageUrl: item.imageUrl,
-                      placeholder: (context, url) =>
-                      new LinearProgressIndicator(),
-                      errorWidget: (context, url, error) => Image.asset("assets/newsicon-128px.png")
-                  )
-                      : Image.asset("assets/newsicon-128px.png")),
-              trailing: Icon(Icons.keyboard_arrow_right),
-              onTap: () => {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => FeedItemView(item: item)))
-              });
-        },
-      ),
-    );
+                    return ListTile(
+                        //contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        title: Text(item.title),
+                        subtitle: Text(
+                            timeago.format(item.publishDate, locale: 'tr')),
+                        leading: SizedBox(
+                            width: 100.0,
+                            child: item.imageUrl != null
+                                ? CachedNetworkImage(
+                                    imageUrl: item.imageUrl,
+                                    placeholder: (context, url) =>
+                                        new LinearProgressIndicator(),
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset(
+                                            "assets/newsicon-128px.png"))
+                                : Image.asset("assets/newsicon-128px.png")),
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        onTap: () => {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          FeedItemView(item: item)))
+                            });
+                  },
+                );
+              } else if (snapshot.hasError) {
+                // TODO: Handle
+              }
+
+              return Center(
+                  child: SizedBox(
+                      height: 200.0,
+                      width: 200.0,
+                      child: CircularProgressIndicator()));
+            }));
   }
 }

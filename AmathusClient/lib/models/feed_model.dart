@@ -18,7 +18,7 @@ class Feed {
       DateTime.parse(json['LastUpdatedTime']),
       json['ImageUrl'] as String,
       json['Url'] as String,
-      (json['Items'] as List)
+      json['Items'] == null? null : (json['Items'] as List)
           .map((itemJson) => FeedItem.fromJson(itemJson))
           .toList(),
     );

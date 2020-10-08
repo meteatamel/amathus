@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed_model.dart';
 import 'package:flutter/services.dart';
 
-
 // For testing
 Future loadLocalFeed() async {
   String jsonString = await rootBundle.loadString('assets/feeds.json');
@@ -13,8 +12,9 @@ Future loadLocalFeed() async {
 }
 
 Future<List<Feed>> fetchFeeds() async {
+  // TODO: Externalize URLs
   var response =
-  await http.get('https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1/news');
+      await http.get('https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1/feeds');
   if (response.statusCode == 200) {
     return parseFeeds(response.body);
   } else {
