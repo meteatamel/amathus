@@ -70,6 +70,7 @@ namespace Amathus.Common.Converter
             {
                 case Source.DetayKibris:
                 case Source.GundemKibris:
+                case Source.HalkinSesi:
                 case Source.Havadis:
                 case Source.KibrisAda:
                 case Source.KibrisSonDakika:
@@ -78,7 +79,6 @@ namespace Amathus.Common.Converter
                     return new HtmlAndImageRemoverFeedItemConverter();
                 case Source.Diyalog:
                     return new DiyalogFeedItemConverter();
-                case Source.HalkinSesi:
                 case Source.KibrisTime:
                     return new SecondLinkFeedItemConverter();
                 default:

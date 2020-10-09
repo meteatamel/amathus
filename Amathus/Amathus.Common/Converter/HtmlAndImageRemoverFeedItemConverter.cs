@@ -23,7 +23,7 @@ namespace Amathus.Common.Converter
         {
             return new FeedItem
             {
-                Title = item.Title.Text,
+                Title = TextUtil.DecodeHtmlChars(item.Title.Text),
                 PublishDate = item.PublishDate.UtcDateTime,
                 Summary = TextUtil.RemoveHtmlTabAndNewLine(item.Summary.Text),
                 ImageUrl = UrlUtil.GetUrl(TextUtil.ExtractImgSrc(item.Summary.Text)),

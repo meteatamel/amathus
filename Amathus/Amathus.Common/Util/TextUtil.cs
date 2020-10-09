@@ -38,7 +38,7 @@ namespace Amathus.Common.Util
             return Regex.Match(text, "<img.+?src=[\"'](.+?)[\"'].+?>", RegexOptions.IgnoreCase).Groups[1].Value;
         }
 
-        private static string DecodeHtmlChars(string text)
+        public static string DecodeHtmlChars(string text)
         {
             // This decodes chars like &#8217; into '
             return HttpUtility.HtmlDecode(text);
