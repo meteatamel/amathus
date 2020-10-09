@@ -23,7 +23,6 @@ class _FeedsViewState extends State<FeedsView> {
     return Scaffold(
         appBar: AppBar(centerTitle: true, title: new Text("Tüm Haberler")),
         body: FutureBuilder<List<Feed>>(
-            initialData: [],
             future: futureFeeds,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
