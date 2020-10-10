@@ -62,6 +62,12 @@
         "LogoUrl": "https://www.kibrishaber.com/images/banner/asdasfxzcxc_1.jpg"
       },
       {
+        "Id": "kibrishaberci",
+        "Title": "Kıbrıs Haberci",
+        "Url": "https://www.kibrishaberci.com/feed",
+        "LogoUrl": "https://www.kibrishaberci.com/logo.jpg"
+      },
+      {
         "Id": "kibrissondakika",
         "Title": "Kıbrıs Son Dakika",
         "Url": "http://kibrissondakika.com/feed",
