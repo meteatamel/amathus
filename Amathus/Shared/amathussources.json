@@ -38,6 +38,12 @@
         "LogoUrl": "http://www.kibrisadahaber.com/wp-content/uploads/2015/01/LOGO-kibrisadahaber_10.png"
       },
       {
+        "Id": "kibrisgazetesi",
+        "Title": "Kıbrıs Gazetesi",
+        "Url": "https://www.kibrisgazetesi.com/rss",
+        "LogoUrl": "https://www.kibrisgazetesi.com/images/banner/logo.png"
+      },
+      {
         "Id": "kibrissondakika",
         "Title": "Kıbrıs Son Dakika",
         "Url": "http://kibrissondakika.com/feed",
