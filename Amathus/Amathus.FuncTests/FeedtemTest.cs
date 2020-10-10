@@ -107,6 +107,7 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -138,8 +139,6 @@ namespace Amathus.FunctionalTests
 
         private static FeedItem Read(string sourceId)
         {
-            sourceId = sourceId.ToLowerInvariant();
-
             var source = _sources.Find(source => source.Id == sourceId);
 
             var reader = new FeedReader(_sources);

@@ -13,22 +13,17 @@
 // limitations under the License.
 using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
-using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class DiyalogFeedItemConverter : IFeedItemConverter
+    public class DiyalogKibrisTimeFeedItemConverter : DefaultFeedItemConverter
     {
-        public FeedItem Convert(SyndicationItem item)
+        public override FeedItem Convert(SyndicationItem item)
         {
-            return new FeedItem
-            {
-                Title = item.Title.Text,
-                PublishDate = item.PublishDate.UtcDateTime,
-                Summary = TextUtil.RemoveHtml(item.Summary.Text),
-                ImageUrl = item.Links[0].Uri,
-                Url = item.Links[1].Uri,
-            };
+            var feedItem = base.Convert(item);
+            feedItem.ImageUrl = item.Links[0].Uri;
+            feedItem.Url = item.Links[1].Uri;
+            return feedItem;
         }
     }
 }

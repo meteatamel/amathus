@@ -13,16 +13,16 @@
 // limitations under the License.
 using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
+using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class SecondLinkFeedItemConverter : HtmlAndImageRemoverFeedItemConverter
-    {
+    public class HtmlRemoverFeedItemConverter : DefaultFeedItemConverter
+    { 
         public override FeedItem Convert(SyndicationItem item)
         {
             var feedItem = base.Convert(item);
-            // Halkin Sesi uses the second link as the article url.
-            feedItem.Url = item.Links[1].Uri;
+            feedItem.Summary = TextUtil.RemoveHtml(feedItem.Summary);
             return feedItem;
         }
     }

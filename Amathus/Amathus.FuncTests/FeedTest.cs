@@ -115,7 +115,6 @@ namespace Amathus.FunctionalTests
 
         private static Feed Read(string sourceId)
         {
-            sourceId = sourceId.ToLowerInvariant();
             var source = _sources.Find(source => source.Id == sourceId);
 
             var reader = new FeedReader(_sources);

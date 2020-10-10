@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace Amathus.Common.Util
 {
@@ -20,7 +19,7 @@ namespace Amathus.Common.Util
     {
         public static string RemoveHtmlTabAndNewLine(string text)
         {
-            return DecodeHtmlChars(RemoveHtml(RemoveTabAndNewLine(text)));
+            return RemoveHtml(RemoveTabAndNewLine(text));
         }
 
         public static string RemoveHtml(string text)
@@ -28,20 +27,19 @@ namespace Amathus.Common.Util
             return Regex.Replace(text, "<.+?>", string.Empty);
         }
 
-        private static string RemoveTabAndNewLine(string text)
-        {
-            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "");
-        }
-
         public static string ExtractImgSrc(string text)
         {
             return Regex.Match(text, "<img.+?src=[\"'](.+?)[\"'].+?>", RegexOptions.IgnoreCase).Groups[1].Value;
         }
 
-        public static string DecodeHtmlChars(string text)
+        public static string RemoveSubtext(string text, string subtext)
         {
-            // This decodes chars like &#8217; into '
-            return HttpUtility.HtmlDecode(text);
+            return Regex.Replace(text, subtext, string.Empty);
+        }
+
+        private static string RemoveTabAndNewLine(string text)
+        {
+            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "");
         }
     }
 }
