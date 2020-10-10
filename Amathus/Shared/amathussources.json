@@ -20,6 +20,18 @@
         "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/gundemkibris.png"
       },
       {
+        "Id": "haberator",
+        "Title": "Haberatör",
+        "Url": "http://www.haberatorkibris.com/rss/",
+        "LogoUrl": "http://www.haberatorkibris.com/s/i/logo.png"
+      },
+      {
+        "Id": "haberalkibrisli",
+        "Title": "Haberal Kıbrıslı",
+        "Url": "http://www.haberalkibrisli.net/rss",
+        "LogoUrl": "http://www.haberalkibrisli.net/images/banner/haberal1-1-13-1024x265.jpg"
+      },
+      {
         "Id": "halkinsesi",
         "Title": "Halkın Sesi",
         "Url": "http://www.halkinsesikibris.com/rss",
