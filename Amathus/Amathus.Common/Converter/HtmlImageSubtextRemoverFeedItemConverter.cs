@@ -13,16 +13,16 @@
 // limitations under the License.
 using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
+using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class DiyalogKibrisTimeFeedItemConverter : DefaultFeedItemConverter
-    {
+    public class HtmlImageSubtextRemoverFeedItemConverter : HtmlImageRemoverFeedItemConverter
+    { 
         public override FeedItem Convert(SyndicationItem item)
         {
             var feedItem = base.Convert(item);
-            feedItem.ImageUrl = item.Links[0].Uri;
-            feedItem.Url = item.Links[1].Uri;
+            feedItem.Summary = TextUtil.RemoveSubtext(feedItem.Summary, feedItem.Title);
             return feedItem;
         }
     }
