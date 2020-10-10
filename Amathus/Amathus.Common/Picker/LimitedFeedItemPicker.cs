@@ -17,32 +17,33 @@ using Amathus.Common.Feeds;
 
 namespace Amathus.Common.Picker
 {
-    public class FairNewsPicker : BaseNewsPicker
+    public class LimitedFeedItemPicker : IFeedItemPicker
     {
-        public FairNewsPicker(List<Feed> feeds) : base(feeds)
+        private readonly List<Feed> _feeds;
+
+        public LimitedFeedItemPicker(List<Feed> feeds)
         {
+            _feeds = feeds;
         }
 
-        public override List<Feed> Pick(int limit)
+        public List<Feed> Pick(int limit)
         {
-            var numberOfNewsItemsPerSource = limit / Feeds.Count;
-            var remainingNewsItems = limit % Feeds.Count;
+            var numberOfItemsPerSource = limit / _feeds.Count;
+            var remainingItems = limit % _feeds.Count;
             
-            foreach (var feed in Feeds)
+            foreach (var feed in _feeds)
             {
-                if (remainingNewsItems > 0)
+                if (remainingItems > 0)
                 {
-                    feed.Items = feed.Items.Take(numberOfNewsItemsPerSource + 1).ToList();
-                    remainingNewsItems--;
+                    feed.Items = feed.Items.Take(numberOfItemsPerSource + 1).ToList();
+                    remainingItems--;
                 }
                 else
                 {
-                    feed.Items = feed.Items.Take(numberOfNewsItemsPerSource).ToList();
+                    feed.Items = feed.Items.Take(numberOfItemsPerSource).ToList();
                 }
             }
-            return Feeds;
+            return _feeds;
         }
-
-
     }
 }

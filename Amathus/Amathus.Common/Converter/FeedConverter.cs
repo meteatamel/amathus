@@ -82,8 +82,6 @@ namespace Amathus.Common.Converter
                 case Source.KibrisTime:
                     return new SecondLinkFeedItemConverter();
                 default:
-                    //case Source.HaberKibris:
-                    //case Source.KibrisPostasi:
                     return new DefaultFeedItemConverter();
             }
         }

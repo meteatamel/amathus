@@ -65,10 +65,9 @@ namespace Amathus.Web.Controllers
                 return Ok(feeds);
             }
 
-            var picker = new FairNewsPicker(feeds);
-            //var picker = new WeightedNewsPicker(feeds);
-            var pickedNews = picker.Pick((int)limit);
-            return Ok(pickedNews);
+            var picker = new LimitedFeedItemPicker(feeds);
+            var picked = picker.Pick((int)limit);
+            return Ok(picked);
         }
 
         [HttpGet("{id}")]

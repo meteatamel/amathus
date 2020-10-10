@@ -11,21 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Collections.Generic;
 using Amathus.Common.Feeds;
 
 namespace Amathus.Common.Picker
 {
-    public abstract class BaseNewsPicker : INewsPicker
+    public interface IFeedItemPicker
     {
-        protected List<Feed> Feeds;
-
-        protected BaseNewsPicker(List<Feed> feeds)
-        {
-            Feeds = feeds;
-        }
-
-        public abstract List<Feed> Pick(int limit);
+        List<Feed> Pick(int limit);
     }
 }
