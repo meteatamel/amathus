@@ -26,10 +26,10 @@ set_service() {
     exit 1
   fi
 
-  if [ "$2" == "private" ]; then
-    SERVICE_VISIBILITY=no-allow-unauthenticated
-  else
+  if [ "$2" == "public" ]; then
     SERVICE_VISIBILITY=allow-unauthenticated
+  else
+    SERVICE_VISIBILITY=no-allow-unauthenticated
   fi
 
   echo "SERVICE_NAME: ${SERVICE_NAME}"

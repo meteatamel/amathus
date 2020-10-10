@@ -24,10 +24,10 @@ Build:
 scripts/build reader
 ```
 
-Deploy service (private):
+Deploy a private service:
 
 ```bash
-scripts/deploy reader private
+scripts/deploy reader
 ```
 
 (One time) Create a Cloud Storage bucket and a Scheduler job to invoke the service:
@@ -44,10 +44,10 @@ Build:
 scripts/build converter
 ```
 
-Deploy service (private):
+Deploy a private service:
 
 ```bash
-scripts/deploy converter private
+scripts/deploy converter
 ```
 
 (One time) Set converter to receive Pub/Sub messages with bucket changes:
@@ -64,11 +64,16 @@ Build:
 scripts/build web
 ```
 
-Deploy:
+Deploy a public service:
 
 ```bash
-scripts/deploy web
+scripts/deploy web public
 ```
+
+### AmathusClient
+
+There's a Flutter client. See [README.md](AmathusClient/README.md)
+for details.
 
 ## Debugging
 

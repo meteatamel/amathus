@@ -74,6 +74,7 @@ namespace Amathus.Common.Converter
                     return new HtmlRemoverFeedItemConverter();
                 case Source.HalkinSesi:
                 case Source.KibrisGazetesi:
+                case Source.KibrisHaber:
                     return new HtmlRemoverImageUrlFeedItemConverter();
                 case Source.DetayKibris:
                 case Source.KibrisAda:
