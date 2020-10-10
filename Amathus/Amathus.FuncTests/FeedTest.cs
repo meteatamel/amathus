@@ -13,7 +13,6 @@
 // limitations under the License.
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
 using Amathus.Common.Reader;
@@ -38,118 +37,80 @@ namespace Amathus.FunctionalTests
         public void Convert_DetayKibris_Converts()
         {
             var feed = Read(Source.DetayKibris);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_Diyalog_Converts()
         {
             var feed = Read(Source.Diyalog);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_GundemKibris_Converts()
         {
             var feed = Read(Source.GundemKibris);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
-        }
-
-        [TestMethod]
-        public void Convert_HaberKibris_Converts()
-        {
-            var feed = Read(Source.HaberKibris);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
             var feed = Read(Source.HalkinSesi);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_Havadis_Converts()
         {
             var feed = Read(Source.Havadis);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
             var feed = Read(Source.KibrisAda);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
-        }
-
-        // No RSS feed anymore
-        [TestMethod, Ignore]
-        public void Convert_KibrisPostasi_Converts()
-        {
-            var feed = Read(Source.KibrisPostasi);
-
-            AssertCommonElements(feed);
-            Assert.AreEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
             var feed = Read(Source.KibrisSonDakika);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
             var feed = Read(Source.KibrisTime);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_YeniCag_Converts()
         {
             var feed = Read(Source.YeniCag);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
             var feed = Read(Source.YeniDuzen);
-
-            AssertCommonElements(feed);
-            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
-        private static void AssertCommonElements(Feed source)
+        private static void AssertTitleLastUpdatedTimeUrlImageUrl(Feed feed)
         {
-            Assert.IsNotNull(source);
-            Assert.IsFalse(string.IsNullOrEmpty(source.Title));
-            Assert.IsNotNull(source.Url);
-            Assert.IsNotNull(source.ImageUrl);
-            Assert.IsTrue(source.Items.Any());
+            Assert.IsNotNull(feed);
+            Assert.IsTrue(!string.IsNullOrEmpty(feed.Title));
+            Assert.IsNotNull(feed.LastUpdatedTime);
+            Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
+            Assert.IsNotNull(feed.Url);
+            Assert.IsNotNull(feed.ImageUrl);
         }
 
         private static Feed Read(string sourceId)

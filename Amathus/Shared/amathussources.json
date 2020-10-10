@@ -20,12 +20,6 @@
         "LogoUrl": "https://www.gundemkibris.com/images/banner/analogo.png"
       },
       {
-        "Id": "haberkibris",
-        "Title": "Haber Kıbrıs",
-        "Url": "http://haberkibris.com/rss.php",
-        "LogoUrl": "http://www.haberkibris.com/tplimages/logo.png"
-      },
-      {
         "Id": "halkinsesi",
         "Title": "Halkın Sesi",
         "Url": "http://www.halkinsesikibris.com/rss",
@@ -42,12 +36,6 @@
         "Title": "Kıbrıs Ada",
         "Url": "http://www.kibrisadahaber.com/rss",
         "LogoUrl": "http://www.kibrisadahaber.com/wp-content/uploads/2015/01/LOGO-kibrisadahaber_10.png"
-      },
-      {
-        "Id": "kibrispostasi",
-        "Title": "Kıbrıs Postası",
-        "Url": "http://www.kibrispostasi.com/rss.xml",
-        "LogoUrl": "http://www.kibrispostasi.com/images/logo-tr.jpg"
       },
       {
         "Id": "kibrissondakika",

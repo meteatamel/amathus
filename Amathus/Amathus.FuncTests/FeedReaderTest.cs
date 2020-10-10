@@ -26,10 +26,7 @@ namespace Amathus.FunctionalTests
         private static List<Source> _sources;
 
         [ClassInitialize]
-        public static void Init(TestContext context)
-        {
-            _sources = TestHelper.GetSources();
-        }
+        public static void Init(TestContext context) => _sources = TestHelper.GetSources();
 
         [TestMethod]
         public void Read_Basic_ReturnsNonEmptyFeed()
