@@ -20,6 +20,7 @@ namespace Amathus.Common.Sources
         public const string DetayKibris = "detaykibris";
         public const string Diyalog = "diyalog";
         public const string GundemKibris = "gundemkibris";
+        public const string HaberalKibrisli = "haberalkibrisli";
         public const string HalkinSesi = "halkinsesi";
         public const string Havadis = "havadis";
         public const string KibrisAda = "kibrisada";

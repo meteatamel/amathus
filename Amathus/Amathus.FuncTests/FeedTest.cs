@@ -55,6 +55,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_HaberalKibrisli_Converts()
+        {
+            var feed = Read(Source.HaberalKibrisli);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
             var feed = Read(Source.HalkinSesi);

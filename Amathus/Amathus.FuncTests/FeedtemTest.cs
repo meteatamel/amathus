@@ -61,6 +61,16 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_HaberalKibrisli_Converts()
+        {
+            var feedItem = Read(Source.HaberalKibrisli);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_HalkinSesi_Converts()
         {
             var feedItem = Read(Source.HalkinSesi);
