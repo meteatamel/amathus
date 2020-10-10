@@ -122,7 +122,6 @@ namespace Amathus.FunctionalTests
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
         }
 
-
         [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
@@ -131,6 +130,15 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
+        public void Convert_OzgurGazete_Converts()
+        {
+            var feedItem = Read(Source.OzgurGazete);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]

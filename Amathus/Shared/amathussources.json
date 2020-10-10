@@ -62,6 +62,12 @@
         "LogoUrl": "https://www.kibristime.com/images/banner/ktimepng_1.png"
       },
       {
+        "Id": "ozgurgazete",
+        "Title": "Özgür Gazete",
+        "Url": "https://www.ozgurgazetekibris.com/feed",
+        "LogoUrl": "https://www.ozgurgazetekibris.com/wp-content/uploads/2020/09/oz-logo.png"
+      },
+      {
         "Id": "yenicag",
         "Title": "Yeniçağ",
         "Url": "http://www.ykp.org.cy/feed/",

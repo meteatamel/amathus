@@ -70,6 +70,7 @@ namespace Amathus.Common.Converter
             {
                 case Source.Havadis:
                 case Source.KibrisSonDakika:
+                case Source.OzgurGazete:
                 case Source.YeniCag:
                     return new HtmlRemoverFeedItemConverter();
                 case Source.HalkinSesi:
