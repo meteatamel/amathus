@@ -66,7 +66,8 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.HalkinSesi);
 
             AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            // Sometimes it can be null or empty
+            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 

@@ -34,7 +34,8 @@ namespace Amathus.Common.Util
 
         public static string RemoveSubtext(string text, string subtext)
         {
-            return Regex.Replace(text, subtext, string.Empty);
+            var regex = new Regex(subtext);
+            return regex.Replace(text, string.Empty, 1);
         }
 
         private static string RemoveTabAndNewLine(string text)
