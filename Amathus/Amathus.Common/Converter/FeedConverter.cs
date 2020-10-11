@@ -72,6 +72,7 @@ namespace Amathus.Common.Converter
                 case Source.Havadis:
                 case Source.KibrisHaberci:
                 case Source.KibrisSonDakika:
+                case Source.LgcNews:
                 case Source.OzgurGazete:
                 case Source.Volkan:
                 case Source.YeniCag:

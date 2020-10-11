@@ -111,6 +111,14 @@ namespace Amathus.FunctionalTests
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
         }
 
+        [TestMethod]
+        public void Convert_LgcNews_Converts()
+        {
+            var feedItem = Read(Source.LgcNews);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
 
         [TestMethod]
         public void Convert_KibrisAda_Converts()

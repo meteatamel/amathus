@@ -92,6 +92,12 @@
         "LogoUrl": "https://www.kibristime.com/images/banner/ktimepng_1.png"
       },
       {
+        "Id": "lgcnews",
+        "Title": "LGC News",
+        "Url": "https://www.lgcnews.com/feed/",
+        "LogoUrl": "https://www.lgcnews.com/wp-content/uploads/2019/05/LGC-News-logo-v8.png"
+      },
+      {
         "Id": "ozgurgazete",
         "Title": "Özgür Gazete",
         "Url": "https://www.ozgurgazetekibris.com/feed",

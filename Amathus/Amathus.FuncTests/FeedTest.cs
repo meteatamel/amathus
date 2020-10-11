@@ -90,6 +90,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_LgcNews_Converts()
+        {
+            var feed = Read(Source.LgcNews);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
             var feed = Read(Source.KibrisAda);
