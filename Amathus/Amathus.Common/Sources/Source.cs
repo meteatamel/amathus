@@ -29,6 +29,7 @@ namespace Amathus.Common.Sources
         public const string KibrisGazetesi = "kibrisgazetesi";
         public const string KibrisHaber = "kibrishaber";
         public const string KibrisHaberci = "kibrishaberci";
+        public const string KibrisManset = "kibrismanset";
         public const string KibrisSonDakika = "kibrissondakika";
         public const string KibrisTime = "kibristime";
         public const string OzgurGazete = "ozgurgazete";

@@ -154,6 +154,16 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_KibrisManset_Converts()
+        {
+            var feedItem = Read(Source.KibrisManset);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
             var feedItem = Read(Source.KibrisSonDakika);

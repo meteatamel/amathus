@@ -118,6 +118,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_KibrisManset_Converts()
+        {
+            var feed = Read(Source.KibrisManset);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_KibrisSonDakika_Converts()
         {
             var feed = Read(Source.KibrisSonDakika);

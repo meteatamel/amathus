@@ -88,6 +88,7 @@ namespace Amathus.Common.Converter
                 case Source.GundemKibris:
                     return new ImageFeedItemConverter();
                 case Source.Diyalog:
+                case Source.KibrisManset:
                 case Source.KibrisTime:
                     return new ImageUrlFeedItemConverter();
                 default:

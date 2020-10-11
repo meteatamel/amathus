@@ -74,6 +74,12 @@
         "LogoUrl": "https://www.kibrishaberci.com/logo.jpg"
       },
       {
+        "Id": "kibrismanset",
+        "Title": "Kıbrıs Manşet",
+        "Url": "https://www.kibrismanset.com/rss",
+        "LogoUrl": "https://www.kibrismanset.com/images/banner/km_site.jpg"
+      },
+      {
         "Id": "kibrissondakika",
         "Title": "Kıbrıs Son Dakika",
         "Url": "http://kibrissondakika.com/feed",
