@@ -33,7 +33,9 @@ namespace Amathus.Common.Sources
         public const string KibrisSonDakika = "kibrissondakika";
         public const string KibrisTime = "kibristime";
         public const string LgcNews = "lgcnews";
+        public const string LondraGazete = "londragazete";
         public const string OzgurGazete = "ozgurgazete";
+        public const string TVine = "tvine";
         public const string Vatan = "vatan";
         public const string Volkan = "volkan";
         public const string YeniCag = "yenicag";

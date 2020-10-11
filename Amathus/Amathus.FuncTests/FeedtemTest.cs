@@ -191,9 +191,27 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_LondraGazete_Converts()
+        {
+            var feedItem = Read(Source.LondraGazete);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
+
+        [TestMethod]
         public void Convert_OzgurGazete_Converts()
         {
             var feedItem = Read(Source.OzgurGazete);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
+
+        [TestMethod]
+        public void Convert_Tvine_Converts()
+        {
+            var feedItem = Read(Source.TVine);
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));

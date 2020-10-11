@@ -98,10 +98,22 @@
         "LogoUrl": "https://www.lgcnews.com/wp-content/uploads/2019/05/LGC-News-logo-v8.png"
       },
       {
+        "Id": "londragazete",
+        "Title": "Londra Gazete",
+        "Url": "https://londragazete.com/category/kibris-haberleri/feed",
+        "LogoUrl": "https://londragazete.com/wp-content/uploads/2020/07/londonlogo90w.jpg"
+      },
+      {
         "Id": "ozgurgazete",
         "Title": "Özgür Gazete",
         "Url": "https://www.ozgurgazetekibris.com/feed",
         "LogoUrl": "https://www.ozgurgazetekibris.com/wp-content/uploads/2020/09/oz-logo.png"
+      },
+      {
+        "Id": "tvine",
+        "Title": "T-Vine",
+        "Url": "http://www.t-vine.com/feed/",
+        "LogoUrl": "http://www.t-vine.com/wp-content/uploads/2016/11/Tvine-web-logo.png"
       },
       {
         "Id": "vatan",

@@ -94,6 +94,7 @@ namespace Amathus.Common.Converter
                 case Source.KibrisManset:
                 case Source.KibrisTime:
                     return new ImageUrlFeedItemConverter();
+                case Source.TVine:
                 default:
                     return new DefaultFeedItemConverter();
             }

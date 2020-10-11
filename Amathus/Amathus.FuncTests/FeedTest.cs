@@ -146,9 +146,23 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_LondraGazete_Converts()
+        {
+            var feed = Read(Source.LondraGazete);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_OzgurGazete_Converts()
         {
             var feed = Read(Source.OzgurGazete);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_TVine_Converts()
+        {
+            var feed = Read(Source.TVine);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
