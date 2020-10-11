@@ -24,7 +24,7 @@ namespace Amathus.Common.Converter
         {
             var feedItem = base.Convert(item);
             feedItem.ImageUrl = new Uri(TextUtil.ExtractImgSrc(feedItem.Summary));
-            feedItem.Summary = TextUtil.RemoveHtml(feedItem.Summary);
+            feedItem.Summary = TextUtil.RemoveHtmlTabAndNewLine(feedItem.Summary);
             feedItem.Summary = TextUtil.RemoveSubtext(feedItem.Summary, feedItem.Title);
             return feedItem;
         }

@@ -22,7 +22,7 @@ namespace Amathus.Common.Converter
         public override FeedItem Convert(SyndicationItem item)
         {
             var feedItem = base.Convert(item);
-            feedItem.Summary = TextUtil.RemoveHtml(feedItem.Summary);
+            feedItem.Summary = TextUtil.RemoveHtmlTabAndNewLine(feedItem.Summary);
             return feedItem;
         }
     }

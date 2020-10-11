@@ -40,7 +40,7 @@ namespace Amathus.Common.Util
 
         private static string RemoveTabAndNewLine(string text)
         {
-            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "");
+            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "").Trim();
         }
     }
 }
