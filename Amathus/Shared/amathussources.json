@@ -32,6 +32,12 @@
         "LogoUrl": "http://www.haberalkibrisli.net/images/banner/haberal1-1-13-1024x265.jpg"
       },
       {
+        "Id": "hakikat",
+        "Title": "Hakikat",
+        "Url": "http://www.kibrishakikat.com/rss-genel-0.xml",
+        "LogoUrl": "http://www.kibrishakikat.com/resimler/43_4acd70fb2c9e0cfb8785.png"
+      },
+      {
         "Id": "halkinsesi",
         "Title": "Halkın Sesi",
         "Url": "http://www.halkinsesikibris.com/rss",

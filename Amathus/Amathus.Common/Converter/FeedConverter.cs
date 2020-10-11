@@ -68,6 +68,7 @@ namespace Amathus.Common.Converter
         {
             switch (sourceId)
             {
+                case Source.Hakikat:
                 case Source.Havadis:
                 case Source.KibrisHaberci:
                 case Source.KibrisSonDakika:

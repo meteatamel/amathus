@@ -16,7 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
-using System.Xml;
 using Amathus.Common.Sources;
 using Microsoft.Extensions.Logging;
 
@@ -58,7 +57,7 @@ namespace Amathus.Common.Reader
 
         private SyndicationFeed LoadFeed(Uri sourceUrl)
         {
-            var reader = new XmlTextReader(sourceUrl.ToString());
+            var reader = new DateTolerantXmlTextReader(sourceUrl.ToString());
             var rawFeed = SyndicationFeed.Load(reader);
             reader.Close();
             return rawFeed;

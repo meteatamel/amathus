@@ -76,8 +76,19 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.HaberalKibrisli);
 
             AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            // Sometimes it can be null or empty
+            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
+        public void Convert_Hakikat_Converts()
+        {
+            var feedItem = Read(Source.Hakikat);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -184,7 +195,8 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.YeniDuzen);
 
             AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            // Sometimes it can be null or empty
+            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 

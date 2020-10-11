@@ -16,6 +16,7 @@ using System.IO;
 using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
 using System.Xml;
+using Amathus.Common.Reader;
 using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Logging;
 
@@ -78,7 +79,7 @@ namespace Amathus.Common.FeedStore
             try
             {
                 stream.Position = 0; // Reset to read
-                var reader = new XmlTextReader(stream);
+                var reader = new DateTolerantXmlTextReader(stream);
 
                 var feed = SyndicationFeed.Load(reader);
                 reader.Close();
