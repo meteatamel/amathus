@@ -146,6 +146,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_Vatan_Converts()
+        {
+            var feed = Read(Source.Vatan);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_Volkan_Converts()
         {
             var feed = Read(Source.Volkan);

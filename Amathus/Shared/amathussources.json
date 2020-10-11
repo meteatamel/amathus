@@ -98,6 +98,12 @@
         "LogoUrl": "https://www.ozgurgazetekibris.com/wp-content/uploads/2020/09/oz-logo.png"
       },
       {
+        "Id": "vatan",
+        "Title": "Vatan Gazetesi",
+        "Url": "http://www.arti392.com/rss",
+        "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/vatangazetesi.png"
+      },
+      {
         "Id": "volkan",
         "Title": "Volkan",
         "Url": "http://kibrisvolkan.net/feed",

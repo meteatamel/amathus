@@ -80,6 +80,7 @@ namespace Amathus.Common.Converter
                 case Source.HalkinSesi:
                 case Source.KibrisGazetesi:
                 case Source.KibrisHaber:
+                case Source.Vatan:
                     return new HtmlRemoverImageUrlFeedItemConverter();
                 case Source.DetayKibris:
                 case Source.Haberator:
