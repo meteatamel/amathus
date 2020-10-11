@@ -98,6 +98,12 @@
         "LogoUrl": "https://www.ozgurgazetekibris.com/wp-content/uploads/2020/09/oz-logo.png"
       },
       {
+        "Id": "volkan",
+        "Title": "Volkan",
+        "Url": "http://kibrisvolkan.net/feed",
+        "LogoUrl": "http://kibrisvolkan.net/wp-content/themes/theHaber/images/logo2.png"
+      },
+      {
         "Id": "yenicag",
         "Title": "Yeniçağ",
         "Url": "http://www.ykp.org.cy/feed/",

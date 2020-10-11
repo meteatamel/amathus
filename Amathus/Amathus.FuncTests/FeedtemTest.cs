@@ -200,6 +200,15 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_Volkan_Converts()
+        {
+            var feedItem = Read(Source.Volkan);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
+
+        [TestMethod]
         public void Convert_YeniDuzen_Converts()
         {
             var feedItem = Read(Source.YeniDuzen);
