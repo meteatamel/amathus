@@ -2,7 +2,10 @@ import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/models/feed_model.dart';
 import 'package:amathus/views/feed_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
+
+import '../ad_manager.dart';
 
 class FeedsView extends StatefulWidget {
   @override
@@ -11,11 +14,25 @@ class FeedsView extends StatefulWidget {
 
 class _FeedsViewState extends State<FeedsView> {
   Future<List<Feed>> futureFeeds;
+  BannerAd _bannerAd;
 
   @override
   void initState() {
+    FirebaseAdMob.instance.initialize(appId: AdManager.appId);
+    _bannerAd = BannerAd(
+      adUnitId: AdManager.bannerAdUnitId,
+      size: AdSize.banner,
+    );
+    _loadBannerAd();
+
     super.initState();
     futureFeeds = fetchFeeds();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd
+      ..load()
+      ..show(anchorOffset: 100,anchorType: AnchorType.top);
   }
 
   @override
@@ -29,7 +46,7 @@ class _FeedsViewState extends State<FeedsView> {
                 var feeds = snapshot.data;
                 return ListView.separated(
                   itemCount: feeds.length,
-                  //padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.only(top: kToolbarHeight + 75),
                   separatorBuilder: (BuildContext context, int index) =>
                   const Divider(),
                   itemBuilder: (context, index) {

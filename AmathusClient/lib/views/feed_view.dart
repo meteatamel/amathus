@@ -1,8 +1,12 @@
 import 'package:amathus/models/feed_model.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+
+import 'package:amathus/ad_manager.dart';
 
 class FeedView extends StatelessWidget {
   final Feed feed;
@@ -14,6 +18,7 @@ class FeedView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: new Text(feed.title)),
       body: ListView.separated(
+        padding: const EdgeInsets.only(top: kToolbarHeight + 75),
         itemCount: feed.items.length,
         separatorBuilder: (BuildContext context, int index) => const Divider(),
         itemBuilder: (context, index) {
