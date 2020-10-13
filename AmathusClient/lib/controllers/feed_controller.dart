@@ -1,16 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed_model.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 
 Future<Feed> fetchFeed(String feedId) async {
-  // TODO: Externalize URLs
-  var response =
-      await http.get('https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1/feeditems/$feedId');
+  var response = await http.get(Constants.URL_FEED_ITEMS + "/$feedId");
   if (response.statusCode == 200) {
     return parseFeed(response.body);
-  } else {
-    throw Exception('Failed to load feeds');
   }
+  throw Exception('Failed to load feeds');
 }
 
 Feed parseFeed(String responseBody) {

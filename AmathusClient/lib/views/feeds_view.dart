@@ -3,6 +3,7 @@ import 'package:amathus/models/feed_model.dart';
 import 'package:amathus/views/feed_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedsView extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _FeedsViewState extends State<FeedsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: new Text("Tüm Haberler")),
+        appBar: AppBar(centerTitle: true, title: new Text(Constants.TITLE_ALL_NEWS)),
         body: FutureBuilder<List<Feed>>(
             future: fetchFeeds(),
             builder: (context, snapshot) {
