@@ -13,8 +13,8 @@ Future loadLocalFeed() async {
 
 Future<List<Feed>> fetchFeeds() async {
   // TODO: Externalize URLs
-  var response =
-      await http.get('https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1/feeds');
+  var feedsUrl = "https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1/feeds";
+  var response =  await http.get(feedsUrl);
   if (response.statusCode == 200) {
     return parseFeeds(response.body);
   } else {
