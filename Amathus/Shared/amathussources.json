@@ -95,7 +95,7 @@
         "Id": "lgcnews",
         "Title": "LGC News",
         "Url": "https://www.lgcnews.com/feed/",
-        "LogoUrl": "https://www.lgcnews.com/wp-content/uploads/2019/05/LGC-News-logo-v8.png"
+        "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/lgcnews.png"
       },
       {
         "Id": "londragazete",
@@ -113,7 +113,7 @@
         "Id": "tvine",
         "Title": "T-Vine",
         "Url": "http://www.t-vine.com/feed/",
-        "LogoUrl": "http://www.t-vine.com/wp-content/uploads/2016/11/Tvine-web-logo.png"
+        "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/tvine.png"
       },
       {
         "Id": "vatan",

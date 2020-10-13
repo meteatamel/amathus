@@ -9,7 +9,7 @@
 
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="Kibris Haber"
+        android:label="Kıbrıs Haber"
         android:icon="@mipmap/ic_launcher_amathus"
         android:usesCleartextTraffic="true">
         <!-- Allow HTTP calls per https://github.com/flutter/flutter/issues/30368 -->
