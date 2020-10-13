@@ -60,7 +60,9 @@ class _FeedsViewState extends State<FeedsView> {
                               });
                     },
                   ),
-                  onRefresh: onRefreshCallback,
+                  onRefresh: () async {
+                    setState(() {});
+                  },
                 );
               }
 
@@ -75,9 +77,4 @@ class _FeedsViewState extends State<FeedsView> {
                       child: CircularProgressIndicator()));
             }));
   }
-
-  Future<void> onRefreshCallback() async {
-    setState(() {});
-  }
-
 }
