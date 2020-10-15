@@ -5,5 +5,12 @@ import 'package:timeago/timeago.dart' as timeago;
 Future<void> main() async {
   timeago.setLocaleMessages('tr', timeago.TrMessages());
 
-  runApp(MaterialApp(home: FeedsView()));
+  runApp(
+      MaterialApp(
+        home: FeedsView(),
+        routes:  {
+          FeedsView.routeName: (context) => FeedsView(),
+        },
+      )
+  );
 }

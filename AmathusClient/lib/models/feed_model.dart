@@ -15,7 +15,7 @@ class Feed {
     return Feed(
       json['Id'] as String,
       json['Title'] as String,
-      DateTime.parse(json['LastUpdatedTime']),
+      json['LastUpdatedTime'] == null ? null : DateTime.parse(json['LastUpdatedTime']),
       json['ImageUrl'] as String,
       json['Url'] as String,
       json['Items'] == null? null : (json['Items'] as List)

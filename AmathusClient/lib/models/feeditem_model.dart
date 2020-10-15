@@ -12,7 +12,7 @@ class FeedItem {
   factory FeedItem.fromJson(Map<String, dynamic> json) {
     return FeedItem(
         json['Title'] as String,
-        DateTime.parse(json['PublishDate']),
+        json['PublishDate'] == null? null : DateTime.parse(json['PublishDate']),
         json['Summary'] as String,
         json['Detail'] as String,
         json['ImageUrl'] as String,

@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedsView extends StatefulWidget {
+
+  static const String routeName = '/feeds';
+
   @override
   _FeedsViewState createState() => _FeedsViewState();
 }
@@ -15,7 +18,23 @@ class _FeedsViewState extends State<FeedsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: new Text(Constants.TITLE_ALL_NEWS)),
+        appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
+        drawer: Drawer(
+          child: ListView(
+            children: [
+              ListTile(
+                leading: Icon(Icons.home),
+                title: Text(Constants.HOME_PAGE),
+                onTap: () => Navigator.pop(context)
+              ),
+//              ListTile(
+//                leading: Icon(Icons.settings),
+//                title: Text(Constants.SETTINGS),
+//                onTap: () => Navigator.pushNamed(context, SettingsView.routeName),
+//              ),
+            ],
+          ),
+        ),
         body: FutureBuilder<List<Feed>>(
             future: fetchFeeds(),
             builder: (context, snapshot) {
