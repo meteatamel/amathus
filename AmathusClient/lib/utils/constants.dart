@@ -8,4 +8,6 @@ const String APP_NAME = "Kuzey Kıbrıs Haber";
 const String ALL_NEWS = "Tüm Haberler";
 const String HOME_PAGE = "Ana Sayfa";
 
+const String SETTINGS = "Ayarlar";
+const String REORDER_NEWS = "Haber kaynakları sırasını değiştir";
 
