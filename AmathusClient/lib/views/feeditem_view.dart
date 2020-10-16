@@ -1,5 +1,5 @@
 import 'package:amathus/controllers/feeditem_controller.dart';
-import 'package:amathus/models/feeditem_model.dart';
+import 'package:amathus/models/feeditem.dart';
 import 'package:flutter/material.dart';
 
 class FeedItemView extends StatelessWidget {

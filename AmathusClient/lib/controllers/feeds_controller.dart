@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:amathus/models/feed_model.dart';
+import 'package:amathus/models/feed.dart';
 import 'package:flutter/services.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -13,9 +13,9 @@ Future<List<Feed>> fetchFeeds() async {
 }
 
 List<Feed> parseFeeds(String responseBody) {
-  final parsed = json.decode(responseBody).cast<Map<String, dynamic>>();
-
-  return parsed.map<Feed>((json) => Feed.fromJson(json)).toList();
+  final decoded = json.decode(responseBody).cast<Map<String, dynamic>>();
+  final feeds =  decoded.map<Feed>((json) => Feed.fromJson(json)).toList();
+  return feeds;
 }
 
 // TODO - For testing, remove when done.

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:amathus/models/feed_model.dart';
+import 'package:amathus/models/feed.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 Future<Feed> fetchFeed(String feedId) async {

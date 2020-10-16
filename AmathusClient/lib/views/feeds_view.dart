@@ -1,5 +1,5 @@
 import 'package:amathus/controllers/feeds_controller.dart';
-import 'package:amathus/models/feed_model.dart';
+import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/feed_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
