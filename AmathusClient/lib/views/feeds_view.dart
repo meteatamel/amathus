@@ -15,6 +15,19 @@ class FeedsView extends StatefulWidget {
 
 class _FeedsViewState extends State<FeedsView> {
 
+  FeedsController _controller;
+  Future _fetchFeedsFuture;
+
+  _FeedsViewState() {
+    _controller =  FeedsController();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFeedsFuture = _controller.read();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +49,7 @@ class _FeedsViewState extends State<FeedsView> {
           ),
         ),
         body: FutureBuilder<List<Feed>>(
-            future: fetchFeeds(),
+            future: _fetchFeedsFuture,
             builder: (context, snapshot) {
 
               if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
@@ -81,7 +94,7 @@ class _FeedsViewState extends State<FeedsView> {
                     },
                   ),
                   onRefresh: () async {
-                    setState(() {});
+                    _fetchFeedsFuture = _controller.read();
                   },
                 );
               }

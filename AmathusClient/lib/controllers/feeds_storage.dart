@@ -5,7 +5,7 @@ import 'package:amathus/models/feed.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:path_provider/path_provider.dart';
 
-class FeedStorage {
+class FeedsStorage {
 
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
@@ -17,7 +17,7 @@ class FeedStorage {
     return File('$path/' + Constants.FEEDS_FILE);
   }
 
-  Future<List<Feed>> readFeeds() async {
+  Future<List<Feed>> read() async {
     try {
       final file = await _localFile;
       final feedsJson = await file.readAsString();
@@ -28,7 +28,7 @@ class FeedStorage {
     }
   }
 
-  Future<File> writeFeeds(List<Feed> feeds) async {
+  Future<File> write(List<Feed> feeds) async {
     final file = await _localFile;
     final feedsJson = json.encode(feeds);
     return await file.writeAsString('$feedsJson', mode: FileMode.write);
