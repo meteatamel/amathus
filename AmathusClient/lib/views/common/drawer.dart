@@ -12,12 +12,12 @@ class AppDrawer extends StatelessWidget {
         children: [
           ListTile(
               leading: Icon(Icons.home),
-              title: Text(Constants.HOME_PAGE),
+              title: Text(Constants.HOME_PAGE, style: TextStyle(fontSize: 18)),
               onTap: () => Navigator.pushNamed(context, FeedsView.routeName)
           ),
           ListTile(
             leading: Icon(Icons.settings),
-            title: Text(Constants.SETTINGS),
+            title: Text(Constants.SETTINGS, style: TextStyle(fontSize: 18)),
             onTap: () => Navigator.pushNamed(context, SettingsView.routeName),
           ),
         ],

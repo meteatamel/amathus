@@ -16,6 +16,7 @@ class _SettingsViewState extends State<SettingsView> {
 
   FeedsStorage _storage;
   Future _fetchFeedsFuture;
+  List<Feed> _feeds;
 
   _SettingsViewState() {
     _storage = FeedsStorage();
@@ -25,6 +26,7 @@ class _SettingsViewState extends State<SettingsView> {
   void initState() {
     super.initState();
     _fetchFeedsFuture = _storage.read();
+    _fetchFeedsFuture.then((value) => _feeds = value);
   }
 
   @override
@@ -38,19 +40,23 @@ class _SettingsViewState extends State<SettingsView> {
               if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
                 var feeds = snapshot.data;
                 return ReorderableListView(
-                   header: Container(
+                  header: Container(
                       padding: EdgeInsets.all(10),
-                      child: Text(Constants.REORDER_NEWS, style: TextStyle(fontSize: 18))),
+                      child: Text(Constants.REORDER_NEWS,
+                          style: TextStyle(fontSize: 18))),
                   onReorder: _onReorder,
                   scrollDirection: Axis.vertical,
                   children: [
                     for (final item in feeds)
-                      ListTile(
+                      Card(
                           key: ValueKey(item.id),
-                          title: Container(
-                              padding: EdgeInsets.all(10),
-                              child: Text(item.title, style: TextStyle(fontSize: 16))),
-                          trailing: Icon(Icons.reorder, size:25),
+                          child: ListTile(
+                            title: Container(
+                                padding: EdgeInsets.all(10),
+                                child: Text(item.title, style: TextStyle(
+                                    fontSize: 16))),
+                            trailing: Icon(Icons.reorder, size: 25),
+                          )
                       ),
                   ],
                 );
@@ -65,6 +71,15 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _onReorder(int oldIndex, int newIndex) {
-    // TODO: Implement
+
+    setState(() {
+        if (newIndex > oldIndex) {
+          newIndex -= 1;
+        }
+        final Feed item = _feeds.removeAt(oldIndex);
+        _feeds.insert(newIndex, item);
+    });
+
+    _storage.write(_feeds);
   }
 }
