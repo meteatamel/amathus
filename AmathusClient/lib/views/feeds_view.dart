@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedsView extends StatefulWidget {
-
   static const String routeName = '/feeds';
 
   @override
@@ -15,18 +14,40 @@ class FeedsView extends StatefulWidget {
 }
 
 class _FeedsViewState extends State<FeedsView> {
-
+  List<Feed> _feeds;
   FeedsController _controller;
-  Future _fetchFeedsFuture;
 
   _FeedsViewState() {
-    _controller =  FeedsController();
+    _controller = FeedsController();
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchFeedsFuture = _controller.read();
+    loadData().whenComplete(() => {});
+  }
+
+  Future<void> loadData({storage = true}) async {
+    if (storage) {
+      print("Loading from storage");
+      var feeds = await _controller.readFromStorage();
+      if (feeds != null) {
+        print("Loaded from storage");
+        setState(() {
+          _feeds = feeds;
+        });
+      }
+    }
+
+    print("Loading from server");
+    var receivedFeeds = await _controller.readFromServer();
+    if (receivedFeeds != null) {
+      print("Loaded from server");
+      var orderedFeeds = await _controller.orderAndStoreFeeds(receivedFeeds);
+      setState(() {
+        _feeds = orderedFeeds;
+      });
+    }
   }
 
   @override
@@ -34,66 +55,54 @@ class _FeedsViewState extends State<FeedsView> {
     return Scaffold(
         appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
         drawer: AppDrawer(),
-        body: FutureBuilder<List<Feed>>(
-            future: _fetchFeedsFuture,
-            builder: (context, snapshot) {
-
-              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                var feeds = snapshot.data;
-                return RefreshIndicator(
-                  child: ListView.separated(
-                    itemCount: feeds.length,
-                    //padding: const EdgeInsets.all(16),
-                    separatorBuilder: (BuildContext context, int index) =>
-                        const Divider(),
-                    itemBuilder: (context, index) {
-                      final item = feeds[index];
-                      return ListTile(
-                          //contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
-                          title: Container(
-                              //color: Colors.grey[150],
-                              child: item.imageUrl != null
-                                  ? SizedBox(
-                                      width: 200,
-                                      height: 50,
-                                      child: CachedNetworkImage(
-                                        imageUrl: item.imageUrl,
-                                        placeholder: (context, url) =>
-                                            new LinearProgressIndicator(),
-                                        errorWidget: (context, url, error) =>
-                                            Text(item.title,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headline4),
-                                      ))
-                                  : Text(item.title,
-                                      style:
-                                          Theme.of(context).textTheme.headline4)),
-                          trailing: Icon(Icons.keyboard_arrow_right),
-                          onTap: () => {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            FeedView(feed: item)))
-                              });
-                    },
-                  ),
-                  onRefresh: () async {
-                    _fetchFeedsFuture = _controller.read();
+        body: _feeds == null
+            ? Center(
+                child: SizedBox(
+                    height: 200.0,
+                    width: 200.0,
+                    child: CircularProgressIndicator()))
+            : RefreshIndicator(
+                child: ListView.separated(
+                  itemCount: _feeds.length,
+                  //padding: const EdgeInsets.all(16),
+                  separatorBuilder: (BuildContext context, int index) =>
+                      const Divider(),
+                  itemBuilder: (context, index) {
+                    final item = _feeds[index];
+                    return ListTile(
+                        //contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
+                        title: Container(
+                            //color: Colors.grey[150],
+                            child: item.imageUrl != null
+                                ? SizedBox(
+                                    width: 200,
+                                    height: 50,
+                                    child: CachedNetworkImage(
+                                      imageUrl: item.imageUrl,
+                                      placeholder: (context, url) =>
+                                          new LinearProgressIndicator(),
+                                      errorWidget: (context, url, error) =>
+                                          Text(item.title,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headline4),
+                                    ))
+                                : Text(item.title,
+                                    style:
+                                        Theme.of(context).textTheme.headline4)),
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        onTap: () => {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          FeedView(feed: item)))
+                            });
                   },
-                );
-              }
-
-              //if (snapshot.hasError) {
-                // TODO: Handle
-              //}
-
-              return Center(
-                  child: SizedBox(
-                      height: 200.0,
-                      width: 200.0,
-                      child: CircularProgressIndicator()));
-            }));
+                ),
+                onRefresh: () async {
+                  await loadData(storage: false);
+                },
+              ));
   }
 }

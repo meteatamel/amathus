@@ -10,51 +10,53 @@ import 'feeds_storage.dart';
 class FeedsController {
 
   FeedsStorage _storage;
+  List<Feed> _storedFeeds;
 
   FeedsController() {
     _storage = new FeedsStorage();
   }
 
-  Future<List<Feed>> read() async {
-    final storedFeeds = await readFromStorage();
+  Future<List<Feed>> readFromServer() async {
 
     try {
       final response = await http.get(Constants.URL_FEEDS);
       if (response.statusCode == 200) {
         final receivedFeeds = (json.decode(response.body) as List).map((i) =>
             Feed.fromJson(i)).toList();
-        final orderedFeeds = await orderAndStoreFeeds(storedFeeds, receivedFeeds);
-        return orderedFeeds;
+        return receivedFeeds;
       }
     } on SocketException catch (e) {
       // Just return the stored feeds
+      print("Cannot connect to server: ${e.message}");
     }
 
-    return storedFeeds;
+    return null;
   }
 
   Future<List<Feed>> readFromStorage() async {
-    var feeds = await _storage.read();
-    if (feeds == null) {
-      throw Exception('Failed to load feeds');
-    }
-    return feeds;
+    _storedFeeds = await _storage.read();
+    return _storedFeeds;
   }
 
-  Future<List<Feed>> orderAndStoreFeeds(List<Feed> storedFeeds, List<Feed> receivedFeeds) async {
+  Future<void> writeToStorage(List<Feed> feeds) async {
+    await _storage.write(feeds);
+    _storedFeeds= feeds;
+  }
+
+  Future<List<Feed>> orderAndStoreFeeds(List<Feed> receivedFeeds) async {
     if (receivedFeeds == null || receivedFeeds.isEmpty) {
-      return storedFeeds;
+      return _storedFeeds;
     }
 
-    if (storedFeeds == null || storedFeeds.isEmpty) {
-      await _storage.write(receivedFeeds);
+    if (_storedFeeds == null || _storedFeeds.isEmpty) {
+      await writeToStorage(receivedFeeds);
       return receivedFeeds;
     }
 
     var orderedFeeds = new List<Feed>();
 
-    for (var i = 0; i < storedFeeds.length; i++) {
-      var storedFeed = storedFeeds[i];
+    for (var i = 0; i < _storedFeeds.length; i++) {
+      var storedFeed = _storedFeeds[i];
       var index = receivedFeeds.indexWhere((element) => element.id == storedFeed.id);
       if (index != -1) {
         var receivedFeed = receivedFeeds.removeAt(index);
@@ -63,8 +65,7 @@ class FeedsController {
     }
 
     orderedFeeds.addAll(receivedFeeds);
-    await _storage.write(orderedFeeds);
-
+    writeToStorage(orderedFeeds);
     return orderedFeeds;
   }
 }
