@@ -19,6 +19,28 @@ class _FeedsViewState extends State<FeedsView> {
   List<Feed> _feeds;
   FeedsController _controller;
   BannerAd _bannerAd;
+  InterstitialAd _interstitialAd;
+  bool _isInterstitialAdReady;
+  DateTime interstitialLastShown;
+
+  void _loadInterstitialAd() {
+    _interstitialAd.load();
+  }
+
+  void _onInterstitialAdEvent(MobileAdEvent event) {
+    switch (event) {
+      case MobileAdEvent.loaded:
+        _isInterstitialAdReady = true;
+        break;
+      case MobileAdEvent.failedToLoad:
+        _isInterstitialAdReady = false;
+        print('Failed to load an interstitial ad');
+        break;
+      case MobileAdEvent.closed:
+        break;
+      default:
+      // do nothing
+    }}
 
   _FeedsViewState() {
     _controller = FeedsController();
@@ -33,8 +55,25 @@ class _FeedsViewState extends State<FeedsView> {
     );
     _loadBannerAd();
 
+    _isInterstitialAdReady = false;
+    _interstitialAd = InterstitialAd(
+      adUnitId: AdManager.interstitialAdUnitId,
+      listener: _onInterstitialAdEvent,
+    );
+
+    _loadInterstitialAd();
+
     super.initState();
-    loadData().whenComplete(() => {});
+    loadData().whenComplete(() => {
+      if (interstitialLastShown == null) {
+        interstitialLastShown = DateTime.now()
+      },
+
+      if (DateTime.now().difference(interstitialLastShown).inHours > 1) {
+        _interstitialAd.show()
+      }
+
+    });
   }
 
   Future<void> loadData({storage = true}) async {
@@ -63,7 +102,7 @@ class _FeedsViewState extends State<FeedsView> {
   void _loadBannerAd() {
     _bannerAd
       ..load()
-      ..show(anchorOffset: 100,anchorType: AnchorType.top);
+      ..show(anchorOffset: kToolbarHeight + 75,anchorType: AnchorType.top);
   }
 
   @override
