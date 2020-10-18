@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "916467285447",
+    "firebase_url": "https://kuzeykibrishaber-42361.firebaseio.com",
+    "project_id": "kuzeykibrishaber-42361",
+    "storage_bucket": "kuzeykibrishaber-42361.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:916467285447:android:0d682f6ffdc9c4904aede2",
+        "android_client_info": {
+          "package_name": "com.ledradev.kuzeykibrishaber"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "916467285447-f04qanaoe0ro78o9tejae6pnfm33e6j7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuNsTJDvwTm_UExsVGb-RVhMz3jAaVN6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "916467285447-f04qanaoe0ro78o9tejae6pnfm33e6j7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "916467285447-9m214rcqg8l31oeusapfmru8kp04baku.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ledradev.kuzeykibrishaber",
+                "app_store_id": "1198036244"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

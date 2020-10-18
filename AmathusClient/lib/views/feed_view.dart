@@ -2,10 +2,18 @@ import 'package:amathus/controllers/feed_controller.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+<<<<<<< HEAD
 class FeedView extends StatefulWidget {
+=======
+
+import 'package:amathus/ad_manager.dart';
+
+class FeedView extends StatelessWidget {
+>>>>>>> ads
   final Feed feed;
 
   FeedView({Key key, @required this.feed}) : super(key: key);
@@ -33,6 +41,7 @@ class _FeedViewState extends State<FeedView> {
                         itemBuilder: (context, index) {
                           final item = feedItems[index];
                           return ListTile(
+                              contentPadding: const EdgeInsets.only(top: kToolbarHeight + 75),
                             //contentPadding: EdgeInsets.symmetric(horizontal: 16),
                               title: Text(item.title),
                               subtitle: Text(

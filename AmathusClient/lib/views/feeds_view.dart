@@ -3,8 +3,11 @@ import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/feed_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+
+import '../ad_manager.dart';
 
 class FeedsView extends StatefulWidget {
   static const String routeName = '/feeds';
@@ -16,6 +19,7 @@ class FeedsView extends StatefulWidget {
 class _FeedsViewState extends State<FeedsView> {
   List<Feed> _feeds;
   FeedsController _controller;
+  BannerAd _bannerAd;
 
   _FeedsViewState() {
     _controller = FeedsController();
@@ -23,6 +27,13 @@ class _FeedsViewState extends State<FeedsView> {
 
   @override
   void initState() {
+    FirebaseAdMob.instance.initialize(appId: AdManager.appId);
+    _bannerAd = BannerAd(
+      adUnitId: AdManager.bannerAdUnitId,
+      size: AdSize.banner,
+    );
+    _loadBannerAd();
+
     super.initState();
     loadData().whenComplete(() => {});
   }
@@ -50,9 +61,16 @@ class _FeedsViewState extends State<FeedsView> {
     }
   }
 
+  void _loadBannerAd() {
+    _bannerAd
+      ..load()
+      ..show(anchorOffset: 100,anchorType: AnchorType.top);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
         appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
         drawer: AppDrawer(),
         body: _feeds == null
@@ -65,6 +83,17 @@ class _FeedsViewState extends State<FeedsView> {
                 child: ListView.separated(
                   itemCount: _feeds.length,
                   //padding: const EdgeInsets.all(16),
+=======
+        appBar: AppBar(centerTitle: true, title: new Text("Tüm Haberler")),
+        body: FutureBuilder<List<Feed>>(
+            future: futureFeeds,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var feeds = snapshot.data;
+                return ListView.separated(
+                  itemCount: feeds.length,
+                  padding: const EdgeInsets.only(top: kToolbarHeight + 75),
+>>>>>>> ads
                   separatorBuilder: (BuildContext context, int index) =>
                       const Divider(),
                   itemBuilder: (context, index) {
