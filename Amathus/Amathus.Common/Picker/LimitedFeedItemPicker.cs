@@ -43,7 +43,9 @@ namespace Amathus.Common.Picker
                     feed.Items = feed.Items.Take(numberOfItemsPerSource).ToList();
                 }
             }
-            return _feeds;
+
+            var feedsWithItems = _feeds.Where(feed => feed.Items != null && feed.Items.Count != 0).ToList();
+            return feedsWithItems;
         }
     }
 }

@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,28 +36,20 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public async Task<IActionResult> GetAll([FromQuery] int? limit = null)
         {
             if (limit != null && limit < 1)
             {
                 return BadRequest("Limit cannot be less than 1");
             }
 
-            var feeds = await GetAllFromCache();
+            var feeds = await _feedStore.ReadAllAsync();
             if (!feeds.Any())
             {
                 return NotFound();
             }
 
-            if (from != null)
-            {
-                var sinceUtc = ((DateTime)from).ToUniversalTime();
-                feeds = feeds.Select(feed =>
-                {
-                    feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
-                    return feed;
-                }).ToList();
-            }
+            feeds = OrderFeeds(feeds);
 
             if (limit == null)
             {
@@ -71,7 +62,7 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null, [FromQuery] DateTime? from = null)
+        public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null)
         {
             if (limit != null && limit < 1)
             {
@@ -86,13 +77,6 @@ namespace Amathus.Web.Controllers
                 return NotFound();
             }
 
-
-            if (from != null)
-            {
-                var sinceUtc = ((DateTime)from).ToUniversalTime();
-                feed.Items = feed.Items.Where(item => item.PublishDate >= sinceUtc).ToList();
-            }
-
             if (limit != null)
             {
                 feed.Items = feed.Items.Take((int)limit).ToList();
@@ -101,11 +85,13 @@ namespace Amathus.Web.Controllers
             return Ok(feed);
         }
 
-        private async Task<List<Feed>> GetAllFromCache()
+        private List<Feed> OrderFeeds(List<Feed> feeds)
         {
-            var feeds = await _feedStore.ReadAllAsync();
-            feeds = feeds.OrderByDescending(feed => feed.AverageItemLength).ToList();
-            return feeds;
+            var orderedFeeds = feeds
+                .OrderByDescending(feed => feed.AverageItemPictures)
+                .ThenByDescending(feed => feed.AverageItemLength)
+                .ToList();
+            return orderedFeeds;
         }
     }
 }

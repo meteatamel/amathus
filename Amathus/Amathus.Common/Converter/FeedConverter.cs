@@ -49,8 +49,7 @@ namespace Amathus.Common.Converter
                     LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime,
                     Url = syncFeed.Links[0].Uri,
                     Items = syncFeed.Items.Select(item => itemConverter.Convert(item))
-                                      //.Where(item => DateTime.Compare(item.PublishDate, DateTime.UtcNow) <= 0)
-                                      .OrderByDescending(item => item.PublishDate).ToList<FeedItem>()
+                                      .OrderByDescending(item => item.PublishDate).ToList()
                 };
 
                 _logger?.LogDebug($"Feed average item length: {feed.AverageItemLength}");

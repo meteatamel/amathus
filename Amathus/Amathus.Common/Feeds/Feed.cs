@@ -50,6 +50,15 @@ namespace Amathus.Common.Feeds
             }
         }
 
+        [JsonIgnore]
+        public double AverageItemPictures
+        {
+            get
+            {
+                return Items.Average(item => item.ImageUrl == null? 0 : 1);
+            }
+        }
+
         public Feed Copy()
         {
             var copy = (Feed)MemberwiseClone();
