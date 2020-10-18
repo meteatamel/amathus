@@ -5,15 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-<<<<<<< HEAD
-class FeedView extends StatefulWidget {
-=======
-
 import 'package:amathus/ad_manager.dart';
 
-class FeedView extends StatelessWidget {
->>>>>>> ads
+class FeedView extends StatefulWidget {
   final Feed feed;
 
   FeedView({Key key, @required this.feed}) : super(key: key);
