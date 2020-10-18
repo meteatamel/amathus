@@ -6,8 +6,10 @@ const String FEEDS_FILE = "feeds.json";
 
 const String APP_NAME = "Kuzey Kıbrıs Haber";
 const String ALL_NEWS = "Tüm Haberler";
-const String HOME_PAGE = "Ana Sayfa";
-
+const String RECENT_NEWS = "Son Haberler";
 const String SETTINGS = "Ayarlar";
+
 const String REORDER_NEWS = "Haber kaynakları sırasını değiştir";
 
+const String SHARE = "Paylaş";
+const String MORE = "Daha fazla";

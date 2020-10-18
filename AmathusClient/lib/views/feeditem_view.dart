@@ -1,6 +1,7 @@
 import 'package:amathus/controllers/feeditem_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:flutter/material.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedItemView extends StatelessWidget {
   final FeedItem item;
@@ -40,7 +41,7 @@ class FeedItemView extends StatelessWidget {
                       padding: const EdgeInsets.all(10.0),
                       child: RaisedButton(
                         child: Row(children: [
-                          Text("Daha fazla"),
+                          Text(Constants.MORE),
                           Icon(Icons.more_vert)
                         ]),
                         onPressed: () => launchURL(item.url),
@@ -48,7 +49,7 @@ class FeedItemView extends StatelessWidget {
                   new Container(
                     padding: const EdgeInsets.all(10.0),
                     child: RaisedButton(
-                      child: Row(children: [Text("Paylaş"), Icon(Icons.share)]),
+                      child: Row(children: [Text(Constants.SHARE), Icon(Icons.share)]),
                       onPressed: () =>
                           socialShare(context, item.title, item.url),
                     ),
