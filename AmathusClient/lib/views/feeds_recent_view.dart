@@ -44,6 +44,7 @@ class _FeedsRecentViewState extends State<FeedsRecentView> {
                 return RefreshIndicator(
                     child: ListView.separated(
                         itemCount: feedItems.length,
+                        padding: const EdgeInsets.only(top: kToolbarHeight + 75),
                         separatorBuilder: (BuildContext context,
                             int index) => const Divider(),
                         itemBuilder: (context, index) {

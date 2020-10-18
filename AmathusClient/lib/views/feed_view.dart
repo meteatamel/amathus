@@ -30,12 +30,12 @@ class _FeedViewState extends State<FeedView> {
                 return RefreshIndicator(
                     child: ListView.separated(
                         itemCount: feedItems.length,
+                        padding: const EdgeInsets.only(top: kToolbarHeight + 75),
                         separatorBuilder: (BuildContext context,
                             int index) => const Divider(),
                         itemBuilder: (context, index) {
                           final item = feedItems[index];
                           return ListTile(
-                              contentPadding: const EdgeInsets.only(top: kToolbarHeight + 75),
                             //contentPadding: EdgeInsets.symmetric(horizontal: 16),
                               title: Text(item.title),
                               subtitle: Text(

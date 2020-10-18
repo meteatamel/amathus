@@ -80,7 +80,7 @@ class _FeedsViewState extends State<FeedsView> {
             : RefreshIndicator(
                 child: ListView.separated(
                   itemCount: _feeds.length,
-                  //padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.only(top: kToolbarHeight + 75),
                   separatorBuilder: (BuildContext context, int index) =>
                       const Divider(),
                   itemBuilder: (context, index) {
