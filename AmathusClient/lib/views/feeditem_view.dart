@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedItemView extends StatelessWidget {
+
   final FeedItem item;
+  final FeedItemController _controller = new FeedItemController();
 
   FeedItemView({Key key, @required this.item}) : super(key: key);
 
@@ -12,7 +14,6 @@ class FeedItemView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //title: Text(""),
       ),
       body: buildColumn(context),
     );
@@ -44,14 +45,14 @@ class FeedItemView extends StatelessWidget {
                           Text(Constants.MORE),
                           Icon(Icons.more_vert)
                         ]),
-                        onPressed: () => launchURL(item.url),
+                        onPressed: () async => await _controller.launchURL(item.url),
                       )),
                   new Container(
                     padding: const EdgeInsets.all(10.0),
                     child: RaisedButton(
                       child: Row(children: [Text(Constants.SHARE), Icon(Icons.share)]),
-                      onPressed: () =>
-                          socialShare(context, item.title, item.url),
+                      onPressed: () async =>
+                          await _controller.socialShare(context, item.title, item.url),
                     ),
                   )
                 ])

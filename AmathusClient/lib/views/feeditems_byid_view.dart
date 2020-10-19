@@ -1,29 +1,41 @@
-import 'package:amathus/controllers/feed_controller.dart';
+import 'package:amathus/controllers/feeditems_controller.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:amathus/ad_manager.dart';
 
-class FeedView extends StatefulWidget {
+class FeedItemsByIdView extends StatefulWidget {
+
   final Feed feed;
 
-  FeedView({Key key, @required this.feed}) : super(key: key);
+  FeedItemsByIdView({Key key, @required this.feed}) : super(key: key);
 
   @override
-  _FeedViewState createState() => _FeedViewState();
+  _FeedItemsByIdViewState createState() => _FeedItemsByIdViewState();
 }
 
-class _FeedViewState extends State<FeedView> {
+class _FeedItemsByIdViewState extends State<FeedItemsByIdView> {
+
+  FeedItemsController _controller;
+  Future<Feed> _futureData;
+
+  _FeedItemsByIdViewState() {
+    _controller = FeedItemsController();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _futureData = _controller.readById(widget.feed.id);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(centerTitle: true, title: new Text(widget.feed.title)),
         body: FutureBuilder<Feed>(
-            future: fetchFeed(widget.feed.id),
+            future: _futureData,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
                 var feedItems = snapshot.data.items;
@@ -61,7 +73,8 @@ class _FeedViewState extends State<FeedView> {
                               });
                         }),
                       onRefresh: () async {
-                        setState(() {});
+                        // TODO: Check that this actually refreshes
+                        _futureData = _controller.readById(widget.feed.id);
                       },
                 );
               }

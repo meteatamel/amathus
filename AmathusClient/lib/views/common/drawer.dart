@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
-import '../feeds_recent_view.dart';
+import '../feeditems_recent_view.dart';
 import '../feeds_view.dart';
 import '../settings_view.dart';
 
@@ -17,9 +17,9 @@ class AppDrawer extends StatelessWidget {
               onTap: () => Navigator.pushNamed(context, FeedsView.routeName)
           ),
           ListTile(
-              leading: Icon(Icons.home),
+              leading: Icon(Icons.new_releases_sharp),
               title: Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
-              onTap: () => Navigator.pushNamed(context, FeedsRecentView.routeName)
+              onTap: () => Navigator.pushNamed(context, FeedItemsRecentView.routeName)
           ),
           ListTile(
             leading: Icon(Icons.settings),

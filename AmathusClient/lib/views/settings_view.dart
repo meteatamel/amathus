@@ -15,7 +15,7 @@ class SettingsView extends StatefulWidget {
 class _SettingsViewState extends State<SettingsView> {
 
   FeedsStorage _storage;
-  Future _fetchFeedsFuture;
+  Future _futureData;
   List<Feed> _feeds;
 
   _SettingsViewState() {
@@ -25,8 +25,8 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
-    _fetchFeedsFuture = _storage.read();
-    _fetchFeedsFuture.then((value) => _feeds = value);
+    // TODO: There's a chance that feeds have not been stored
+    _futureData = _storage.read();
   }
 
   @override
@@ -35,7 +35,7 @@ class _SettingsViewState extends State<SettingsView> {
         appBar: AppBar(centerTitle: true, title: new Text(Constants.SETTINGS)),
         drawer: AppDrawer(),
         body: FutureBuilder<List<Feed>>(
-            future: _fetchFeedsFuture,
+            future: _futureData,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
                 var feeds = snapshot.data;

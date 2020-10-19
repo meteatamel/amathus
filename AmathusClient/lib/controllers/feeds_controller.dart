@@ -16,40 +16,35 @@ class FeedsController {
     _storage = new FeedsStorage();
   }
 
-  Future<List<Feed>> readFromServer() async {
+  Future<List<Feed>> readAll() async {
 
     try {
       final response = await http.get(Constants.URL_FEEDS);
       if (response.statusCode == 200) {
         final receivedFeeds = (json.decode(response.body) as List).map((i) =>
             Feed.fromJson(i)).toList();
-        return receivedFeeds;
+        var orderedFeeds = await _orderAndStoreFeeds(receivedFeeds);
+        return orderedFeeds;
       }
     } on SocketException catch (e) {
-      // Just return the stored feeds
       print("Cannot connect to server: ${e.message}");
     }
 
     return null;
   }
 
-  Future<List<Feed>> readFromStorage() async {
+  Future<List<Feed>> readAllStored() async {
     _storedFeeds = await _storage.read();
     return _storedFeeds;
   }
 
-  Future<void> writeToStorage(List<Feed> feeds) async {
-    await _storage.write(feeds);
-    _storedFeeds= feeds;
-  }
-
-  Future<List<Feed>> orderAndStoreFeeds(List<Feed> receivedFeeds) async {
+  Future<List<Feed>> _orderAndStoreFeeds(List<Feed> receivedFeeds) async {
     if (receivedFeeds == null || receivedFeeds.isEmpty) {
       return _storedFeeds;
     }
 
     if (_storedFeeds == null || _storedFeeds.isEmpty) {
-      await writeToStorage(receivedFeeds);
+      await _writeToStorage(receivedFeeds);
       return receivedFeeds;
     }
 
@@ -65,7 +60,12 @@ class FeedsController {
     }
 
     orderedFeeds.addAll(receivedFeeds);
-    writeToStorage(orderedFeeds);
+    _writeToStorage(orderedFeeds);
     return orderedFeeds;
+  }
+
+  Future<void> _writeToStorage(List<Feed> feeds) async {
+    await _storage.write(feeds);
+    _storedFeeds= feeds;
   }
 }

@@ -1,4 +1,4 @@
-import 'package:amathus/controllers/feeds_recent_controller.dart';
+import 'package:amathus/controllers/feeditems_controller.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/feeditem_view.dart';
@@ -9,22 +9,27 @@ import 'package:amathus/utils/constants.dart' as Constants;
 
 import 'common/drawer.dart';
 
-class FeedsRecentView extends StatefulWidget {
+class FeedItemsRecentView extends StatefulWidget {
 
   static const String routeName = '/feeds-recent';
 
   @override
-  _FeedsRecentViewState createState() => _FeedsRecentViewState();
+  _FeedItemsRecentViewState createState() => _FeedItemsRecentViewState();
 }
 
-class _FeedsRecentViewState extends State<FeedsRecentView> {
+class _FeedItemsRecentViewState extends State<FeedItemsRecentView> {
 
-  Future<List<Feed>> _fetchFeedsFuture;
+  FeedItemsController _controller;
+  Future<List<Feed>> _futureData;
+
+  _FeedItemsRecentViewState() {
+    _controller = FeedItemsController();
+  }
 
   @override
   void initState() {
     super.initState();
-    _fetchFeedsFuture = readFromServer();
+    _futureData = _controller.readRecent();
   }
 
   @override
@@ -33,7 +38,7 @@ class _FeedsRecentViewState extends State<FeedsRecentView> {
         appBar: AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS)),
         drawer: AppDrawer(),
         body: FutureBuilder<List<Feed>>(
-            future: _fetchFeedsFuture,
+            future: _futureData,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
                 final feeds = snapshot.data;
@@ -75,7 +80,7 @@ class _FeedsRecentViewState extends State<FeedsRecentView> {
                               });
                         }),
                       onRefresh: () async {
-                        _fetchFeedsFuture = readFromServer();
+                        _futureData = _controller.readRecent();
                       },
                 );
               }

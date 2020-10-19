@@ -1,7 +1,7 @@
 import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
-import 'package:amathus/views/feed_view.dart';
+import 'package:amathus/views/feeditems_byid_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
@@ -78,23 +78,18 @@ class _FeedsViewState extends State<FeedsView> {
 
   Future<void> loadData({storage = true}) async {
     if (storage) {
-      print("Loading from storage");
-      var feeds = await _controller.readFromStorage();
+      var feeds = await _controller.readAllStored();
       if (feeds != null) {
-        print("Loaded from storage");
         setState(() {
           _feeds = feeds;
         });
       }
     }
 
-    print("Loading from server");
-    var receivedFeeds = await _controller.readFromServer();
+    var receivedFeeds = await _controller.readAll();
     if (receivedFeeds != null) {
-      print("Loaded from server");
-      var orderedFeeds = await _controller.orderAndStoreFeeds(receivedFeeds);
       setState(() {
-        _feeds = orderedFeeds;
+        _feeds = receivedFeeds;
       });
     }
   }
@@ -151,7 +146,7 @@ class _FeedsViewState extends State<FeedsView> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          FeedView(feed: item)))
+                                          FeedItemsByIdView(feed: item)))
                             });
                   },
                 ),
