@@ -1,6 +1,7 @@
 import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
+import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/feeditems_byid_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -106,11 +107,7 @@ class _FeedsViewState extends State<FeedsView> {
         appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
         drawer: AppDrawer(),
         body: _feeds == null
-            ? Center(
-                child: SizedBox(
-                    height: 200.0,
-                    width: 200.0,
-                    child: CircularProgressIndicator()))
+            ? CenteredProgressIndicator()
             : RefreshIndicator(
                 child: ListView.separated(
                   itemCount: _feeds.length,

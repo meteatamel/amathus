@@ -1,6 +1,7 @@
 import 'package:amathus/controllers/feeds_storage.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
+import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -62,11 +63,7 @@ class _SettingsViewState extends State<SettingsView> {
                 );
               }
 
-              return Center(
-                  child: SizedBox(
-                      height: 200.0,
-                      width: 200.0,
-                      child: CircularProgressIndicator()));
+              return CenteredProgressIndicator();
             }));
   }
 
