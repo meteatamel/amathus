@@ -18,7 +18,7 @@ class AppBottomNavigationBar extends StatelessWidget {
           label: Constants.ALL_NEWS,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.business),
+          icon: Icon(Icons.new_releases),
           label: Constants.RECENT_NEWS,
         )
       ],

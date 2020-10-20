@@ -12,30 +12,30 @@ class FeedItemListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      //contentPadding: EdgeInsets.symmetric(horizontal: 16),
-        title: Text(item.title),
-        subtitle:
-        Text(timeago.format(item.publishDate, locale: 'tr')),
-        leading: SizedBox(
-            width: 100.0,
-            child: item.imageUrl != null
-                ? CachedNetworkImage(
-                imageUrl: item.imageUrl,
-                placeholder: (context, url) =>
-                new LinearProgressIndicator(),
-                errorWidget: (context, url, error) =>
-                    Image.asset("assets/newsicon-128px.png"))
-                : Image.asset("assets/newsicon-128px.png")),
-        trailing: Icon(Icons.keyboard_arrow_right),
-        onTap: () =>
-        {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      FeedItemView(item: item)))
-        }
+    return Card(
+        child: ListTile(
+            title: Text(item.title),
+            subtitle: Text(timeago.format(item.publishDate, locale: 'tr')),
+            leading: SizedBox(
+                width: 100.0,
+                child: item.imageUrl != null
+                    ? CachedNetworkImage(
+                    imageUrl: item.imageUrl,
+                    placeholder: (context, url) =>
+                    new LinearProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        Image.asset("assets/newsicon-128px.png"))
+                    : Image.asset("assets/newsicon-128px.png")),
+            //trailing: Icon(Icons.keyboard_arrow_right),
+            onTap: () =>
+            {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          FeedItemView(item: item)))
+            }
+        )
     );
   }
 }

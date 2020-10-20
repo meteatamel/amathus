@@ -6,11 +6,14 @@ import 'package:flutter/material.dart';
 typedef LoadDataCallback = Future<List<Feed>> Function();
 
 class FeedsList extends StatefulWidget {
-
   final LoadDataCallback loadDataStorageCallback;
   final LoadDataCallback loadDataServerCallback;
 
-  FeedsList({Key key, @required this.loadDataStorageCallback, @required this.loadDataServerCallback }) : super(key: key);
+  FeedsList(
+      {Key key,
+      @required this.loadDataStorageCallback,
+      @required this.loadDataServerCallback})
+      : super(key: key);
 
   @override
   _FeedsListState createState() => _FeedsListState();
@@ -22,8 +25,8 @@ class _FeedsListState extends State<FeedsList> {
   @override
   void initState() {
     super.initState();
-    _loadDataAndUpdateState(widget.loadDataStorageCallback).whenComplete(()
-        => _loadDataAndUpdateState(widget.loadDataServerCallback));
+    _loadDataAndUpdateState(widget.loadDataStorageCallback).whenComplete(
+        () => _loadDataAndUpdateState(widget.loadDataServerCallback));
   }
 
   Future<void> _loadDataAndUpdateState(LoadDataCallback callback) async {
@@ -40,20 +43,18 @@ class _FeedsListState extends State<FeedsList> {
     return _items == null
         ? CenteredProgressIndicator()
         : RefreshIndicator(
-      child: ListView.separated(
-        itemCount: _items.length,
-        // TODO: Add or remove after ads are fixed
-        //padding: const EdgeInsets.only(top: kToolbarHeight + 75),
-        padding: const EdgeInsets.only(top: 10),
-        separatorBuilder: (BuildContext context, int index) =>
-        const Divider(),
-        itemBuilder: (context, index) {
-          return FeedListTile(item: _items[index]);
-        },
-      ),
-      onRefresh: () async {
-        await _loadDataAndUpdateState(widget.loadDataServerCallback);
-      },
-    );
+            child: ListView.builder(
+              // TODO: Add or remove after ads are fixed
+              //padding: const EdgeInsets.only(top: kToolbarHeight + 75),
+              padding: const EdgeInsets.all(10),
+              itemCount: _items.length,
+              itemBuilder: (context, index) {
+                return FeedListTile(item: _items[index]);
+              },
+            ),
+            onRefresh: () async {
+              await _loadDataAndUpdateState(widget.loadDataServerCallback);
+            },
+          );
   }
 }
