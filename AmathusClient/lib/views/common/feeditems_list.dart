@@ -39,7 +39,9 @@ class _FeedItemsListState extends State<FeedItemsList> {
           ? CenteredProgressIndicator()
           : ListView.separated(
               itemCount: _items.length,
-              padding: const EdgeInsets.only(top: kToolbarHeight + 75),
+              // TODO: Add or remove after ads are fixed
+              //padding: const EdgeInsets.only(top: kToolbarHeight + 75),
+              padding: const EdgeInsets.only(top: 10),
               separatorBuilder: (BuildContext context, int index) =>
                   const Divider(),
               itemBuilder: (context, index) {

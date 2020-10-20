@@ -1,5 +1,6 @@
 import 'package:amathus/ad_manager.dart';
 import 'package:amathus/controllers/feeds_controller.dart';
+import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeds_list.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -7,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedsView extends StatefulWidget {
-
   static const String routeName = '/feeds';
 
   @override
@@ -15,7 +15,6 @@ class FeedsView extends StatefulWidget {
 }
 
 class _FeedsViewState extends State<FeedsView> {
-
   FeedsController _controller;
   BannerAd _bannerAd;
   InterstitialAd _interstitialAd;
@@ -39,7 +38,8 @@ class _FeedsViewState extends State<FeedsView> {
         break;
       default:
       // do nothing
-    }}
+    }
+  }
 
   _FeedsViewState() {
     _controller = FeedsController();
@@ -52,7 +52,9 @@ class _FeedsViewState extends State<FeedsView> {
       adUnitId: AdManager.bannerAdUnitId,
       size: AdSize.banner,
     );
-    _loadBannerAd();
+
+    // TODO: Add or remove after ads are fixed
+    //_loadBannerAd();
 
     _isInterstitialAdReady = false;
     _interstitialAd = InterstitialAd(
@@ -76,16 +78,18 @@ class _FeedsViewState extends State<FeedsView> {
   void _loadBannerAd() {
     _bannerAd
       ..load()
-      ..show(anchorOffset: kToolbarHeight + 75,anchorType: AnchorType.top);
+      ..show(anchorOffset: kToolbarHeight + 75, anchorType: AnchorType.top);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
-        drawer: AppDrawer(),
-        body: FeedsList(loadDataStorageCallback: () => _controller.readAllStored(),
-          loadDataServerCallback: () => _controller.readAll(),)
+      appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
+      drawer: AppDrawer(),
+      body: FeedsList(
+          loadDataStorageCallback: () => _controller.readAllStored(),
+          loadDataServerCallback: () => _controller.readAll()),
+      bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0)
     );
   }
 }
