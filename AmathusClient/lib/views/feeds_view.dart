@@ -1,15 +1,13 @@
+import 'package:amathus/ad_manager.dart';
 import 'package:amathus/controllers/feeds_controller.dart';
-import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
-import 'package:amathus/views/common/progress_indicator.dart';
-import 'package:amathus/views/feeditems_byid_view.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:amathus/views/common/feeds_list.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import '../ad_manager.dart';
 
 class FeedsView extends StatefulWidget {
+
   static const String routeName = '/feeds';
 
   @override
@@ -17,7 +15,7 @@ class FeedsView extends StatefulWidget {
 }
 
 class _FeedsViewState extends State<FeedsView> {
-  List<Feed> _feeds;
+
   FeedsController _controller;
   BannerAd _bannerAd;
   InterstitialAd _interstitialAd;
@@ -65,33 +63,13 @@ class _FeedsViewState extends State<FeedsView> {
     _loadInterstitialAd();
 
     super.initState();
-    loadData().whenComplete(() => {
-      if (interstitialLastShown == null) {
-        interstitialLastShown = DateTime.now()
-      },
 
-      if (DateTime.now().difference(interstitialLastShown).inHours > 1) {
-        _interstitialAd.show()
-      }
-
-    });
-  }
-
-  Future<void> loadData({storage = true}) async {
-    if (storage) {
-      var feeds = await _controller.readAllStored();
-      if (feeds != null) {
-        setState(() {
-          _feeds = feeds;
-        });
-      }
+    if (interstitialLastShown == null) {
+      interstitialLastShown = DateTime.now();
     }
 
-    var receivedFeeds = await _controller.readAll();
-    if (receivedFeeds != null) {
-      setState(() {
-        _feeds = receivedFeeds;
-      });
+    if (DateTime.now().difference(interstitialLastShown).inHours > 1) {
+      _interstitialAd.show();
     }
   }
 
@@ -106,50 +84,8 @@ class _FeedsViewState extends State<FeedsView> {
     return Scaffold(
         appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)),
         drawer: AppDrawer(),
-        body: _feeds == null
-            ? CenteredProgressIndicator()
-            : RefreshIndicator(
-                child: ListView.separated(
-                  itemCount: _feeds.length,
-                  padding: const EdgeInsets.only(top: kToolbarHeight + 75),
-                  separatorBuilder: (BuildContext context, int index) =>
-                      const Divider(),
-                  itemBuilder: (context, index) {
-                    final item = _feeds[index];
-                    return ListTile(
-                        //contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
-                        title: Container(
-                            //color: Colors.grey[150],
-                            child: item.imageUrl != null
-                                ? SizedBox(
-                                    width: 200,
-                                    height: 50,
-                                    child: CachedNetworkImage(
-                                      imageUrl: item.imageUrl,
-                                      placeholder: (context, url) =>
-                                          new LinearProgressIndicator(),
-                                      errorWidget: (context, url, error) =>
-                                          Text(item.title,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .headline4),
-                                    ))
-                                : Text(item.title,
-                                    style:
-                                        Theme.of(context).textTheme.headline4)),
-                        trailing: Icon(Icons.keyboard_arrow_right),
-                        onTap: () => {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          FeedItemsByIdView(feed: item)))
-                            });
-                  },
-                ),
-                onRefresh: () async {
-                  await loadData(storage: false);
-                },
-              ));
+        body: FeedsList(loadDataStorageCallback: () => _controller.readAllStored(),
+          loadDataServerCallback: () => _controller.readAll(),)
+    );
   }
 }
