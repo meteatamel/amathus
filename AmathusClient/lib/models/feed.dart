@@ -29,7 +29,15 @@ class Feed {
   Feed(this.id, this.title, this.lastUpdatedTime, this.imageUrl, this.url,
       this.items);
 
-  factory Feed.fromJson(Map<String, dynamic> json) => _$FeedFromJson(json);
+  factory Feed.fromJson(Map<String, dynamic> json) {
+    var feed = _$FeedFromJson(json);
+    if (feed.items != null) {
+      feed.items.forEach((element) {
+        element.feed = feed;
+      });
+    }
+    return feed;
+  }
 
   Map<String, dynamic> toJson() => _$FeedToJson(this);
 }

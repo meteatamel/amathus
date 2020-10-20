@@ -1,3 +1,4 @@
+import 'package:amathus/models/feed.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 // Run the following to generate it:
@@ -24,6 +25,9 @@ class FeedItem {
 
   @JsonKey(name: 'Url')
   final String url;
+
+  @JsonKey(ignore: true)
+  Feed feed;
 
   FeedItem(this.title, this.publishDate, this.summary, this.detail,
       this.imageUrl, this.url);
