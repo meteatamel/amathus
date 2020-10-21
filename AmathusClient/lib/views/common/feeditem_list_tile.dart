@@ -16,17 +16,8 @@ class FeedItemListTile extends StatelessWidget {
     return Card(
         child: ListTile(
             title: Text(item.title),
-            subtitle: Text(getSubtitle()),
-            leading: SizedBox(
-                width: 100.0,
-                child: item.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: item.imageUrl,
-                        placeholder: (context, url) =>
-                            new LinearProgressIndicator(),
-                        errorWidget: (context, url, error) =>
-                            Image.asset("assets/newsicon-128px.png"))
-                    : Image.asset("assets/newsicon-128px.png")),
+            subtitle: _subtitleText(),
+            leading: _leadingImage(),
             //trailing: Icon(Icons.keyboard_arrow_right),
             onTap: () => {
                   Navigator.push(
@@ -36,11 +27,32 @@ class FeedItemListTile extends StatelessWidget {
                 }));
   }
 
-  String getSubtitle() {
+  Widget _subtitleText() {
     var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
     if (displayFeedTitle && item.feed != null) {
       subtitle = "${item.feed.title} • $subtitle";
     }
-    return subtitle;
+    return Text(subtitle);
+  }
+
+  Widget _leadingImage() {
+
+    var childWidget;
+
+    if (item.imageUrl == null) {
+      childWidget = Image.asset("assets/newsicon-128px.png");
+    }
+    else {
+      childWidget = CachedNetworkImage(
+          imageUrl: item.imageUrl,
+          placeholder: (context, url) => new LinearProgressIndicator(),
+          errorWidget: (context, url, error) =>
+              Image.asset("assets/newsicon-128px.png"));
+    }
+
+    // Need to wrap into a SizedBox for some reason
+    return SizedBox(
+        width: 100.0,
+        child: childWidget);
   }
 }

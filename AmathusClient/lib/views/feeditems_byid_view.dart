@@ -3,7 +3,6 @@ import 'package:amathus/models/feed.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class FeedItemsByIdView extends StatelessWidget {
