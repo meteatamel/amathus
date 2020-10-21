@@ -1,7 +1,8 @@
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/feeditems_byid_view.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import 'feed_image.dart';
 
 class FeedListTile extends StatelessWidget {
   final Feed item;
@@ -12,20 +13,7 @@ class FeedListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
         child: ListTile(
-            title: Container(
-                child: item.imageUrl != null
-                    ? SizedBox(
-                        width: 200,
-                        height: 50,
-                        child: CachedNetworkImage(
-                          imageUrl: item.imageUrl,
-                          placeholder: (context, url) =>
-                              new LinearProgressIndicator(),
-                          errorWidget: (context, url, error) => Text(item.title,
-                              style: Theme.of(context).textTheme.headline4),
-                        ))
-                    : Text(item.title,
-                        style: Theme.of(context).textTheme.headline4)),
+            title: FeedImage(item: item),
             //trailing: Icon(Icons.keyboard_arrow_right),
             onTap: () => {
                   Navigator.push(
