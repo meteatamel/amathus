@@ -13,7 +13,7 @@ Future<void> main() async {
         routes:  {
           FeedsView.routeName: (context) => FeedsView(),
           FeedItemsRecentView.routeName: (context) => FeedItemsRecentView(),
-          SettingsView.routeName: (context) => SettingsView()
+          SettingsView.routeName: (context) => SettingsView(),
         },
       )
   );

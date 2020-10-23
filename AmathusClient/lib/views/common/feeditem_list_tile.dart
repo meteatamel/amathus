@@ -6,14 +6,16 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class FeedItemListTile extends StatelessWidget {
   final FeedItem item;
-  final bool displayFeedTitle;
 
-  FeedItemListTile({Key key, @required this.item, this.displayFeedTitle})
+  FeedItemListTile({Key key, @required this.item})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+        //height: 100,
+        child: Card(
+        elevation: 5,
         child: ListTile(
             title: Text(item.title),
             subtitle: _subtitleText(),
@@ -24,12 +26,12 @@ class FeedItemListTile extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) => FeedItemView(item: item)))
-                }));
+                })));
   }
 
   Widget _subtitleText() {
     var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
-    if (displayFeedTitle && item.feed != null) {
+    if (item.feed != null) {
       subtitle = "${item.feed.title} • $subtitle";
     }
     return Text(subtitle);

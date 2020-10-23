@@ -12,6 +12,7 @@ class FeedListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+        elevation: 5,
         child: ListTile(
             title: FeedImage(item: item),
             //trailing: Icon(Icons.keyboard_arrow_right),
