@@ -17,7 +17,7 @@ class FeedItemListTile extends StatelessWidget {
         child: Card(
         elevation: 5,
         child: ListTile(
-            title: Text(item.title),
+            title: Text(item.title, maxLines: 3, overflow: TextOverflow.ellipsis),
             subtitle: _subtitleText(),
             leading: _leadingImage(),
             //trailing: Icon(Icons.keyboard_arrow_right),
@@ -31,9 +31,9 @@ class FeedItemListTile extends StatelessWidget {
 
   Widget _subtitleText() {
     var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
-    if (item.feed != null) {
-      subtitle = "${item.feed.title} • $subtitle";
-    }
+//    if (item.feed != null) {
+//      subtitle = "${item.feed.title} • $subtitle";
+//    }
     return Text(subtitle);
   }
 

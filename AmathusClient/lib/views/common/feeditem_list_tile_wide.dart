@@ -43,8 +43,7 @@ class FeedItemListTileContent extends StatelessWidget {
   final FeedItem item;
   final FeedItemController _controller = new FeedItemController();
 
-  FeedItemListTileContent(
-      {Key key, @required this.item})
+  FeedItemListTileContent({Key key, @required this.item})
       : assert(item != null),
         super(key: key);
 
@@ -57,7 +56,6 @@ class FeedItemListTileContent extends StatelessWidget {
           //height: 200,
           child: _itemImage(),
         ),
-        // Description and share/explore buttons.
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Column(
@@ -70,34 +68,27 @@ class FeedItemListTileContent extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
-              Text(item.summary,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis)
+              Text(item.summary, maxLines: 2, overflow: TextOverflow.ellipsis)
             ],
           ),
         ),
 
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
-              child: _subtitleText()),
+              padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _favicon(),
+                  _sourceAndTimeText()])),
           IconButton(
             tooltip: Constants.SHARE,
             icon: const Icon(Icons.share),
-            onPressed: () async => await _controller.socialShare(context, item.title, item.url),
+            onPressed: () async =>
+                await _controller.socialShare(context, item.title, item.url),
           ),
         ]),
       ],
     );
-  }
-
-  Widget _subtitleText() {
-    var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
-    if (item.feed != null) {
-      subtitle = "${item.feed.title} • $subtitle";
-    }
-    return Text(subtitle, style: TextStyle(fontSize: 14));
   }
 
   Widget _itemImage() {
@@ -107,5 +98,19 @@ class FeedItemListTileContent extends StatelessWidget {
             imageUrl: item.imageUrl,
             placeholder: (context, url) => new LinearProgressIndicator(),
           );
+  }
+
+  Widget _sourceAndTimeText() {
+    var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
+    if (item.feed != null) {
+      subtitle = " ${item.feed.title} • $subtitle";
+    }
+    return Text(subtitle, style: TextStyle(fontSize: 14));
+  }
+
+  Widget _favicon() {
+    return CachedNetworkImage(width: 16, height: 16,
+      imageUrl: item.feed.url + "favicon.ico",
+      errorWidget: (context, url, error) => Icon(Icons.description, size: 16));
   }
 }
