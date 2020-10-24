@@ -1,7 +1,6 @@
-import 'package:amathus/controllers/feeditem_controller.dart';
 import 'package:amathus/models/feeditem.dart';
+import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
-import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -41,7 +40,6 @@ class FeedItemListTileWide extends StatelessWidget {
 
 class FeedItemListTileContent extends StatelessWidget {
   final FeedItem item;
-  final FeedItemController _controller = new FeedItemController();
 
   FeedItemListTileContent({Key key, @required this.item})
       : assert(item != null),
@@ -80,12 +78,7 @@ class FeedItemListTileContent extends StatelessWidget {
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [_favicon(), _sourceAndTimeText()])),
-          IconButton(
-            tooltip: Constants.SHARE,
-            icon: const Icon(Icons.share),
-            onPressed: () async =>
-                await _controller.socialShare(context, item.title, item.url),
-          ),
+          ShareIconButton(item: item),
         ]),
       ],
     );

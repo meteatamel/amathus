@@ -18,10 +18,9 @@ class FeedItemListTile extends StatelessWidget {
         child: Card(
         elevation: 5,
         child: ListTile(
-            title: Text(item.title, maxLines: 3, overflow: TextOverflow.ellipsis),
-            subtitle: _subtitleText(),
-            leading: _leadingImage(),
-            //trailing: Icon(Icons.keyboard_arrow_right),
+            title: _titleText(),
+            subtitle: _timeText(),
+            trailing: _itemImage(),
             onTap: () => {
                   Navigator.push(
                       context,
@@ -31,15 +30,23 @@ class FeedItemListTile extends StatelessWidget {
                 })));
   }
 
-  Widget _subtitleText() {
-    var subtitle = "${timeago.format(item.publishDate, locale: 'tr')}";
-//    if (item.feed != null) {
-//      subtitle = "${item.feed.title} • $subtitle";
-//    }
-    return Text(subtitle);
+  Widget _titleText() {
+    return new Padding(
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+        child: Text(item.title,
+            style: TextStyle(fontSize: 16),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis));
   }
 
-  Widget _leadingImage() {
+  Widget _timeText() {
+    var time = "${timeago.format(item.publishDate, locale: 'tr')}";
+    return new Padding(
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+        child: Text(time));
+  }
+
+  Widget _itemImage() {
 
     var childWidget;
 

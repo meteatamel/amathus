@@ -1,12 +1,13 @@
-import 'package:amathus/controllers/feeditem_controller.dart';
 import 'package:amathus/models/feeditem.dart';
+import 'package:amathus/views/common/feed_image.dart';
+import 'package:amathus/views/common/share_iconbutton.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:url_launcher/url_launcher.dart';
 
 class FeedItemView extends StatelessWidget {
-
   final FeedItem item;
-  final FeedItemController _controller = new FeedItemController();
 
   FeedItemView({Key key, @required this.item}) : super(key: key);
 
@@ -14,48 +15,52 @@ class FeedItemView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: FeedImage(item: item.feed),
+        centerTitle: true,
+        actions: [
+          ShareIconButton(item: item)
+        ],
       ),
       body: buildColumn(context),
     );
   }
 
   Widget buildColumn(BuildContext context) =>
-      Column(crossAxisAlignment: CrossAxisAlignment.start,
-          //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            new Container(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(item.title,
-                    style: Theme.of(context).textTheme.headline5)),
-            new Container(
-                padding: const EdgeInsets.all(8.0),
-                child: item.imageUrl != null
-                    ? Image.network(item.imageUrl)
-                    : null),
-            new Container(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(item.summary, style: TextStyle(fontSize: 16.0))),
-            new Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  new Container(
-                      padding: const EdgeInsets.all(10.0),
-                      child: RaisedButton(
-                        child: Row(children: [
-                          Text(Constants.MORE),
-                          Icon(Icons.more_vert)
-                        ]),
-                        onPressed: () async => await _controller.launchURL(item.url),
-                      )),
-                  new Container(
-                    padding: const EdgeInsets.all(10.0),
-                    child: RaisedButton(
-                      child: Row(children: [Text(Constants.SHARE), Icon(Icons.share)]),
-                      onPressed: () async =>
-                          await _controller.socialShare(context, item.title, item.url),
-                    ),
-                  )
-                ])
-          ]);
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        new Container(
+            padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+            child:
+                Text(item.title, style: Theme.of(context).textTheme.headline5)),
+        new Container(
+            padding: const EdgeInsets.all(12.0),
+            child: item.imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: item.imageUrl,
+                    placeholder: (context, url) =>
+                        new LinearProgressIndicator())
+                : null),
+        new Container(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            child: Text(item.summary, style: TextStyle(fontSize: 18.0))),
+        _moreButton()
+      ]);
 
+  Widget _moreButton() {
+    return Align(
+        alignment: Alignment.bottomRight,
+        child: TextButton.icon(
+        onPressed: () async => await _launchURL(item.url),
+        icon: Icon(Icons.open_in_new),
+        label: Text(Constants.MORE)
+    )
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url, forceWebView: true, enableJavaScript: true);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 }
