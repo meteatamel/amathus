@@ -65,6 +65,8 @@ class FeedItemListTileContent extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   item.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -72,14 +74,12 @@ class FeedItemListTileContent extends StatelessWidget {
             ],
           ),
         ),
-
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _favicon(),
-                  _sourceAndTimeText()])),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [_favicon(), _sourceAndTimeText()])),
           IconButton(
             tooltip: Constants.SHARE,
             icon: const Icon(Icons.share),
@@ -109,8 +109,11 @@ class FeedItemListTileContent extends StatelessWidget {
   }
 
   Widget _favicon() {
-    return CachedNetworkImage(width: 16, height: 16,
-      imageUrl: item.feed.url + "favicon.ico",
-      errorWidget: (context, url, error) => Icon(Icons.description, size: 16));
+    return CachedNetworkImage(
+        width: 16,
+        height: 16,
+        imageUrl: item.feed.url + "favicon.ico",
+        errorWidget: (context, url, error) =>
+            Icon(Icons.description, size: 16));
   }
 }

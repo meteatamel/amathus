@@ -5,7 +5,7 @@
         "Id": "cyprustoday",
         "Title": "Cyprus Today",
         "Url": "https://www.cyprustodayonline.com/rss/category/cyprus",
-        "LogoUrl": "https://www.cyprustodayonline.com/uploads/logo/logo_5e6a36abc2b20.png"
+        "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/cyprustoday.png"
       },
       {
         "Id": "detaykibris",
@@ -125,7 +125,7 @@
         "Id": "seskibris",
         "Title": "Ses Kıbrıs",
         "Url": "https://www.seskibris.com//rss",
-        "LogoUrl": "https://static.daktilo.com/sites/706/uploads/2020/10/07/small/ms.png"
+        "LogoUrl": "https://static.daktilo.com/sites/706/uploads/2020/10/07/large/ms.png"
       },
       {
         "Id": "tvine",
