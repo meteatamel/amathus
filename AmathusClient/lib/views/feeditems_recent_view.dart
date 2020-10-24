@@ -9,8 +9,6 @@ import 'common/drawer.dart';
 
 class FeedItemsRecentView extends StatelessWidget {
 
-  static const String routeName = '/feeds-recent';
-
   final FeedItemsController _controller = FeedItemsController();
 
   @override

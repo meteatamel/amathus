@@ -7,8 +7,6 @@ import 'package:amathus/utils/constants.dart' as Constants;
 
 class SettingsView extends StatelessWidget {
 
-  static const String routeName = '/settings';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

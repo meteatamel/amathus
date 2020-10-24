@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 class FeedsView extends StatefulWidget {
-  static const String routeName = '/feeds';
 
   @override
   _FeedsViewState createState() => _FeedsViewState();

@@ -1,7 +1,9 @@
 import 'package:amathus/views/feeditems_recent_view.dart';
 import 'package:amathus/views/feeds_view.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:page_transition/page_transition.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
 
@@ -27,11 +29,10 @@ class AppBottomNavigationBar extends StatelessWidget {
       onTap: (index) {
         switch (index) {
           case 0:
-            Navigator.pushReplacementNamed(context, FeedsView.routeName);
+            Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade, child: FeedsView()));
             break;
           case 1:
-            Navigator.pushReplacementNamed(
-                context, FeedItemsRecentView.routeName);
+            Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade, child: FeedItemsRecentView()));
             break;
         }
       },

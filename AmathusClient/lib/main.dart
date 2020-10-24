@@ -10,11 +10,6 @@ Future<void> main() async {
   runApp(
       MaterialApp(
         home: FeedsView(),
-        routes:  {
-          FeedsView.routeName: (context) => FeedsView(),
-          FeedItemsRecentView.routeName: (context) => FeedItemsRecentView(),
-          SettingsView.routeName: (context) => SettingsView(),
-        },
       )
   );
 }

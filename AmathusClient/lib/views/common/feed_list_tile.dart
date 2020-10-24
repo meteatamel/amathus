@@ -1,6 +1,7 @@
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/feeditems_byid_view.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 
 import 'feed_image.dart';
 
@@ -15,12 +16,12 @@ class FeedListTile extends StatelessWidget {
         elevation: 5,
         child: ListTile(
             title: FeedImage(item: item),
-            //trailing: Icon(Icons.keyboard_arrow_right),
             onTap: () => {
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => FeedItemsByIdView(feed: item)))
+                      PageTransition(
+                          type: PageTransitionType.rightToLeft,
+                          child: FeedItemsByIdView(feed: item)))
                 }));
   }
 }

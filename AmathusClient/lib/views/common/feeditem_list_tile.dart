@@ -2,6 +2,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class FeedItemListTile extends StatelessWidget {
@@ -24,8 +25,9 @@ class FeedItemListTile extends StatelessWidget {
             onTap: () => {
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => FeedItemView(item: item)))
+                      PageTransition(
+                          type: PageTransitionType.rightToLeft,
+                          child: FeedItemView(item: item)))
                 })));
   }
 
