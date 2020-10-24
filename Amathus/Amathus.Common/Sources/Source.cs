@@ -17,9 +17,11 @@ namespace Amathus.Common.Sources
 {
     public class Source
     {
+        public const string CyprusToday = "cyprustoday";
         public const string DetayKibris = "detaykibris";
         public const string Diyalog = "diyalog";
         public const string GundemKibris = "gundemkibris";
+        public const string Giynik = "giynik";
         public const string Haberator = "haberator";
         public const string HaberalKibrisli = "haberalkibrisli";
         public const string Hakikat = "hakikat";
@@ -35,6 +37,7 @@ namespace Amathus.Common.Sources
         public const string LgcNews = "lgcnews";
         public const string LondraGazete = "londragazete";
         public const string OzgurGazete = "ozgurgazete";
+        public const string SesKibris = "seskibris";
         public const string TVine = "tvine";
         public const string Vatan = "vatan";
         public const string Volkan = "volkan";

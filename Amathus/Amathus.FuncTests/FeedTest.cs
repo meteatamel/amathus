@@ -34,6 +34,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_CyprusToday_Converts()
+        {
+            var feed = Read(Source.CyprusToday);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
             var feed = Read(Source.DetayKibris);
@@ -44,6 +51,13 @@ namespace Amathus.FunctionalTests
         public void Convert_Diyalog_Converts()
         {
             var feed = Read(Source.Diyalog);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Giynik_Converts()
+        {
+            var feed = Read(Source.Giynik);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -156,6 +170,13 @@ namespace Amathus.FunctionalTests
         public void Convert_OzgurGazete_Converts()
         {
             var feed = Read(Source.OzgurGazete);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_SesKibris_Converts()
+        {
+            var feed = Read(Source.SesKibris);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 

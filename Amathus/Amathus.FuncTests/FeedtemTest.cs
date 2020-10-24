@@ -32,6 +32,16 @@ namespace Amathus.FunctionalTests
         public static void Init(TestContext context) => _sources = TestHelper.GetSources();
 
         [TestMethod]
+        public void Convert_CyprusToday_Converts()
+        {
+            var feedItem = Read(Source.CyprusToday);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_DetayKibris_Converts()
         {
             var feedItem = Read(Source.DetayKibris);
@@ -49,6 +59,16 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
+        public void Convert_Giynik_Converts()
+        {
+            var feedItem = Read(Source.Giynik);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -207,6 +227,16 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
+
+        [TestMethod]
+        public void Convert_SesKibris_Converts()
+        {
+            var feedItem = Read(Source.SesKibris);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]

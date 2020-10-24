@@ -2,6 +2,12 @@
   "Amathus": {
     "Sources": [
       {
+        "Id": "cyprustoday",
+        "Title": "Cyprus Today",
+        "Url": "https://www.cyprustodayonline.com/rss/category/cyprus",
+        "LogoUrl": "https://www.cyprustodayonline.com/uploads/logo/logo_5e6a36abc2b20.png"
+      },
+      {
         "Id": "detaykibris",
         "Title": "Detay Kıbrıs",
         "Url": "http://www.detaykibris.com/rss/",
@@ -30,6 +36,12 @@
         "Title": "Haberal Kıbrıslı",
         "Url": "http://www.haberalkibrisli.net/rss",
         "LogoUrl": "http://www.haberalkibrisli.net/images/banner/haberal1-1-13-1024x265.jpg"
+      },
+      {
+        "Id": "giynik",
+        "Title": "Gıynık Gazetesi",
+        "Url": "https://www.giynikgazetesi.com/feed/",
+        "LogoUrl": "https://www.giynikgazetesi.com/wp-content/uploads/2020/01/GIYNIKson.png"
       },
       {
         "Id": "hakikat",
@@ -108,6 +120,12 @@
         "Title": "Özgür Gazete",
         "Url": "https://www.ozgurgazetekibris.com/feed",
         "LogoUrl": "https://www.ozgurgazetekibris.com/wp-content/uploads/2020/09/oz-logo.png"
+      },
+      {
+        "Id": "seskibris",
+        "Title": "Ses Kıbrıs",
+        "Url": "https://www.seskibris.com//rss",
+        "LogoUrl": "https://static.daktilo.com/sites/706/uploads/2020/10/07/small/ms.png"
       },
       {
         "Id": "tvine",

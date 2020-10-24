@@ -46,7 +46,8 @@ namespace Amathus.Common.Converter
                     Id = source.Id,
                     Title = source.Title,
                     ImageUrl = source.LogoUrl,
-                    LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime,
+                    // Some feeds do not have last updated time set. In those cases, use current time.
+                    LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime == new DateTime() ? DateTime.UtcNow : syncFeed.LastUpdatedTime.UtcDateTime,
                     Url = syncFeed.Links[0].Uri,
                     Items = syncFeed.Items.Select(item => itemConverter.Convert(item))
                                       .OrderByDescending(item => item.PublishDate).ToList()
@@ -67,6 +68,7 @@ namespace Amathus.Common.Converter
         {
             switch (sourceId)
             {
+                case Source.Giynik:
                 case Source.Hakikat:
                 case Source.Havadis:
                 case Source.KibrisHaberci:
@@ -87,7 +89,9 @@ namespace Amathus.Common.Converter
                 case Source.KibrisAda:
                 case Source.YeniDuzen:
                     return new HtmlImageSubtextRemoverFeedItemConverter();
+                case Source.CyprusToday:
                 case Source.GundemKibris:
+                case Source.SesKibris:
                     return new ImageFeedItemConverter();
                 case Source.Diyalog:
                 case Source.KibrisManset:
