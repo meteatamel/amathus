@@ -17,9 +17,7 @@ class FeedItemView extends StatelessWidget {
       appBar: AppBar(
         title: FeedImage(item: item.feed),
         centerTitle: true,
-        actions: [
-          ShareIconButton(item: item)
-        ],
+        actions: [ShareIconButton(item: item)],
       ),
       body: buildColumn(context),
     );
@@ -45,15 +43,15 @@ class FeedItemView extends StatelessWidget {
         _moreButton()
       ]);
 
+
   Widget _moreButton() {
     return Align(
         alignment: Alignment.bottomRight,
-        child: TextButton.icon(
-        onPressed: () async => await _launchURL(item.url),
-        icon: Icon(Icons.open_in_new),
-        label: Text(Constants.MORE)
-    )
-    );
+        child: TextButton(
+            onPressed: () async => await _launchURL(item.url),
+            child: Column(
+              children: <Widget>[Icon(Icons.open_in_new), Text(Constants.MORE)],
+            )));
   }
 
   Future<void> _launchURL(String url) async {

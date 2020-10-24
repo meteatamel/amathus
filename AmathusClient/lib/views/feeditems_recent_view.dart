@@ -17,7 +17,7 @@ class FeedItemsRecentView extends StatelessWidget {
         appBar: AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS)),
         drawer: AppDrawer(),
         body: FeedItemsList(loadDataCallback: loadData, wideTile: true),
-        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 1)
+        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0)
     );
   }
 

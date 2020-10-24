@@ -88,7 +88,7 @@ class _FeedsViewState extends State<FeedsView> {
       body: FeedsList(
           loadDataStorageCallback: () => _controller.readAllStored(),
           loadDataServerCallback: () => _controller.readAll()),
-      bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0)
+      bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 1)
     );
   }
 }
