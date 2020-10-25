@@ -1,9 +1,15 @@
+import 'package:admob_flutter/admob_flutter.dart';
+import 'package:amathus/ad_manager.dart';
 import 'package:amathus/views/feeditems_recent_view.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 Future<void> main() async {
   timeago.setLocaleMessages('tr', timeago.TrMessages());
+
+  WidgetsFlutterBinding.ensureInitialized();
+  Admob.initialize();
+  await Admob.requestTrackingAuthorization();
 
   runApp(
       MaterialApp(

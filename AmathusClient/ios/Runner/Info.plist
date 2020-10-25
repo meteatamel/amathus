@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>GADApplicationIdentifier</key>
-    <string>ca-app-pub-8735582123402927~8560233916</string>
+    <string>ca-app-pub-3940256099942544~2594085930</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
@@ -13,6 +13,10 @@
         <key>NSAllowsArbitraryLoadsInWebContent</key>
         <true/>
     </dict>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier will be used to deliver personalized ads to you.</string>
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

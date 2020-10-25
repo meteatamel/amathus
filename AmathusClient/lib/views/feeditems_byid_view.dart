@@ -4,6 +4,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:flutter/material.dart';
+import 'package:amathus/extensions.dart';
 
 class FeedItemsByIdView extends StatelessWidget {
 
@@ -15,7 +16,7 @@ class FeedItemsByIdView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: FeedImage(item: feed)),
+        appBar: AppBar(centerTitle: true, title: FeedImage(item: feed)).withBottomAdmobBanner(context),
         body: FeedItemsList(loadDataCallback: loadData));
   }
 

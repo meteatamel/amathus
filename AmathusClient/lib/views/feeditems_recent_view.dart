@@ -4,7 +4,7 @@ import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-
+import 'package:amathus/extensions.dart';
 import 'common/drawer.dart';
 
 class FeedItemsRecentView extends StatelessWidget {
@@ -14,7 +14,7 @@ class FeedItemsRecentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS)),
+        appBar: AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS)).withBottomAdmobBanner(context),
         drawer: AppDrawer(),
         body: FeedItemsList(loadDataCallback: loadData, wideTile: true),
         bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0)

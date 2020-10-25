@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:amathus/extensions.dart';
 
 class FeedItemView extends StatelessWidget {
   final FeedItem item;
@@ -18,7 +19,7 @@ class FeedItemView extends StatelessWidget {
         title: FeedImage(item: item.feed),
         centerTitle: true,
         actions: [ShareIconButton(item: item)],
-      ),
+      ).withBottomAdmobBanner(context),
       body: buildColumn(context),
     );
   }
