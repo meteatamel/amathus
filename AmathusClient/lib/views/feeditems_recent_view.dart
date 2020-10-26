@@ -8,17 +8,17 @@ import 'package:amathus/extensions.dart';
 import 'common/drawer.dart';
 
 class FeedItemsRecentView extends StatelessWidget {
-
   final FeedItemsController _controller = FeedItemsController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS)).withBottomAdmobBanner(context),
+        appBar:
+            AppBar(centerTitle: true, title: new Text(Constants.RECENT_NEWS))
+                .withBottomAdmobBanner(context),
         drawer: AppDrawer(),
         body: FeedItemsList(loadDataCallback: loadData, wideTile: true),
-        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0)
-    );
+        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0));
   }
 
   Future<List<FeedItem>> loadData() async {

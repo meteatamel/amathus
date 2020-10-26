@@ -8,26 +8,25 @@ import 'package:timeago/timeago.dart' as timeago;
 class FeedItemListTile extends StatelessWidget {
   final FeedItem item;
 
-  FeedItemListTile({Key key, @required this.item})
-      : super(key: key);
+  FeedItemListTile({Key key, @required this.item}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
         //height: 100,
         child: Card(
-        elevation: 5,
-        child: ListTile(
-            title: _titleText(),
-            subtitle: _timeText(),
-            trailing: _itemImage(),
-            onTap: () => {
-                  Navigator.push(
-                      context,
-                      PageTransition(
-                          type: PageTransitionType.rightToLeft,
-                          child: FeedItemView(item: item)))
-                })));
+            elevation: 5,
+            child: ListTile(
+                title: _titleText(),
+                subtitle: _timeText(),
+                trailing: _itemImage(),
+                onTap: () => {
+                      Navigator.push(
+                          context,
+                          PageTransition(
+                              type: PageTransitionType.rightToLeft,
+                              child: FeedItemView(item: item)))
+                    })));
   }
 
   Widget _titleText() {
@@ -42,18 +41,15 @@ class FeedItemListTile extends StatelessWidget {
   Widget _timeText() {
     var time = "${timeago.format(item.publishDate, locale: 'tr')}";
     return new Padding(
-        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
-        child: Text(time));
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0), child: Text(time));
   }
 
   Widget _itemImage() {
-
     var childWidget;
 
     if (item.imageUrl == null) {
       childWidget = Image.asset("assets/newsicon-128px.png");
-    }
-    else {
+    } else {
       childWidget = CachedNetworkImage(
           imageUrl: item.imageUrl,
           placeholder: (context, url) => new LinearProgressIndicator(),
@@ -62,8 +58,6 @@ class FeedItemListTile extends StatelessWidget {
     }
 
     // Need to wrap into a SizedBox for some reason
-    return SizedBox(
-        width: 100.0,
-        child: childWidget);
+    return SizedBox(width: 100.0, child: childWidget);
   }
 }

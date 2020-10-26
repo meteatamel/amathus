@@ -44,8 +44,6 @@ class _FeedsListState extends State<FeedsList> {
         ? CenteredProgressIndicator()
         : RefreshIndicator(
             child: ListView.builder(
-              // TODO: Add or remove after ads are fixed
-              //padding: const EdgeInsets.only(top: kToolbarHeight + 75),
               padding: const EdgeInsets.all(10),
               itemCount: _items.length,
               itemBuilder: (context, index) {

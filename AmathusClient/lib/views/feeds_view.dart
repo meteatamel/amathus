@@ -1,4 +1,3 @@
-import 'package:amathus/ad_manager.dart';
 import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
@@ -8,40 +7,26 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/extensions.dart';
 
 class FeedsView extends StatefulWidget {
-
   @override
   _FeedsViewState createState() => _FeedsViewState();
 }
 
 class _FeedsViewState extends State<FeedsView> {
   FeedsController _controller;
-  bool _isInterstitialAdReady;
-  DateTime interstitialLastShown;
-
-
 
   _FeedsViewState() {
     _controller = FeedsController();
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    if (interstitialLastShown == null) {
-      interstitialLastShown = DateTime.now();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS)).withBottomAdmobBanner(context),
-      drawer: AppDrawer(),
-      body: FeedsList(
-          loadDataStorageCallback: () => _controller.readAllStored(),
-          loadDataServerCallback: () => _controller.readAll()),
-      bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 1)
-    );
+        appBar: AppBar(centerTitle: true, title: new Text(Constants.ALL_NEWS))
+            .withBottomAdmobBanner(context),
+        drawer: AppDrawer(),
+        body: FeedsList(
+            loadDataStorageCallback: () => _controller.readAllStored(),
+            loadDataServerCallback: () => _controller.readAll()),
+        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 1));
   }
 }

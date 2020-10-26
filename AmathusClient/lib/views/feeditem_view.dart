@@ -44,7 +44,6 @@ class FeedItemView extends StatelessWidget {
         _moreButton()
       ]);
 
-
   Widget _moreButton() {
     return Align(
         alignment: Alignment.bottomRight,

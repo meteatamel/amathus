@@ -12,18 +12,27 @@ class AppDrawer extends StatelessWidget {
         children: [
           ListTile(
               leading: Icon(Icons.fiber_new),
-              title: Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
-              onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => FeedItemsRecentView()))
-          ),
+              title:
+                  Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
+              onTap: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) =>
+                          FeedItemsRecentView()))),
           ListTile(
               leading: Icon(Icons.dynamic_feed),
               title: Text(Constants.ALL_NEWS, style: TextStyle(fontSize: 18)),
-              onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => FeedsView()))
-          ),
+              onTap: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => FeedsView()))),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text(Constants.SETTINGS, style: TextStyle(fontSize: 18)),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => SettingsView())),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => SettingsView())),
           ),
         ],
       ),

@@ -5,10 +5,10 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:page_transition/page_transition.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
-
   final int selectedIndex;
 
-  AppBottomNavigationBar({Key key, @required this.selectedIndex}) : super(key: key);
+  AppBottomNavigationBar({Key key, @required this.selectedIndex})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +28,20 @@ class AppBottomNavigationBar extends StatelessWidget {
       onTap: (index) {
         switch (index) {
           case 0:
-            Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade, child: FeedItemsRecentView()));
+            Navigator.pushReplacement(
+                context,
+                PageTransition(
+                    type: PageTransitionType.fade,
+                    child: FeedItemsRecentView()));
             break;
           case 1:
-            Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade, child: FeedsView()));
+            Navigator.pushReplacement(
+                context,
+                PageTransition(
+                    type: PageTransitionType.fade, child: FeedsView()));
             break;
         }
       },
     );
   }
-
 }

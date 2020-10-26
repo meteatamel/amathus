@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 
 class ShareIconButton extends StatelessWidget {
-
   final FeedItem item;
 
   ShareIconButton({Key key, @required this.item}) : super(key: key);
@@ -14,8 +13,8 @@ class ShareIconButton extends StatelessWidget {
     return IconButton(
         tooltip: Constants.SHARE,
         icon: const Icon(Icons.share),
-        onPressed: () async => await _socialShare(context, item.title, item.url)
-    );
+        onPressed: () async =>
+            await _socialShare(context, item.title, item.url));
   }
 
   Future<void> _socialShare(BuildContext context, title, String url) async {

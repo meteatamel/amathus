@@ -41,21 +41,16 @@ class _FeedItemsListState extends State<FeedItemsList> {
       child: _items == null
           ? CenteredProgressIndicator()
           : ListView.builder(
-              // TODO: Add or remove after ads are fixed
-              //padding: const EdgeInsets.only(top: kToolbarHeight + 75),
               padding: const EdgeInsets.all(10),
               itemCount: _items.length,
               itemBuilder: (context, index) {
                 return (widget.wideTile)
-                    ? FeedItemListTileWide(
-                        item: _items[index])
-                    : FeedItemListTile(
-                        item: _items[index]);
+                    ? FeedItemListTileWide(item: _items[index])
+                    : FeedItemListTile(item: _items[index]);
               }),
       onRefresh: () async {
         await _loadDataAndUpdateState();
       },
     );
   }
-
 }
