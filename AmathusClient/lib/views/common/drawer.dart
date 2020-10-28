@@ -1,3 +1,4 @@
+import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/feeditems_recent_view.dart';
@@ -26,6 +27,14 @@ class AppDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (BuildContext context) => FeedsView()))),
+          ListTile(
+            leading: Icon(Icons.email),
+            title: Text(Constants.CONTACT, style: TextStyle(fontSize: 18)),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => ContactView())),
+          ),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text(Constants.SETTINGS, style: TextStyle(fontSize: 18)),
