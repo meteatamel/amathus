@@ -13,6 +13,7 @@
 // limitations under the License.
 using System.ServiceModel.Syndication;
 using System.Web;
+using System.Xml.Linq;
 using Amathus.Common.Feeds;
 
 namespace Amathus.Common.Converter
@@ -21,15 +22,29 @@ namespace Amathus.Common.Converter
     {
         public virtual FeedItem Convert(SyndicationItem item)
         {
-            var feedItem =  new FeedItem
+            var feedItem = new FeedItem
             {
                 Title = HttpUtility.HtmlDecode(item.Title.Text),
                 PublishDate = item.PublishDate.UtcDateTime,
                 Summary = HttpUtility.HtmlDecode(item.Summary.Text),
+                Detail = GetContentEncoded(item),
                 Url = item.Links[0].Uri
             };
 
             return feedItem;
+        }
+
+        protected string GetContentEncoded(SyndicationItem item)
+        {
+            foreach (SyndicationElementExtension ext in item.ElementExtensions)
+            {
+                if (ext.GetObject<XElement>().Name.LocalName == "encoded")
+                {
+                    var value = ext.GetObject<XElement>().Value.ToString();
+                    return value;
+                }
+            }
+            return null;
         }
     }
 }

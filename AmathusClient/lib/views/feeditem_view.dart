@@ -42,7 +42,7 @@ class FeedItemView extends StatelessWidget {
                 : null),
         new Container(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: Text(item.summary, style: TextStyle(fontSize: 18.0))),
+            child: Text(item.summary, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         item.detail != null
             ? new Container(
                 child: Html(data: item.detail, style: {
