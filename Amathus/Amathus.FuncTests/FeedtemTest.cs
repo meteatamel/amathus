@@ -14,8 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.ServiceModel.Syndication;
-using System.Xml.Linq;
 using Amathus.Common.Converter;
 using Amathus.Common.Feeds;
 using Amathus.Common.Reader;
@@ -71,6 +69,7 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
             //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -82,6 +81,7 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -112,7 +112,8 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            //Assert.IsNotNull(feedItem.ImageUrl);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -133,6 +134,9 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -186,6 +190,8 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]

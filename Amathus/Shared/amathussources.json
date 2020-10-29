@@ -20,6 +20,12 @@
         "LogoUrl": "http://www.diyaloggazetesi.com/images/banner/hslogo_1_1.png"
       },
       {
+        "Id": "giynik",
+        "Title": "Gıynık Gazetesi",
+        "Url": "https://www.giynikgazetesi.com/feed/",
+        "LogoUrl": "https://www.giynikgazetesi.com/wp-content/uploads/2020/01/GIYNIKson.png"
+      },
+      {
         "Id": "gundemkibris",
         "Title": "Gündem Kıbrıs",
         "Url": "http://www.gundemkibris.com/rss",
@@ -36,12 +42,6 @@
         "Title": "Haberal Kıbrıslı",
         "Url": "http://www.haberalkibrisli.net/rss",
         "LogoUrl": "http://www.haberalkibrisli.net/images/banner/haberal1-1-13-1024x265.jpg"
-      },
-      {
-        "Id": "giynik",
-        "Title": "Gıynık Gazetesi",
-        "Url": "https://www.giynikgazetesi.com/feed/",
-        "LogoUrl": "https://www.giynikgazetesi.com/wp-content/uploads/2020/01/GIYNIKson.png"
       },
       {
         "Id": "hakikat",

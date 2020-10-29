@@ -18,14 +18,18 @@ using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class HtmlImageSubtextRemoverFeedItemConverter : DefaultFeedItemConverter
+    public class HtmlImageFooterRemoverFeedItemConverter : HtmlRemoverFeedItemConverter
     { 
         public override FeedItem Convert(SyndicationItem item)
         {
             var feedItem = base.Convert(item);
-            feedItem.ImageUrl = TextUtil.ExtractImgSrc(feedItem.Summary);
-            feedItem.Summary = TextUtil.RemoveHtmlTabAndNewLine(feedItem.Summary);
-            feedItem.Summary = TextUtil.RemoveSubtext(feedItem.Summary, feedItem.Title);
+            feedItem.ImageUrl = TextUtil.ExtractImgSrc(feedItem.Detail);
+            if (feedItem.ImageUrl != null)
+            {
+                feedItem.Detail = TextUtil.RemoveImgSrc(feedItem.Detail);
+            }
+            feedItem.Summary = TextUtil.RemoveFooter(feedItem.Summary);
+            feedItem.Detail = TextUtil.RemoveFooter(feedItem.Detail);
             return feedItem;
         }
     }

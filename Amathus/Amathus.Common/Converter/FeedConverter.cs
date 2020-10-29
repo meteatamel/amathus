@@ -69,9 +69,11 @@ namespace Amathus.Common.Converter
             switch (sourceId)
             {
                 case Source.Giynik:
-                case Source.Hakikat:
                 case Source.Havadis:
                 case Source.KibrisHaberci:
+                    return new HtmlImageFooterRemoverFeedItemConverter();
+                case Source.Hakikat:
+                    return new HakikatFeedItemConverter();
                 case Source.KibrisSonDakika:
                 case Source.LgcNews:
                 case Source.OzgurGazete:

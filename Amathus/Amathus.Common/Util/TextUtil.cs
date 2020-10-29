@@ -11,25 +11,52 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace Amathus.Common.Util
 {
     public static class TextUtil
     {
+        private const string ImgPattern = "<img.+?src=[\"'](.+?)[\"'].+?>";
+
         public static string RemoveHtmlTabAndNewLine(string text)
         {
             return RemoveHtml(RemoveTabAndNewLine(text));
         }
 
+        public static string HtmlDecode(string text)
+        {
+            // Some feeds have extra space before or after
+            return HttpUtility.HtmlDecode(text).Trim();
+        }
+
         public static string RemoveHtml(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
             return Regex.Replace(text, "<.+?>", string.Empty);
         }
 
-        public static string ExtractImgSrc(string text)
+        public static Uri GetImg(string text)
         {
-            return Regex.Match(text, "<img.+?src=[\"'](.+?)[\"'].+?>", RegexOptions.IgnoreCase).Groups[1].Value;
+            return string.IsNullOrEmpty(text) ? null : new Uri(text);
+        }
+
+        public static Uri ExtractImgSrc(string text)
+        {
+            var extracted = Regex.Match(text, ImgPattern, RegexOptions.IgnoreCase).Groups[1].Value;
+            return string.IsNullOrEmpty(extracted)? null : new Uri(extracted);
+        }
+
+        public static string RemoveImgSrc(string text)
+        {
+            var regex = new Regex(ImgPattern);
+            return regex.Replace(text, string.Empty, 1);
         }
 
         public static string RemoveSubtext(string text, string subtext)
@@ -38,8 +65,28 @@ namespace Amathus.Common.Util
             return regex.Replace(text, string.Empty, 1);
         }
 
-        private static string RemoveTabAndNewLine(string text)
+        public static string RemoveFooter(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            if (Regex.IsMatch(text, "The post (.+?) appeared"))
+            {
+                return text.Substring(0, text.IndexOf("The post"));
+            }
+
+            return text;
+        }
+
+        public static string RemoveTabAndNewLine(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
             return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "").Trim();
         }
     }

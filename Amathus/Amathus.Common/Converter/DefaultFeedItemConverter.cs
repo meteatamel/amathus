@@ -15,6 +15,7 @@ using System.ServiceModel.Syndication;
 using System.Web;
 using System.Xml.Linq;
 using Amathus.Common.Feeds;
+using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
@@ -24,21 +25,21 @@ namespace Amathus.Common.Converter
         {
             var feedItem = new FeedItem
             {
-                Title = HttpUtility.HtmlDecode(item.Title.Text),
+                Title = TextUtil.HtmlDecode(item.Title.Text),
                 PublishDate = item.PublishDate.UtcDateTime,
-                Summary = HttpUtility.HtmlDecode(item.Summary.Text),
-                Detail = GetContentEncoded(item),
+                Summary = TextUtil.HtmlDecode(item.Summary.Text),
+                Detail = GetExtension(item, "encoded"),
                 Url = item.Links[0].Uri
             };
 
             return feedItem;
         }
 
-        protected string GetContentEncoded(SyndicationItem item)
+        protected string GetExtension(SyndicationItem item, string localName)
         {
             foreach (SyndicationElementExtension ext in item.ElementExtensions)
             {
-                if (ext.GetObject<XElement>().Name.LocalName == "encoded")
+                if (ext.GetObject<XElement>().Name.LocalName == localName)
                 {
                     var value = ext.GetObject<XElement>().Value.ToString();
                     return value;
