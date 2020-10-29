@@ -3,7 +3,9 @@ import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:flutter_html/style.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:amathus/extensions.dart';
 
@@ -24,8 +26,8 @@ class FeedItemView extends StatelessWidget {
     );
   }
 
-  Widget buildColumn(BuildContext context) =>
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget buildColumn(BuildContext context) => ListView(
+          children: [
         new Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
             child:
@@ -41,6 +43,14 @@ class FeedItemView extends StatelessWidget {
         new Container(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
             child: Text(item.summary, style: TextStyle(fontSize: 18.0))),
+        item.detail != null
+            ? new Container(
+                child: Html(data: item.detail, style: {
+                "body": Style(
+                  fontSize: FontSize(16.0),
+                ),
+              }))
+            : new Container(),
         _moreButton()
       ]);
 
