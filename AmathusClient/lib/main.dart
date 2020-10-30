@@ -12,6 +12,10 @@ Future<void> main() async {
 
   runApp(
       MaterialApp(
+        theme: ThemeData(
+          primaryColor: Colors.blue[700],
+          accentColor: Colors.amber
+        ),
         home: FeedsView(),
       )
   );
