@@ -140,16 +140,6 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
-        public void Convert_LgcNews_Converts()
-        {
-            var feedItem = Read(Source.LgcNews);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-        }
-
-        [TestMethod]
         public void Convert_KibrisAda_Converts()
         {
             var feedItem = Read(Source.KibrisAda);
@@ -227,6 +217,17 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_LgcNews_Converts()
+        {
+            var feedItem = Read(Source.LgcNews);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_LondraGazete_Converts()
         {
             var feedItem = Read(Source.LondraGazete);
@@ -234,6 +235,8 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -265,14 +268,8 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-        }
-
-        [TestMethod]
-        public void Convert_YeniCag_Converts()
-        {
-            var feedItem = Read(Source.YeniCag);
-
-            AssertTitleUrlPublishDate(feedItem);
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -281,7 +278,7 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.Vatan);
 
             AssertTitleUrlPublishDate(feedItem);
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -293,6 +290,14 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+        }
+
+        [TestMethod]
+        public void Convert_YeniCag_Converts()
+        {
+            var feedItem = Read(Source.YeniCag);
+
+            AssertTitleUrlPublishDate(feedItem);
         }
 
         [TestMethod]

@@ -11,20 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.ServiceModel.Syndication;
 using Amathus.Common.Feeds;
 using Amathus.Common.Util;
 
 namespace Amathus.Common.Converter
 {
-    public class HakikatFeedItemConverter : HtmlRemoverFeedItemConverter
+    public class HtmlFooterRemoverFeedItemConverter : HtmlRemoverFeedItemConverter
     { 
         public override FeedItem Convert(SyndicationItem item)
         {
             var feedItem = base.Convert(item);
-            feedItem.Detail = TextUtil.RemoveTabAndNewLine(GetExtension(item, "news"));
-            feedItem.Detail = TextUtil.RemoveAmp(feedItem.Detail);
-            feedItem.ImageUrl = TextUtil.GetImg(GetExtension(item, "image"));
+            feedItem.Summary = TextUtil.RemoveFooter(feedItem.Summary);
+            feedItem.Detail = TextUtil.RemoveFooter(feedItem.Detail);
             return feedItem;
         }
     }

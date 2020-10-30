@@ -26,33 +26,42 @@ class FeedItemView extends StatelessWidget {
     );
   }
 
-  Widget buildColumn(BuildContext context) => ListView(
-          children: [
+  Widget buildColumn(BuildContext context) => ListView(children: [
         new Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             child:
                 Text(item.title, style: Theme.of(context).textTheme.headline5)),
-        new Container(
-            padding: const EdgeInsets.all(12.0),
-            child: item.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: item.imageUrl,
-                    placeholder: (context, url) =>
-                        new LinearProgressIndicator())
-                : null),
-        new Container(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: Text(item.summary, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-        item.detail != null
-            ? new Container(
-                child: Html(data: item.detail, style: {
-                "body": Style(
-                  fontSize: FontSize(16.0),
-                ),
-              }))
-            : new Container(),
+        _itemImage(),
+        _itemDetail(),
         _moreButton()
       ]);
+
+  Widget _itemImage() {
+    if (item.imageUrl != null) {
+      return Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: CachedNetworkImage(
+              imageUrl: item.imageUrl,
+              placeholder: (context, url) => new LinearProgressIndicator()));
+    }
+
+    return Container();
+  }
+
+  Widget _itemDetail() {
+    if (item.detail != null) {
+      return new Container(
+          child: Html(data: item.detail, style: {
+        "body": Style(
+          fontSize: FontSize(16),
+        ),
+      }));
+    }
+
+    return Container(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+        child: Text(item.summary, style: TextStyle(fontSize: 16)));
+  }
 
   Widget _moreButton() {
     return Align(

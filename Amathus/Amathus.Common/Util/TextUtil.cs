@@ -89,5 +89,15 @@ namespace Amathus.Common.Util
 
             return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "").Trim();
         }
+
+        public static string RemoveAmp(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            return Regex.Replace(text, "&amp;", "&").Trim();
+        }
     }
 }
