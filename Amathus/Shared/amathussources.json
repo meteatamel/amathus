@@ -38,6 +38,12 @@
         "LogoUrl": "http://www.haberatorkibris.com/s/i/logo.png"
       },
       {
+        "Id": "haberkibris",
+        "Title": "Haber Kıbrıs",
+        "Url": "https://haberkibris.com/rss.php",
+        "LogoUrl": "https://haberkibris.com/tpl/design/logo.png"
+      },
+      {
         "Id": "haberalkibrisli",
         "Title": "Haberal Kıbrıslı",
         "Url": "http://www.haberalkibrisli.net/rss",

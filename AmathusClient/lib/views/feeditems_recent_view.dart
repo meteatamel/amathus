@@ -18,7 +18,7 @@ class FeedItemsRecentView extends StatelessWidget {
                 .withBottomAdmobBanner(context),
         drawer: AppDrawer(),
         body: FeedItemsList(loadDataCallback: loadData, wideTile: true),
-        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 0));
+        bottomNavigationBar: AppBottomNavigationBar(selectedIndex: 1));
   }
 
   Future<List<FeedItem>> loadData() async {

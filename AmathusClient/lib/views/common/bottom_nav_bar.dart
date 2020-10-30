@@ -15,12 +15,12 @@ class AppBottomNavigationBar extends StatelessWidget {
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
-          icon: Icon(Icons.fiber_new),
-          label: Constants.RECENT_NEWS,
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.dynamic_feed),
           label: Constants.ALL_NEWS,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.fiber_new),
+          label: Constants.RECENT_NEWS,
         ),
       ],
       currentIndex: selectedIndex,
@@ -31,14 +31,14 @@ class AppBottomNavigationBar extends StatelessWidget {
             Navigator.pushReplacement(
                 context,
                 PageTransition(
-                    type: PageTransitionType.fade,
-                    child: FeedItemsRecentView()));
+                    type: PageTransitionType.fade, child: FeedsView()));
             break;
           case 1:
             Navigator.pushReplacement(
                 context,
                 PageTransition(
-                    type: PageTransitionType.fade, child: FeedsView()));
+                    type: PageTransitionType.fade,
+                    child: FeedItemsRecentView()));
             break;
         }
       },

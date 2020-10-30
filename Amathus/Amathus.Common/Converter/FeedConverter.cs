@@ -79,6 +79,7 @@ namespace Amathus.Common.Converter
                     return new HakikatFeedItemConverter();
                 case Source.Volkan:
                     return new HtmlFooterRemoverFeedItemConverter();
+                case Source.HaberKibris:
                 case Source.KibrisSonDakika:
                 case Source.OzgurGazete:
                 case Source.YeniCag:

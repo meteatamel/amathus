@@ -95,6 +95,15 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_HaberKibris_Converts()
+        {
+            var feedItem = Read(Source.HaberKibris);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+        }
+
+        [TestMethod]
         public void Convert_HaberalKibrisli_Converts()
         {
             var feedItem = Read(Source.HaberalKibrisli);
