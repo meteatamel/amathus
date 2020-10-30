@@ -45,19 +45,14 @@ class FeedItemListTile extends StatelessWidget {
   }
 
   Widget _itemImage() {
-    var childWidget;
-
     if (item.imageUrl == null) {
-      childWidget = Image.asset("assets/newsicon-128px.png");
-    } else {
-      childWidget = CachedNetworkImage(
-          imageUrl: item.imageUrl,
-          placeholder: (context, url) => new LinearProgressIndicator(),
-          errorWidget: (context, url, error) =>
-              Image.asset("assets/newsicon-128px.png"));
+      return null;
     }
+    var childWidget = CachedNetworkImage(
+          imageUrl: item.imageUrl,
+          placeholder: (context, url) => new LinearProgressIndicator());
 
-    // Need to wrap into a SizedBox for some reason
+    //return childWidget;
     return SizedBox(width: 100.0, child: childWidget);
   }
 }

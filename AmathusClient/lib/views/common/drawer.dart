@@ -21,7 +21,7 @@ class AppDrawer extends StatelessWidget {
           ListTile(
               leading: Icon(Icons.fiber_new),
               title:
-              Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
+                  Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
               onTap: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
@@ -30,18 +30,24 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.email),
             title: Text(Constants.CONTACT, style: TextStyle(fontSize: 18)),
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => ContactView())),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => ContactView()));
+            },
           ),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text(Constants.SETTINGS, style: TextStyle(fontSize: 18)),
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => SettingsView())),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => SettingsView()));
+            },
           ),
         ],
       ),
