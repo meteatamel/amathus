@@ -256,6 +256,8 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]

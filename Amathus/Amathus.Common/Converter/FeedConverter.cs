@@ -73,6 +73,7 @@ namespace Amathus.Common.Converter
                 case Source.KibrisHaberci:
                 case Source.LondraGazete:
                 case Source.LgcNews:
+                case Source.OzgurGazete:
                 case Source.TVine:
                     return new HtmlImageFooterRemoverFeedItemConverter();
                 case Source.Hakikat:
@@ -81,7 +82,6 @@ namespace Amathus.Common.Converter
                     return new HtmlFooterRemoverFeedItemConverter();
                 case Source.HaberKibris:
                 case Source.KibrisSonDakika:
-                case Source.OzgurGazete:
                 case Source.YeniCag:
                     return new HtmlRemoverFeedItemConverter();
                 case Source.HaberalKibrisli:
