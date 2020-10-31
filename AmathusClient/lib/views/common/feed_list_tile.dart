@@ -15,7 +15,7 @@ class FeedListTile extends StatelessWidget {
     return Card(
         elevation: 5,
         child: ListTile(
-            title: FeedImage(item: item),
+            title: Center(child: FeedImage(item: item)),
             onTap: () => {
                   Navigator.push(
                       context,

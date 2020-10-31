@@ -35,15 +35,15 @@ class _ContactFormState extends State<ContactForm> {
         ListTile(
             leading: Icon(Icons.email),
             title: Linkify(
-              onOpen: (link) => _launchURL(link.url),
+              onOpen: (link) => _launchURL(link.url, context),
               text: Constants.APP_EMAIL,
               style: TextStyle(fontSize: 18),
             )),
         ListTile(
             leading: FaIcon(FontAwesomeIcons.facebook),
             title: Linkify(
-                onOpen: (link) => _launchURL(link.url),
-                text: "https://www.facebook.com/kuzeykibrishaber",
+                onOpen: (link) => _launchURL(link.url, context),
+                text: Constants.URL_FACEBOOK,
                 style: TextStyle(fontSize: 16))),
       ]),
       SizedBox(height: 20),
@@ -90,10 +90,7 @@ class _ContactFormState extends State<ContactForm> {
   }
 
   String _validateText(String value) {
-    if (value.isEmpty) {
-      return Constants.NO_LEAVE_EMPTY;
-    }
-    return null;
+    return value.isEmpty ? Constants.NO_LEAVE_EMPTY : null;
   }
 
   Future<void> _sendEmail(BuildContext context) async {
@@ -111,13 +108,10 @@ class _ContactFormState extends State<ContactForm> {
       platformResponse = 'Email gönderildi';
     } catch (error) {
       success = false;
-      platformResponse = 'Hata: $error.toString()';
+      platformResponse = 'Email göndermede hata: $error.toString()';
     }
 
-    if (mounted) {
-      Scaffold.of(context)
-          .showSnackBar(SnackBar(content: Text(platformResponse)));
-    }
+    _showSnackBar(platformResponse, context);
 
     if (success) {
       _clearForm();
@@ -129,11 +123,18 @@ class _ContactFormState extends State<ContactForm> {
     _bodyController.text = '';
   }
 
-  Future<void> _launchURL(String url) async {
+  Future<void> _launchURL(String url, BuildContext context) async {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
-      throw 'Could not launch $url';
+      _showSnackBar('Hata: $url', context);
+    }
+  }
+
+  _showSnackBar(String text, BuildContext context) {
+    if (mounted) {
+      Scaffold.of(context)
+          .showSnackBar(SnackBar(content: Text(text)));
     }
   }
 }
