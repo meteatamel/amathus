@@ -100,5 +100,4 @@ flutter_icons:
 
 flutter_native_splash:
   image: assets/splash/splash.png
-  color: "27639a"
-  #color: "233c7a"
+  color: "1e397b"
