@@ -10,26 +10,27 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
+        padding: EdgeInsets.fromLTRB(12, 12, 0, 0),
         children: [
           ListTile(
-              leading: Icon(Icons.dynamic_feed),
-              title: Text(Constants.ALL_NEWS, style: TextStyle(fontSize: 18)),
+              leading: Icon(Icons.dynamic_feed, size: 28),
+              title: Text(Constants.ALL_NEWS.toUpperCase(), style: TextStyle(fontSize: 18)),
               onTap: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                       builder: (BuildContext context) => FeedsView()))),
           ListTile(
-              leading: Icon(Icons.fiber_new),
+              leading: Icon(Icons.fiber_new, size: 28),
               title:
-                  Text(Constants.RECENT_NEWS, style: TextStyle(fontSize: 18)),
+                  Text(Constants.RECENT_NEWS.toUpperCase(), style: TextStyle(fontSize: 18)),
               onTap: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                       builder: (BuildContext context) =>
                           FeedItemsRecentView()))),
           ListTile(
-            leading: Icon(Icons.email),
-            title: Text(Constants.CONTACT, style: TextStyle(fontSize: 18)),
+            leading: Icon(Icons.email, size: 28),
+            title: Text(Constants.CONTACT.toUpperCase(), style: TextStyle(fontSize: 18)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -39,8 +40,8 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
-            title: Text(Constants.SETTINGS, style: TextStyle(fontSize: 18)),
+            leading: Icon(Icons.settings, size: 28),
+            title: Text(Constants.SETTINGS.toUpperCase(), style: TextStyle(fontSize: 18)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(

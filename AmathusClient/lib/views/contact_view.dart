@@ -45,6 +45,12 @@ class _ContactFormState extends State<ContactForm> {
                 onOpen: (link) => _launchURL(link.url, context),
                 text: Constants.URL_FACEBOOK,
                 style: TextStyle(fontSize: 16))),
+        ListTile(
+            leading: FaIcon(FontAwesomeIcons.twitter),
+            title: Linkify(
+                onOpen: (link) => _launchURL(link.url, context),
+                text: Constants.URL_TWITTER,
+                style: TextStyle(fontSize: 16))),
       ]),
       SizedBox(height: 20),
       Text(Constants.SEND_MESSAGE, style: TextStyle(fontSize: 20)),

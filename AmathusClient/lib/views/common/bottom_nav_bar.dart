@@ -13,14 +13,14 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
+      items: <BottomNavigationBarItem>[
         BottomNavigationBarItem(
-          icon: Icon(Icons.dynamic_feed),
-          label: Constants.ALL_NEWS,
+          icon: Icon(Icons.dynamic_feed, size: 28),
+          label: Constants.ALL_NEWS.toUpperCase(),
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.fiber_new),
-          label: Constants.RECENT_NEWS,
+          icon: Icon(Icons.fiber_new, size: 28),
+          label: Constants.RECENT_NEWS.toUpperCase(),
         ),
       ],
       currentIndex: selectedIndex,

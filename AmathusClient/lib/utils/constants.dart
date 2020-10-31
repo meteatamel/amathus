@@ -3,6 +3,7 @@ const String URL_MAIN = "https://amathus-web-y5l3hnrsla-ew.a.run.app/api/v1";
 const String URL_FEEDS = URL_MAIN + "/feeds";
 const String URL_FEED_ITEMS = URL_MAIN + "/feeditems";
 const String URL_FACEBOOK = "https://www.facebook.com/kuzeykibrishaber";
+const String URL_TWITTER = "https://twitter.com/kkibrishaber";
 
 // files
 const String FEEDS_FILE = "feeds.json";
