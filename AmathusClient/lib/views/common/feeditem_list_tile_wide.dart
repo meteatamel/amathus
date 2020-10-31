@@ -50,8 +50,7 @@ class FeedItemListTileContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          //height: 200,
+        Center(
           child: _itemImage(),
         ),
         Padding(
