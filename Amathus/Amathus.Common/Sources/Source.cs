@@ -20,8 +20,10 @@ namespace Amathus.Common.Sources
         public const string CyprusToday = "cyprustoday";
         public const string DetayKibris = "detaykibris";
         public const string Diyalog = "diyalog";
-        public const string GundemKibris = "gundemkibris";
+        public const string GazeddaKibris = "gazeddakibris";
         public const string Giynik = "giynik";
+        public const string GundemKibris = "gundemkibris";
+        public const string Gunes = "gunes";
         public const string Haberator = "haberator";
         public const string HaberKibris = "haberkibris";
         public const string HaberalKibrisli = "haberalkibrisli";
@@ -30,6 +32,7 @@ namespace Amathus.Common.Sources
         public const string Havadis = "havadis";
         public const string KibrisAda = "kibrisada";
         public const string KibrisGazetesi = "kibrisgazetesi";
+        public const string KibrisGercek = "kibrisgercek";
         public const string KibrisHaber = "kibrishaber";
         public const string KibrisHaberci = "kibrishaberci";
         public const string KibrisManset = "kibrismanset";

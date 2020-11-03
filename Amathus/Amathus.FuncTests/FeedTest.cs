@@ -55,6 +55,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_GazeddaKibris_Converts()
+        {
+            var feed = Read(Source.GazeddaKibris);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_Giynik_Converts()
         {
             var feed = Read(Source.Giynik);
@@ -65,6 +72,13 @@ namespace Amathus.FunctionalTests
         public void Convert_GundemKibris_Converts()
         {
             var feed = Read(Source.GundemKibris);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Gunes_Converts()
+        {
+            var feed = Read(Source.Gunes);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -121,6 +135,13 @@ namespace Amathus.FunctionalTests
         public void Convert_KibrisAda_Converts()
         {
             var feed = Read(Source.KibrisAda);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_KibrisGercek_Converts()
+        {
+            var feed = Read(Source.KibrisGercek);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 

@@ -20,6 +20,12 @@
         "LogoUrl": "http://www.diyaloggazetesi.com/images/banner/hslogo_1_1.png"
       },
       {
+        "Id": "gazeddakibris",
+        "Title": "Gazedda Kıbrıs",
+        "Url": "https://gazeddakibris.com/feed/",
+        "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/gazedda.png"
+      },
+      {
         "Id": "giynik",
         "Title": "Gıynık Gazetesi",
         "Url": "https://www.giynikgazetesi.com/feed/",
@@ -30,6 +36,12 @@
         "Title": "Gündem Kıbrıs",
         "Url": "http://www.gundemkibris.com/rss",
         "LogoUrl": "https://storage.googleapis.com/amathus-atamel-logos/gundemkibris.png"
+      },
+      {
+        "Id": "gunes",
+        "Title": "Güneş",
+        "Url": "https://habergunes.com/feed/",
+        "LogoUrl": "https://habergunes.com/aws-cloudfront-files/2019/03/Gunes-Gazetesi-AnaLogo.png"
       },
       {
         "Id": "haberator",
@@ -78,6 +90,12 @@
         "Title": "Kıbrıs Gazetesi",
         "Url": "https://www.kibrisgazetesi.com/rss",
         "LogoUrl": "https://www.kibrisgazetesi.com/images/banner/logo.png"
+      },
+      {
+        "Id": "kibrisgercek",
+        "Title": "Kıbrıs Gerçek",
+        "Url": "https://kibrisgercek.com/feed/",
+        "LogoUrl": "https://kibrisgercek.com/wp-content/uploads/2016/12/logo.png"
       },
       {
         "Id": "kibrishaber",

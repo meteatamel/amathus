@@ -68,8 +68,11 @@ namespace Amathus.Common.Converter
         {
             switch (sourceId)
             {
+                case Source.GazeddaKibris:
+                case Source.Gunes:
                 case Source.Giynik:
                 case Source.Havadis:
+                case Source.KibrisGercek:
                 case Source.KibrisHaberci:
                 case Source.LondraGazete:
                 case Source.LgcNews:

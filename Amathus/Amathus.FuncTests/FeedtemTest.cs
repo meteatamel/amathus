@@ -37,7 +37,8 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.CyprusToday);
 
             AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            // Sometimes summary can be null or empty.
+            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -62,6 +63,18 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_GazeddaKibris_Converts()
+        {
+            var feedItem = Read(Source.GazeddaKibris);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_Giynik_Converts()
         {
             var feedItem = Read(Source.Giynik);
@@ -82,6 +95,18 @@ namespace Amathus.FunctionalTests
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
             Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
+        public void Convert_Gunes_Converts()
+        {
+            var feedItem = Read(Source.Gunes);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            // Not all have images
+            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -166,6 +191,17 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             // Sometimes it can be null or empty
             //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
+        public void Convert_KibrisGercek_Converts()
+        {
+            var feedItem = Read(Source.KibrisGercek);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
