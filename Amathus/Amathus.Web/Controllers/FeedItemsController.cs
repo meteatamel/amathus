@@ -49,7 +49,7 @@ namespace Amathus.Web.Controllers
                 return NotFound();
             }
 
-            feeds = OrderFeeds(feeds);
+            feeds = FilterAndOrderFeeds(feeds);
 
             if (limit == null)
             {
@@ -85,8 +85,17 @@ namespace Amathus.Web.Controllers
             return Ok(feed);
         }
 
-        private List<Feed> OrderFeeds(List<Feed> feeds)
+        private List<Feed> FilterAndOrderFeeds(List<Feed> feeds)
         {
+            // Remove all feed items with empty/null summary, image and detail
+            feeds.ForEach(feed =>
+            {
+                feed.Items = feed.Items.Where(item => !(
+                    string.IsNullOrEmpty(item.Summary) &&
+                    string.IsNullOrEmpty(item.Detail) &&
+                    item.ImageUrl == null)).ToList();
+            });
+
             var orderedFeeds = feeds
                 .OrderByDescending(feed => feed.AverageItemPictures)
                 .ThenByDescending(feed => feed.AverageItemLength)
