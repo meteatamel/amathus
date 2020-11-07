@@ -87,12 +87,11 @@ namespace Amathus.Web.Controllers
 
         private List<Feed> FilterAndOrderFeeds(List<Feed> feeds)
         {
-            // Remove all feed items with empty/null summary, image and detail
+            // Remove all feed items with empty/null summary and image
             feeds.ForEach(feed =>
             {
                 feed.Items = feed.Items.Where(item => !(
                     string.IsNullOrEmpty(item.Summary) &&
-                    string.IsNullOrEmpty(item.Detail) &&
                     item.ImageUrl == null)).ToList();
             });
 
