@@ -102,6 +102,7 @@ namespace Amathus.Common.Converter
                 case Source.GundemKibris:
                 case Source.SesKibris:
                     return new ImageFeedItemConverter();
+                case Source.AdaBasini:
                 case Source.Diyalog:
                 case Source.KibrisManset:
                 case Source.KibrisTime:

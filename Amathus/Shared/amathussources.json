@@ -2,6 +2,12 @@
   "Amathus": {
     "Sources": [
       {
+        "Id": "adabasini",
+        "Title": "Ada Basını",
+        "Url": "https://www.adabasini.com/rss",
+        "LogoUrl": "https://www.adabasini.com/images/banner/ada_basYnY_logo.jpeg"
+      },
+      {
         "Id": "cyprustoday",
         "Title": "Cyprus Today",
         "Url": "https://www.cyprustodayonline.com/rss/category/cyprus",

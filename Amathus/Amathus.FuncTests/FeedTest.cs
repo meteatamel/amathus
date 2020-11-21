@@ -34,6 +34,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_AdaBasini_Converts()
+        {
+            var feed = Read(Source.AdaBasini);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_CyprusToday_Converts()
         {
             var feed = Read(Source.CyprusToday);

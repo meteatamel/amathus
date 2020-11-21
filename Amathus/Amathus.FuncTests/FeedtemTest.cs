@@ -32,6 +32,17 @@ namespace Amathus.FunctionalTests
         public static void Init(TestContext context) => _sources = TestHelper.GetSources();
 
         [TestMethod]
+        public void Convert_AdaBasini_Converts()
+        {
+            var feedItem = Read(Source.AdaBasini);
+
+            AssertTitleUrlPublishDate(feedItem);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
+            Assert.IsNotNull(feedItem.ImageUrl);
+        }
+
+        [TestMethod]
         public void Convert_CyprusToday_Converts()
         {
             var feedItem = Read(Source.CyprusToday);

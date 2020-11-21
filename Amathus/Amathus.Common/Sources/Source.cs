@@ -17,6 +17,7 @@ namespace Amathus.Common.Sources
 {
     public class Source
     {
+        public const string AdaBasini = "adabasini";
         public const string CyprusToday = "cyprustoday";
         public const string DetayKibris = "detaykibris";
         public const string Diyalog = "diyalog";
