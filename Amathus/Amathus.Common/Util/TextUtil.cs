@@ -20,6 +20,8 @@ namespace Amathus.Common.Util
     public static class TextUtil
     {
         private const string ImgPattern = "<img.+?src=[\"'](.+?)[\"'].+?>";
+        private static readonly Regex ImgRegex = new Regex(ImgPattern);
+        private const string BannedPattern = "(c|k)ovid|(c|k)orona|vir(u|ü)s|vaka";
 
         public static string RemoveHtmlTabAndNewLine(string text)
         {
@@ -55,8 +57,7 @@ namespace Amathus.Common.Util
 
         public static string RemoveImgSrc(string text)
         {
-            var regex = new Regex(ImgPattern);
-            return regex.Replace(text, string.Empty, 1);
+            return ImgRegex.Replace(text, string.Empty, 1);
         }
 
         public static string RemoveSubtext(string text, string subtext)
@@ -98,6 +99,11 @@ namespace Amathus.Common.Util
             }
 
             return Regex.Replace(text, "&amp;", "&").Trim();
+        }
+
+        public static bool ContainsBannedWords(string text)
+        {
+            return !string.IsNullOrEmpty(text) && Regex.IsMatch(text, BannedPattern, RegexOptions.IgnoreCase);
         }
     }
 }

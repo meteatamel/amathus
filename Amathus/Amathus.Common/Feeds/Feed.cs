@@ -46,7 +46,7 @@ namespace Amathus.Common.Feeds
         {
             get
             {
-                return Items.Average(item => item.Length);
+                return (Items == null || Items.Count == 0) ? 0 : Items.Average(item => item.Length);
             }
         }
 
@@ -55,7 +55,7 @@ namespace Amathus.Common.Feeds
         {
             get
             {
-                return Items.Average(item => item.ImageUrl == null? 0 : 1);
+                return (Items == null || Items.Count == 0)? 0 : Items.Average(item => item.ImageUrl == null? 0 : 1);
             }
         }
 

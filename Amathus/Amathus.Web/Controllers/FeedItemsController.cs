@@ -19,6 +19,7 @@ using Amathus.Common.Picker;
 using Amathus.Common.FeedStore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Amathus.Common.Util;
 
 namespace Amathus.Web.Controllers
 {
@@ -77,6 +78,8 @@ namespace Amathus.Web.Controllers
                 return NotFound();
             }
 
+            feed = FilterFeedItems(feed);
+
             if (limit != null)
             {
                 feed.Items = feed.Items.Take((int)limit).ToList();
@@ -87,19 +90,29 @@ namespace Amathus.Web.Controllers
 
         private List<Feed> FilterAndOrderFeeds(List<Feed> feeds)
         {
-            // Remove all feed items with empty/null summary and image
-            feeds.ForEach(feed =>
-            {
-                feed.Items = feed.Items.Where(item => !(
-                    string.IsNullOrEmpty(item.Summary) &&
-                    item.ImageUrl == null)).ToList();
-            });
+            feeds = feeds.Select(feed => FilterFeedItems(feed)).ToList();
 
             var orderedFeeds = feeds
                 .OrderByDescending(feed => feed.AverageItemPictures)
                 .ThenByDescending(feed => feed.AverageItemLength)
                 .ToList();
             return orderedFeeds;
+        }
+
+        private Feed FilterFeedItems(Feed feed)
+        {
+            // Remove all feed items with empty/null summary and image
+            feed.Items = feed.Items.Where(item => !(
+                string.IsNullOrEmpty(item.Summary) &&
+                item.ImageUrl == null)).ToList();
+
+            // Remove all feed items with banned words
+            feed.Items = feed.Items.Where(item => !(
+                TextUtil.ContainsBannedWords(item.Title) ||
+                TextUtil.ContainsBannedWords(item.Summary) ||
+                TextUtil.ContainsBannedWords(item.Detail))).ToList();
+
+            return feed;
         }
     }
 }
