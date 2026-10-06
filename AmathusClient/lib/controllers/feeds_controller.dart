@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
@@ -8,64 +7,61 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'feeds_storage.dart';
 
 class FeedsController {
+  final FeedsStorage _storage = FeedsStorage();
+  List<Feed>? _storedFeeds;
 
-  FeedsStorage _storage;
-  List<Feed> _storedFeeds;
-
-  FeedsController() {
-    _storage = new FeedsStorage();
-  }
-
-  Future<List<Feed>> readAll() async {
-
+  Future<List<Feed>?> readAll() async {
     try {
-      final response = await http.get(Constants.URL_FEEDS);
+      final response = await http.get(Uri.parse(Constants.URL_FEEDS));
       if (response.statusCode == 200) {
-        final receivedFeeds = (json.decode(response.body) as List).map((i) =>
-            Feed.fromJson(i)).toList();
-        var orderedFeeds = await _orderAndStoreFeeds(receivedFeeds);
+        final decoded = json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+        final receivedFeeds = decoded
+            .map((i) => Feed.fromJson(i as Map<String, dynamic>))
+            .toList();
+        final orderedFeeds = await _orderAndStoreFeeds(receivedFeeds);
         return orderedFeeds;
       }
-    } on SocketException catch (e) {
-      print("Cannot connect to server: ${e.message}");
+    } catch (e) {
+      // Ignore network error and fall back to stored feeds
     }
 
-    return null;
+    return _storedFeeds;
   }
 
-  Future<List<Feed>> readAllStored() async {
+  Future<List<Feed>?> readAllStored() async {
     _storedFeeds = await _storage.read();
     return _storedFeeds;
   }
 
-  Future<List<Feed>> _orderAndStoreFeeds(List<Feed> receivedFeeds) async {
-    if (receivedFeeds == null || receivedFeeds.isEmpty) {
+  Future<List<Feed>?> _orderAndStoreFeeds(List<Feed> receivedFeeds) async {
+    if (receivedFeeds.isEmpty) {
       return _storedFeeds;
     }
 
-    if (_storedFeeds == null || _storedFeeds.isEmpty) {
+    _storedFeeds ??= await _storage.read();
+
+    if (_storedFeeds == null || _storedFeeds!.isEmpty) {
       await _writeToStorage(receivedFeeds);
       return receivedFeeds;
     }
 
-    var orderedFeeds = new List<Feed>();
+    final remaining = List<Feed>.from(receivedFeeds);
+    final orderedFeeds = <Feed>[];
 
-    for (var i = 0; i < _storedFeeds.length; i++) {
-      var storedFeed = _storedFeeds[i];
-      var index = receivedFeeds.indexWhere((element) => element.id == storedFeed.id);
+    for (final storedFeed in _storedFeeds!) {
+      final index = remaining.indexWhere((element) => element.id == storedFeed.id);
       if (index != -1) {
-        var receivedFeed = receivedFeeds.removeAt(index);
-        orderedFeeds.add(receivedFeed);
+        orderedFeeds.add(remaining.removeAt(index));
       }
     }
 
-    orderedFeeds.addAll(receivedFeeds);
-    _writeToStorage(orderedFeeds);
+    orderedFeeds.addAll(remaining);
+    await _writeToStorage(orderedFeeds);
     return orderedFeeds;
   }
 
   Future<void> _writeToStorage(List<Feed> feeds) async {
     await _storage.write(feeds);
-    _storedFeeds= feeds;
+    _storedFeeds = feeds;
   }
 }

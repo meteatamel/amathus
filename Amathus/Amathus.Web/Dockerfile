@@ -1,6 +1,6 @@
 # Use Microsoft's official build .NET image.
-# https://hub.docker.com/_/microsoft-dotnet-core-sdk/
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
+# https://hub.docker.com/_/microsoft-dotnet-sdk/
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
 # Copy local code to the container image.
@@ -15,9 +15,8 @@ RUN dotnet restore Amathus.Web
 RUN dotnet publish Amathus.Web -c Release -o out
 
 # Use Microsoft's official runtime .NET image.
-# https://hub.docker.com/_/microsoft-dotnet-core-aspnet/
-# Note: Not using 'alpine' here due to some Firebase dependency
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS runtime
+# https://hub.docker.com/_/microsoft-dotnet-aspnet/
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/out .
 

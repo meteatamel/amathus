@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ namespace Amathus.Common.Converter
                     ImageUrl = source.LogoUrl,
                     // Some feeds do not have last updated time set. In those cases, use current time.
                     LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime == new DateTime() ? DateTime.UtcNow : syncFeed.LastUpdatedTime.UtcDateTime,
-                    Url = syncFeed.Links[0].Uri,
+                    Url = syncFeed.Links.Count > 0 ? syncFeed.Links[0].Uri : source.Url,
                     Items = syncFeed.Items.Select(item => itemConverter.Convert(item))
                                       .OrderByDescending(item => item.PublishDate).ToList()
                 };
@@ -59,7 +59,7 @@ namespace Amathus.Common.Converter
             }
             catch (Exception ex)
             {
-                _logger?.LogError($"Converting failed for feed: {source.Id}", ex);
+                _logger?.LogError($"Converting failed for feed: {source.Id} - {ex.Message}", ex);
                 return null;
             }
         }
@@ -69,40 +69,25 @@ namespace Amathus.Common.Converter
             switch (sourceId)
             {
                 case Source.GazeddaKibris:
-                case Source.Gunes:
                 case Source.Giynik:
                 case Source.Havadis:
-                case Source.KibrisHaberci:
                 case Source.LondraGazete:
-                case Source.LgcNews:
-                case Source.OzgurGazete:
-                case Source.TVine:
+                case Source.HaberalKibrisli:
+                case Source.KibrisGazetesi:
                     return new HtmlImageFooterRemoverFeedItemConverter();
-                case Source.Hakikat:
-                    return new HakikatFeedItemConverter();
                 case Source.KibrisGercek:
-                case Source.Volkan:
-                    return new HtmlFooterRemoverFeedItemConverter();
-                case Source.HaberKibris:
-                case Source.KibrisSonDakika:
+                    return new HtmlImageSubtextRemoverFeedItemConverter();
                 case Source.YeniCag:
                     return new HtmlRemoverFeedItemConverter();
-                case Source.HaberalKibrisli:
                 case Source.HalkinSesi:
-                case Source.KibrisGazetesi:
-                case Source.KibrisHaber:
                 case Source.Vatan:
                     return new HtmlRemoverImageUrlFeedItemConverter();
                 case Source.DetayKibris:
-                case Source.Haberator:
-                case Source.KibrisAda:
                 case Source.YeniDuzen:
                     return new HtmlImageSubtextRemoverFeedItemConverter();
                 case Source.CyprusToday:
                 case Source.GundemKibris:
-                case Source.SesKibris:
                     return new ImageFeedItemConverter();
-                case Source.AdaBasini:
                 case Source.Diyalog:
                 case Source.KibrisManset:
                 case Source.KibrisTime:

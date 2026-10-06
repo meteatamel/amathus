@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
+using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Xml.Linq;
 using Amathus.Common.Feeds;
@@ -22,26 +24,72 @@ namespace Amathus.Common.Converter
     {
         public virtual FeedItem Convert(SyndicationItem item)
         {
+            var articleLink = item.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
+                ?? item.Links.FirstOrDefault(l => l.RelationshipType != "enclosure")?.Uri
+                ?? item.Links.FirstOrDefault()?.Uri;
+
+            var imageUrl = GetEnclosureOrMediaImage(item);
+
             var feedItem = new FeedItem
             {
-                Title = TextUtil.HtmlDecode(item.Title.Text),
-                PublishDate = item.PublishDate.UtcDateTime,
-                Summary = TextUtil.HtmlDecode(item.Summary.Text),
+                Title = TextUtil.HtmlDecode(item.Title?.Text ?? string.Empty),
+                PublishDate = item.PublishDate.UtcDateTime == default ? DateTime.UtcNow : item.PublishDate.UtcDateTime,
+                Summary = TextUtil.HtmlDecode(item.Summary?.Text ?? string.Empty),
                 Detail = GetExtension(item, "encoded"),
-                Url = item.Links[0].Uri
+                Url = articleLink,
+                ImageUrl = TextUtil.EnsureHttps(imageUrl)
             };
 
             return feedItem;
+        }
+
+        protected Uri GetEnclosureOrMediaImage(SyndicationItem item)
+        {
+            var enclosure = item.Links.FirstOrDefault(l => l.RelationshipType == "enclosure")?.Uri;
+            if (enclosure != null)
+            {
+                return TextUtil.EnsureHttps(enclosure);
+            }
+
+            foreach (SyndicationElementExtension ext in item.ElementExtensions)
+            {
+                try
+                {
+                    var el = ext.GetObject<XElement>();
+                    if (el.Name.LocalName == "content" || el.Name.LocalName == "thumbnail")
+                    {
+                        var urlAttr = el.Attribute("url")?.Value;
+                        var uri = TextUtil.GetImg(urlAttr);
+                        if (uri != null)
+                        {
+                            return uri;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore malformed extensions
+                }
+            }
+
+            return null;
         }
 
         protected string GetExtension(SyndicationItem item, string localName)
         {
             foreach (SyndicationElementExtension ext in item.ElementExtensions)
             {
-                if (ext.GetObject<XElement>().Name.LocalName == localName)
+                try
                 {
-                    var value = ext.GetObject<XElement>().Value.ToString();
-                    return value;
+                    var el = ext.GetObject<XElement>();
+                    if (el.Name.LocalName == localName)
+                    {
+                        return el.Value.ToString();
+                    }
+                }
+                catch
+                {
+                    // Ignore malformed extensions
                 }
             }
             return null;

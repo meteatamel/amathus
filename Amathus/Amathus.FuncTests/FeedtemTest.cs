@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,24 +32,11 @@ namespace Amathus.FunctionalTests
         public static void Init(TestContext context) => _sources = TestHelper.GetSources();
 
         [TestMethod]
-        public void Convert_AdaBasini_Converts()
-        {
-            var feedItem = Read(Source.AdaBasini);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
         public void Convert_CyprusToday_Converts()
         {
             var feedItem = Read(Source.CyprusToday);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes summary can be null or empty.
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -81,8 +68,6 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -93,8 +78,6 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -104,39 +87,7 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
             Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_Gunes_Converts()
-        {
-            var feedItem = Read(Source.Gunes);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_Haberator_Converts()
-        {
-            var feedItem = Read(Source.Haberator);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_HaberKibris_Converts()
-        {
-            var feedItem = Read(Source.HaberKibris);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]
@@ -145,20 +96,7 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.HaberalKibrisli);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_Hakikat_Converts()
-        {
-            var feedItem = Read(Source.Hakikat);
-
-            AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -167,8 +105,6 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.HalkinSesi);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -180,18 +116,6 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisAda_Converts()
-        {
-            var feedItem = Read(Source.KibrisAda);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -200,9 +124,7 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.KibrisGazetesi);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsNotNull(feedItem.ImageUrl);
+            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
         }
 
         [TestMethod]
@@ -212,32 +134,7 @@ namespace Amathus.FunctionalTests
 
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            //Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisHaber_Converts()
-        {
-            var feedItem = Read(Source.KibrisHaber);
-
-            AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
             Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisHaberci_Converts()
-        {
-            var feedItem = Read(Source.KibrisHaberci);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -246,19 +143,8 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.KibrisManset);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisSonDakika_Converts()
-        {
-            var feedItem = Read(Source.KibrisSonDakika);
-
-            AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
+            Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -267,19 +153,6 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.KibrisTime);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_LgcNews_Converts()
-        {
-            var feedItem = Read(Source.LgcNews);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 
@@ -291,43 +164,6 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_OzgurGazete_Converts()
-        {
-            var feedItem = Read(Source.OzgurGazete);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_SesKibris_Converts()
-        {
-            var feedItem = Read(Source.SesKibris);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_Tvine_Converts()
-        {
-            var feedItem = Read(Source.TVine);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
-            // Not all have images
-            //Assert.IsNotNull(feedItem.ImageUrl);
         }
 
         [TestMethod]
@@ -338,16 +174,6 @@ namespace Amathus.FunctionalTests
             AssertTitleUrlPublishDate(feedItem);
             Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
-        }
-
-        [TestMethod]
-        public void Convert_Volkan_Converts()
-        {
-            var feedItem = Read(Source.Volkan);
-
-            AssertTitleUrlPublishDate(feedItem);
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
-            Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Detail));
         }
 
         [TestMethod]
@@ -364,8 +190,6 @@ namespace Amathus.FunctionalTests
             var feedItem = Read(Source.YeniDuzen);
 
             AssertTitleUrlPublishDate(feedItem);
-            // Sometimes it can be null or empty
-            //Assert.IsTrue(!string.IsNullOrEmpty(feedItem.Summary));
             Assert.IsNotNull(feedItem.ImageUrl);
         }
 

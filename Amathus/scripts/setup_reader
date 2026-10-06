@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 DIR="$(dirname "$0")"
 . "${DIR}/config"
@@ -7,27 +8,38 @@ set_service "reader"
 
 set -v -x
 
-# Create a Cloud Storage bucket
-gsutil mb gs://${BUCKET_ID}
+# Create a Cloud Storage bucket if it doesn't exist
+gcloud storage buckets describe "gs://${BUCKET_ID}" --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || \
+  gcloud storage buckets create "gs://${BUCKET_ID}" --project="${PROJECT_ID}" --location="${REGION}" --uniform-bucket-level-access --quiet
 
 # Setup service account for the scheduler
-export SERVICE_ACCOUNT=${SERVICE_NAME}-scheduler-sa
+export SERVICE_ACCOUNT="${SERVICE_NAME}-scheduler-sa"
 
-gcloud iam service-accounts create ${SERVICE_ACCOUNT} \
-    --display-name "${SERVICE_NAME} Scheduler Service Account"
+gcloud iam service-accounts describe "${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com" --project="${PROJECT_ID}" --quiet >/dev/null 2>&1 || \
+  gcloud iam service-accounts create "${SERVICE_ACCOUNT}" \
+    --project="${PROJECT_ID}" \
+    --display-name="${SERVICE_NAME} Scheduler Service Account" \
+    --quiet
 
-gcloud run services add-iam-policy-binding ${SERVICE_NAME} \
-   --member=serviceAccount:${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
-   --role=roles/run.invoker \
-   --platform managed \
-   --region ${REGION}
+gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
+  --project="${PROJECT_ID}" \
+  --member="serviceAccount:${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --platform=managed \
+  --region="${REGION}" \
+  --quiet
 
-SERVICE_URL="$(gcloud run services list --platform managed --filter=${SERVICE_NAME} --format='value(URL)')"
+SERVICE_URL="$(gcloud run services describe "${SERVICE_NAME}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' --quiet)"
 
-# Setup scheduler
+# Setup Cloud Scheduler job
+gcloud scheduler jobs delete "${SERVICE_NAME}-job" --project="${PROJECT_ID}" --location="${REGION}" --quiet 2>/dev/null || true
 
-gcloud beta scheduler jobs create http ${SERVICE_NAME}-job --schedule "*/10 * * * *" \
-   --http-method=GET \
-   --uri=${SERVICE_URL} \
-   --oidc-service-account-email=${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com \
-   --oidc-token-audience=${SERVICE_URL}
+gcloud scheduler jobs create http "${SERVICE_NAME}-job" \
+  --project="${PROJECT_ID}" \
+  --location="${REGION}" \
+  --schedule="*/10 * * * *" \
+  --http-method=GET \
+  --uri="${SERVICE_URL}" \
+  --oidc-service-account-email="${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --oidc-token-audience="${SERVICE_URL}" \
+  --quiet

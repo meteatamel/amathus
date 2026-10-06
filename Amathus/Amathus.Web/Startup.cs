@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
-using WebApiContrib.Core.Formatter.Jsonp;
+// Removed unused Jsonp formatter
 using Amathus.Common.Reader;
 using System.Collections.Generic;
 using Amathus.Common.Sources;

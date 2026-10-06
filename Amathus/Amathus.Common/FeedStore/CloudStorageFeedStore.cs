@@ -1,4 +1,4 @@
-﻿// Copyright 2020 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ using System.ServiceModel.Syndication;
 using System.Threading.Tasks;
 using System.Xml;
 using Amathus.Common.Reader;
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Logging;
 
@@ -26,24 +27,25 @@ namespace Amathus.Common.FeedStore
     {
         private readonly string _bucketId;
         private readonly ILogger _logger;
+        private readonly StorageClient _client;
 
         public CloudStorageSyndFeedStore(string bucketId, ILogger logger = null)
         {
             _bucketId = bucketId;
             _logger = logger;
+            var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
+                ? GoogleCredential.FromComputeCredential()
+                : null;
+            _client = StorageClient.Create(credential);
         }
 
         public async Task InsertAsync(SyndicationFeed feed)
         {
-            var client = StorageClient.Create();
-
-            //await CheckBucketExists();
-
             var objectName = feed.Id.ToLowerInvariant();
             _logger?.LogInformation($"Uploading {objectName} to bucket {_bucketId}");
 
             var stream = GetStream(feed);
-            await client.UploadObjectAsync(_bucketId, objectName, "application/xml", stream);
+            await _client.UploadObjectAsync(_bucketId, objectName, "application/xml", stream);
 
             _logger?.LogInformation($"Uploaded {objectName}");
         }
@@ -55,23 +57,19 @@ namespace Amathus.Common.FeedStore
                 throw new ArgumentNullException();
             }
 
-            //await CheckBucketExists();
-
-            var client = StorageClient.Create();
-
             var objectName = feedId.ToLowerInvariant();
             _logger?.LogInformation($"Reading {objectName} from bucket {_bucketId}");
 
             var stream = new MemoryStream();
             try
             {
-                await client.DownloadObjectAsync(_bucketId, objectName, stream);
+                await _client.DownloadObjectAsync(_bucketId, objectName, stream);
                 _logger?.LogInformation($"Read {objectName}");
             }
             catch (Exception e)
             {
                 _logger.LogError($"Error reading {objectName}: " + e.Message);
-                throw e;
+                throw;
             }
 
             _logger?.LogInformation($"Converting to SyndicationFeed");
@@ -89,10 +87,9 @@ namespace Amathus.Common.FeedStore
             catch (Exception e)
             {
                 _logger?.LogError($"Error converting {e.Message}");
-                throw e;
+                throw;
             }
         }
-
 
         private async Task CheckBucketExists()
         {
@@ -103,9 +100,7 @@ namespace Amathus.Common.FeedStore
 
             try
             {
-                var client = StorageClient.Create();
-
-                await client.GetBucketAsync(_bucketId);
+                await _client.GetBucketAsync(_bucketId);
             }
             catch (Exception)
             {

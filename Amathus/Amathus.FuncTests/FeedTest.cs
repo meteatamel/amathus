@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,13 +31,6 @@ namespace Amathus.FunctionalTests
         public static void Init(TestContext context)
         {
             _sources = TestHelper.GetSources();
-        }
-
-        [TestMethod]
-        public void Convert_AdaBasini_Converts()
-        {
-            var feed = Read(Source.AdaBasini);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
         [TestMethod]
@@ -83,37 +76,9 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
-        public void Convert_Gunes_Converts()
-        {
-            var feed = Read(Source.Gunes);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_Haberator_Converts()
-        {
-            var feed = Read(Source.Haberator);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_HaberKibris_Converts()
-        {
-            var feed = Read(Source.HaberKibris);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
         public void Convert_HaberalKibrisli_Converts()
         {
             var feed = Read(Source.HaberalKibrisli);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_Hakikat_Converts()
-        {
-            var feed = Read(Source.Hakikat);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -132,37 +97,9 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
-        public void Convert_LgcNews_Converts()
-        {
-            var feed = Read(Source.LgcNews);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisAda_Converts()
-        {
-            var feed = Read(Source.KibrisAda);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
         public void Convert_KibrisGercek_Converts()
         {
             var feed = Read(Source.KibrisGercek);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisHaber_Converts()
-        {
-            var feed = Read(Source.KibrisHaber);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_KibrisHaberci_Converts()
-        {
-            var feed = Read(Source.KibrisHaberci);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -181,13 +118,6 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
-        public void Convert_KibrisSonDakika_Converts()
-        {
-            var feed = Read(Source.KibrisSonDakika);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
             var feed = Read(Source.KibrisTime);
@@ -202,37 +132,9 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
-        public void Convert_OzgurGazete_Converts()
-        {
-            var feed = Read(Source.OzgurGazete);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_SesKibris_Converts()
-        {
-            var feed = Read(Source.SesKibris);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_TVine_Converts()
-        {
-            var feed = Read(Source.TVine);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
         public void Convert_Vatan_Converts()
         {
             var feed = Read(Source.Vatan);
-            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
-        }
-
-        [TestMethod]
-        public void Convert_Volkan_Converts()
-        {
-            var feed = Read(Source.Volkan);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -272,6 +174,5 @@ namespace Amathus.FunctionalTests
 
             return feed;
         }
-
     }
 }

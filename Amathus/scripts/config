@@ -1,13 +1,13 @@
 #!/bin/bash
 
-PROJECT_ID="$(gcloud config get-value core/project)"
-PROJECT_NUMBER="$(gcloud projects list --filter=$PROJECT_ID --format='value(PROJECT_NUMBER)')"
-REGION="europe-west1"
-BUCKET_ID="amathus-atamel-bucket"
-TOPIC_NAME="amathus-atamel-topic"
+PROJECT_ID="${PROJECT_ID:-events-atamel}"
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)' --quiet)"
+REGION="${REGION:-europe-west1}"
+BUCKET_ID="${BUCKET_ID:-amathus-events-atamel-bucket}"
+TOPIC_NAME="${TOPIC_NAME:-amathus-events-atamel-topic}"
 
 set_service() {
-  echo $1 $2
+  echo "$1" "$2"
 
   # Amathus.Reader
   if [ "$1" == "reader" ]; then
@@ -22,7 +22,7 @@ set_service() {
     SERVICE_SRC=Amathus.Web
     SERVICE_NAME=amathus-web
   else
-    echo "Error: No service specified"
+    echo "Error: No service specified (use: reader | converter | web)"
     exit 1
   fi
 
@@ -32,6 +32,8 @@ set_service() {
     SERVICE_VISIBILITY=no-allow-unauthenticated
   fi
 
+  echo "PROJECT_ID: ${PROJECT_ID}"
+  echo "REGION: ${REGION}"
   echo "SERVICE_NAME: ${SERVICE_NAME}"
   echo "SERVICE_SRC: ${SERVICE_SRC}"
   echo "SERVICE_VISIBILITY: ${SERVICE_VISIBILITY}"

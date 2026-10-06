@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+PROJECT_ID="${PROJECT_ID:-events-atamel}"
+REGION="${REGION:-europe-west1}"
+SERVICE_NAME="amathus-client"
+IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
+
+echo "Building Flutter Web release bundle..."
+flutter build web --release
+
+echo "Building container image ${IMAGE} via Cloud Build..."
+gcloud builds submit \
+  --project="${PROJECT_ID}" \
+  --tag="${IMAGE}" \
+  --quiet
+
+echo "Deploying ${SERVICE_NAME} to Cloud Run (${REGION})..."
+gcloud run deploy "${SERVICE_NAME}" \
+  --project="${PROJECT_ID}" \
+  --image="${IMAGE}" \
+  --region="${REGION}" \
+  --platform=managed \
+  --allow-unauthenticated \
+  --port=8080 \
+  --memory=512Mi \
+  --quiet

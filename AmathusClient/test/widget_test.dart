@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility that Flutter provides. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:amathus/views/feeds_view.dart';
-import 'package:flutter/material.dart';
+import 'package:amathus/main.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(FeedsView());
+  testWidgets(
+      'Amathus app renders Latest News as first tab, Newspapers as second, and toggles Turkish/English',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await Constants.setLanguage('tr');
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(const AmathusApp());
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Turkish labels: Son Haberler (header + first tab), Gazeteler (second tab)
+    expect(find.text('Son Haberler'), findsWidgets);
+    expect(find.text('Gazeteler'), findsOneWidget);
+
+    // Switch to English
+    await Constants.setLanguage('en');
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Latest News'), findsWidgets);
+    expect(find.text('Newspapers'), findsOneWidget);
   });
 }

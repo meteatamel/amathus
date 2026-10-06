@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,35 +17,21 @@ namespace Amathus.Common.Sources
 {
     public class Source
     {
-        public const string AdaBasini = "adabasini";
         public const string CyprusToday = "cyprustoday";
         public const string DetayKibris = "detaykibris";
         public const string Diyalog = "diyalog";
         public const string GazeddaKibris = "gazeddakibris";
         public const string Giynik = "giynik";
         public const string GundemKibris = "gundemkibris";
-        public const string Gunes = "gunes";
-        public const string Haberator = "haberator";
-        public const string HaberKibris = "haberkibris";
         public const string HaberalKibrisli = "haberalkibrisli";
-        public const string Hakikat = "hakikat";
         public const string HalkinSesi = "halkinsesi";
         public const string Havadis = "havadis";
-        public const string KibrisAda = "kibrisada";
         public const string KibrisGazetesi = "kibrisgazetesi";
         public const string KibrisGercek = "kibrisgercek";
-        public const string KibrisHaber = "kibrishaber";
-        public const string KibrisHaberci = "kibrishaberci";
         public const string KibrisManset = "kibrismanset";
-        public const string KibrisSonDakika = "kibrissondakika";
         public const string KibrisTime = "kibristime";
-        public const string LgcNews = "lgcnews";
         public const string LondraGazete = "londragazete";
-        public const string OzgurGazete = "ozgurgazete";
-        public const string SesKibris = "seskibris";
-        public const string TVine = "tvine";
         public const string Vatan = "vatan";
-        public const string Volkan = "volkan";
         public const string YeniCag = "yenicag";
         public const string YeniDuzen = "yeniduzen";
 

@@ -2,46 +2,71 @@ import 'package:amathus/views/feeditems_recent_view.dart';
 import 'package:amathus/views/feeds_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:page_transition/page_transition.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
 
-  AppBottomNavigationBar({Key key, @required this.selectedIndex})
-      : super(key: key);
+  const AppBottomNavigationBar({super.key, required this.selectedIndex});
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dynamic_feed, size: 28),
-          label: Constants.ALL_NEWS.toUpperCase(),
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.fiber_new, size: 28),
-          label: Constants.RECENT_NEWS.toUpperCase(),
-        ),
-      ],
-      currentIndex: selectedIndex,
-      selectedItemColor: Colors.amber[800],
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            Navigator.pushReplacement(
+      ),
+      child: NavigationBar(
+        height: 64,
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFF0F2942).withValues(alpha: 0.12),
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) {
+          if (index == selectedIndex) return;
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
                 context,
-                PageTransition(
-                    type: PageTransitionType.fade, child: FeedsView()));
-            break;
-          case 1:
-            Navigator.pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => FeedItemsRecentView(),
+                  transitionDuration: const Duration(milliseconds: 180),
+                  transitionsBuilder: (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
+                ),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
                 context,
-                PageTransition(
-                    type: PageTransitionType.fade,
-                    child: FeedItemsRecentView()));
-            break;
-        }
-      },
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const FeedsView(),
+                  transitionDuration: const Duration(milliseconds: 180),
+                  transitionsBuilder: (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
+                ),
+              );
+              break;
+          }
+        },
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.bolt_outlined),
+            selectedIcon: const Icon(
+              Icons.bolt_rounded,
+              color: Color(0xFF0F2942),
+            ),
+            label: Constants.RECENT_NEWS,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.newspaper_outlined),
+            selectedIcon: const Icon(
+              Icons.newspaper_rounded,
+              color: Color(0xFF0F2942),
+            ),
+            label: Constants.NEWSPAPERS,
+          ),
+        ],
+      ),
     );
   }
 }

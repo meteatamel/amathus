@@ -1,12 +1,15 @@
 #!/bin/bash
+set -e
 
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-set_service $1
+set_service "$1" "$2"
 
 set -v
 
 gcloud builds submit \
-  --config scripts/cloudbuild.yaml \
-  --substitutions=_SERVICE_NAME="${SERVICE_NAME}",_SERVICE_SRC="${SERVICE_SRC}"
+  --project="${PROJECT_ID}" \
+  --config=scripts/cloudbuild.yaml \
+  --substitutions=_SERVICE_NAME="${SERVICE_NAME}",_SERVICE_SRC="${SERVICE_SRC}" \
+  --quiet

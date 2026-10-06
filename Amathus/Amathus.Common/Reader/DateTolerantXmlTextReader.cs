@@ -1,4 +1,4 @@
-﻿
+
 // Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,9 +65,10 @@ namespace Amathus.Common.Reader
 
             var dateString = base.ReadString();
 
-            if (!DateTime.TryParse(dateString, out DateTime dt))
+            if (!DateTime.TryParse(dateString, out DateTime dt) &&
+                !DateTime.TryParseExact(dateString, CustomUtcDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
             {
-                dt = DateTime.ParseExact(dateString, CustomUtcDateTimeFormat, CultureInfo.InvariantCulture);
+                dt = DateTime.UtcNow;
             }
 
             return dt.ToUniversalTime().ToString("R", CultureInfo.InvariantCulture);

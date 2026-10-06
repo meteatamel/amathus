@@ -1,0 +1,12 @@
+.git
+.gitignore
+.dart_tool/
+.idea/
+android/
+ios/
+macos/
+test/
+build/ios/
+build/macos/
+build/app/
+!build/web/

@@ -1,4 +1,4 @@
-﻿// Copyright 2020 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,9 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 
 namespace Amathus.Common.FeedStore
@@ -25,7 +27,18 @@ namespace Amathus.Common.FeedStore
 
         public FirestoreFeedStore(string projectId)
         {
-            _firestore = FirestoreDb.Create(projectId);
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE")))
+            {
+                _firestore = new FirestoreDbBuilder
+                {
+                    ProjectId = projectId,
+                    Credential = GoogleCredential.FromComputeCredential()
+                }.Build();
+            }
+            else
+            {
+                _firestore = FirestoreDb.Create(projectId);
+            }
             _feeds = _firestore.Collection("feeds");
         }
 

@@ -1,0 +1,12 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - macos/**
+
+linter:
+  rules:
+    avoid_print: false
+    prefer_single_quotes: false

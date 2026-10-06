@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,10 +43,7 @@ namespace Amathus.Reader.Controllers
             stopWatch.Start();
 
             var rawFeeds = (await _reader.ReadAll()).ToList();
-            rawFeeds.ForEach(async rawFeed =>
-            {
-                await _syncStore.InsertAsync(rawFeed);
-            });
+            await Task.WhenAll(rawFeeds.Select(rawFeed => _syncStore.InsertAsync(rawFeed)));
 
             stopWatch.Stop();
             _logger?.LogInformation($"Fetching news feeds finished in {stopWatch.Elapsed.Seconds} seconds. Total feeds: {rawFeeds.Count}");

@@ -1,13 +1,17 @@
 #!/bin/bash
+set -e
 
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
 set -v
 
-gcloud services enable --project ${PROJECT_ID} \
-    cloudbuild.googleapis.com \
-    run.googleapis.com \
-    firestore.googleapis.com \
-    cloudscheduler.googleapis.com
-
+gcloud services enable \
+  --project="${PROJECT_ID}" \
+  cloudbuild.googleapis.com \
+  run.googleapis.com \
+  firestore.googleapis.com \
+  cloudscheduler.googleapis.com \
+  pubsub.googleapis.com \
+  storage.googleapis.com \
+  --quiet

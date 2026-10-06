@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ namespace Amathus.Common.Util
 {
     public static class TextUtil
     {
-        private const string ImgPattern = "<img.+?src=[\"'](.+?)[\"'].+?>";
-        private static readonly Regex ImgRegex = new Regex(ImgPattern);
+        private const string ImgPattern = "<img.+?src=[\"'](.+?)[\"'].*?>";
+        private static readonly Regex ImgRegex = new Regex(ImgPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         private const string BannedPattern = "(c|k)ovid|(c|k)orona|vir(u|ü)s|vaka";
 
         public static string RemoveHtmlTabAndNewLine(string text)
@@ -30,6 +30,10 @@ namespace Amathus.Common.Util
 
         public static string HtmlDecode(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
             // Some feeds have extra space before or after
             return HttpUtility.HtmlDecode(text).Trim();
         }
@@ -41,29 +45,63 @@ namespace Amathus.Common.Util
                 return text;
             }
 
-            return Regex.Replace(text, "<.+?>", string.Empty);
+            return Regex.Replace(text, "<.+?>", string.Empty, RegexOptions.Singleline).Trim();
+        }
+
+        public static Uri EnsureHttps(Uri uri)
+        {
+            if (uri == null)
+            {
+                return null;
+            }
+            if (uri.Scheme == Uri.UriSchemeHttp)
+            {
+                var builder = new UriBuilder(uri)
+                {
+                    Scheme = Uri.UriSchemeHttps,
+                    Port = -1
+                };
+                return builder.Uri;
+            }
+            return uri;
         }
 
         public static Uri GetImg(string text)
         {
-            return string.IsNullOrEmpty(text) ? null : new Uri(text);
+            if (string.IsNullOrEmpty(text))
+            {
+                return null;
+            }
+            return Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri) ? EnsureHttps(uri) : null;
         }
 
         public static Uri ExtractImgSrc(string text)
         {
-            var extracted = Regex.Match(text, ImgPattern, RegexOptions.IgnoreCase).Groups[1].Value;
-            return string.IsNullOrEmpty(extracted)? null : new Uri(extracted);
+            if (string.IsNullOrEmpty(text))
+            {
+                return null;
+            }
+            var extracted = ImgRegex.Match(text).Groups[1].Value;
+            return GetImg(extracted);
         }
 
         public static string RemoveImgSrc(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
             return ImgRegex.Replace(text, string.Empty, 1);
         }
 
         public static string RemoveSubtext(string text, string subtext)
         {
-            var regex = new Regex(subtext);
-            return regex.Replace(text, string.Empty, 1);
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(subtext))
+            {
+                return text;
+            }
+            var regex = new Regex(Regex.Escape(subtext));
+            return regex.Replace(text, string.Empty, 1).Trim();
         }
 
         public static string RemoveFooter(string text)
@@ -73,9 +111,9 @@ namespace Amathus.Common.Util
                 return text;
             }
 
-            if (Regex.IsMatch(text, "The post (.+?) appeared"))
+            if (Regex.IsMatch(text, "The post (.+?) appeared", RegexOptions.Singleline))
             {
-                return text.Substring(0, text.IndexOf("The post"));
+                return text.Substring(0, text.IndexOf("The post")).Trim();
             }
 
             return text;
@@ -88,7 +126,7 @@ namespace Amathus.Common.Util
                 return text;
             }
 
-            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", "").Trim();
+            return Regex.Replace(text, @"\t|\n|\r|&nbsp;", " ").Trim();
         }
 
         public static string RemoveAmp(string text)

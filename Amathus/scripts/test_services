@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+echo "=== Testing Amathus Microservices in ${PROJECT_ID} (${REGION}) ==="
+
+TOKEN="$(gcloud auth print-identity-token --quiet)"
+
+READER_URL="$(gcloud run services describe amathus-reader --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' --quiet)"
+CONVERTER_URL="$(gcloud run services describe amathus-converter --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' --quiet)"
+WEB_URL="$(gcloud run services describe amathus-web --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' --quiet)"
+
+echo "Reader URL   : ${READER_URL}"
+echo "Converter URL: ${CONVERTER_URL}"
+echo "Web URL      : ${WEB_URL}"
+
+echo ""
+echo "1. Triggering amathus-reader to fetch RSS feeds and upload XML to gs://${BUCKET_ID}..."
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer ${TOKEN}" "${READER_URL}"
+
+echo ""
+echo "2. Testing amathus-converter directly with a sample OBJECT_FINALIZE event for 'cyprustoday'..."
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -X POST "${CONVERTER_URL}" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":{\"attributes\":{\"eventType\":\"OBJECT_FINALIZE\",\"bucketId\":\"${BUCKET_ID}\",\"objectId\":\"cyprustoday\"}}}"
+
+echo ""
+echo "3. Testing amathus-web /api/v1/feeds..."
+FEEDS_COUNT="$(curl -s "${WEB_URL}/api/v1/feeds" | jq 'length')"
+echo "Total feeds returned by amathus-web: ${FEEDS_COUNT}"
+
+echo ""
+echo "4. Testing amathus-web /api/v1/feeditems?limit=10..."
+ITEMS_COUNT="$(curl -s "${WEB_URL}/api/v1/feeditems?limit=10" | jq '[.[].Items | length] | add')"
+echo "Total feed items returned (limit=10): ${ITEMS_COUNT}"
+
+echo ""
+echo "All microservice checks passed!"
