@@ -25,7 +25,7 @@ namespace Amathus.Common.Converter
             var extractedImg = TextUtil.ExtractImgSrc(feedItem.Detail) ?? TextUtil.ExtractImgSrc(item.Summary?.Text);
             if (extractedImg != null)
             {
-                feedItem.ImageUrl = extractedImg;
+                feedItem.ImageUrl ??= extractedImg;
                 feedItem.Detail = TextUtil.RemoveImgSrc(feedItem.Detail);
             }
             feedItem.Summary = TextUtil.RemoveFooter(feedItem.Summary);

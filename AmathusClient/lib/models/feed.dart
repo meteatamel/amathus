@@ -11,6 +11,9 @@ class Feed {
   @JsonKey(name: 'Title')
   final String title;
 
+  @JsonKey(name: 'Language')
+  final String? language;
+
   @JsonKey(name: 'LastUpdatedTime')
   final DateTime lastUpdatedTime;
 
@@ -29,8 +32,9 @@ class Feed {
     this.lastUpdatedTime,
     this.imageUrl,
     this.url,
-    this.items,
-  );
+    this.items, [
+    this.language,
+  ]);
 
   factory Feed.fromJson(Map<String, dynamic> json) {
     final feed = _$FeedFromJson(json);

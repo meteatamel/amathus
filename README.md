@@ -1,6 +1,6 @@
 # Amathus
 
-Amathus reads Northern Cyprus (KKTC) RSS news feeds, transforms them into a common feed format, and exposes them behind a Web API with a cross-platform Flutter client (Web, iOS, Android, macOS).
+Amathus reads Cyprus RSS news feeds in Turkish, Greek, and English, transforms them into a common feed format, and exposes them behind a Web API with a cross-platform Flutter client (Web, iOS, Android, macOS).
 
 - **Backend (`Amathus/`)**: Written in **C# 14 / ASP.NET Core (.NET 10.0)** and deployed as 3 Cloud Run microservices (`amathus-reader`, `amathus-converter`, `amathus-web`) on Google Cloud (`events-atamel`).
 - **Frontend (`AmathusClient/`)**: Written in **Flutter 3.41 / Dart 3.11** (Material 3) and deployed as a Cloud Run web application (`amathus-client`).
@@ -9,7 +9,7 @@ Amathus reads Northern Cyprus (KKTC) RSS news feeds, transforms them into a comm
 
 ![Architecture](./Amathus/Shared/architecture.png)
 
-1. **`Amathus.Reader` (`amathus-reader`)**: Invoked every 10 minutes by Cloud Scheduler (`amathus-reader-job`). Fetches the 17 active RSS feeds configured in [`Amathus/Shared/amathussources.json`](./Amathus/Shared/amathussources.json) in parallel and uploads raw XML feeds to Cloud Storage (`gs://amathus-events-atamel-bucket`).
+1. **`Amathus.Reader` (`amathus-reader`)**: Invoked every 10 minutes by Cloud Scheduler (`amathus-reader-job`). Fetches the 34 active RSS feeds configured in [`Amathus/Shared/amathussources.json`](./Amathus/Shared/amathussources.json) in parallel and uploads raw XML feeds to Cloud Storage (`gs://amathus-events-atamel-bucket`).
 2. **`Amathus.Converter` (`amathus-converter`)**: Triggered by Pub/Sub push notifications (`amathus-events-atamel-topic`) on Cloud Storage `OBJECT_FINALIZE` events. Parses and cleans the raw feeds into normalized `Feed` / `FeedItem` documents and stores them in Firestore (`feeds` collection).
 3. **`Amathus.Web` (`amathus-web`)**: Public REST API serving `/api/v1/feeds`, `/api/v1/feeditems`, `/api/v1/feeditems/{id}`, and `/api/v1/imageproxy?url=...` (CORS-enabled image proxy for Flutter Web).
 4. **`AmathusClient` (`amathus-client`)**: Flutter client for Web, iOS, Android, and macOS.
@@ -28,7 +28,7 @@ dotnet test Amathus.sln
 
 ### Run `Amathus.Web` Locally (In-Memory Mode)
 
-In `Development` mode (`appsettings.Development.json`), `Amathus.Web` uses `InMemory` storage and automatically runs a background `FeedReaderService` that fetches and converts all 17 RSS feeds on startup without requiring Google Cloud credentials:
+In `Development` mode (`appsettings.Development.json`), `Amathus.Web` uses `InMemory` storage and automatically runs a background `FeedReaderService` that fetches and converts all 34 RSS feeds on startup without requiring Google Cloud credentials:
 
 ```bash
 cd Amathus/Amathus.Web

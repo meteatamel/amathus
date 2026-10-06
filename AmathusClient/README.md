@@ -1,4 +1,4 @@
-# Amathus Client (Kuzey Kıbrıs Haber)
+# Amathus Client (Kıbrıs Haber / Cyprus News)
 
 Cross-platform Flutter client (Web, Android, iOS, macOS) for Amathus, upgraded to **Flutter 3.41 / Dart 3.11** with Material 3 design.
 

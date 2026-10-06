@@ -2,6 +2,7 @@ import 'package:amathus/controllers/feeditems_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
+import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'common/drawer.dart';
@@ -19,7 +20,14 @@ class FeedItemsRecentView extends StatelessWidget {
         title: Text(Constants.RECENT_NEWS),
       ),
       drawer: const AppDrawer(),
-      body: FeedItemsList(loadDataCallback: loadData, wideTile: true),
+      body: Column(
+        children: [
+          const SourceLanguageFilterBar(),
+          Expanded(
+            child: FeedItemsList(loadDataCallback: loadData, wideTile: true),
+          ),
+        ],
+      ),
       bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 0),
     );
   }

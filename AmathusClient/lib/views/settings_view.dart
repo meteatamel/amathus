@@ -3,6 +3,7 @@ import 'package:amathus/controllers/feeds_storage.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
+import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
@@ -119,12 +120,17 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                               ButtonSegment<String>(
                                 value: 'tr',
                                 label: Text('Türkçe'),
-                                icon: Icon(Icons.translate_rounded, size: 18),
+                                icon: FlagIcon(languageCode: 'tr'),
+                              ),
+                              ButtonSegment<String>(
+                                value: 'el',
+                                label: Text('Ελληνικά'),
+                                icon: FlagIcon(languageCode: 'el'),
                               ),
                               ButtonSegment<String>(
                                 value: 'en',
                                 label: Text('English'),
-                                icon: Icon(Icons.public_rounded, size: 18),
+                                icon: FlagIcon(languageCode: 'en'),
                               ),
                             ],
                             selected: {Constants.currentLanguage},
@@ -136,6 +142,94 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                  ),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: Constants.sourceLanguageNotifier,
+                      builder: (context, selectedSourceLang, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.filter_list_rounded,
+                                  color: Color(0xFF0F2942),
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  Constants.SOURCE_LANGUAGE_TITLE,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              Constants.SOURCE_LANGUAGE_SUBTITLE,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color: Colors.blueGrey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              child: SegmentedButton<String>(
+                                segments: [
+                                  ButtonSegment<String>(
+                                    value: 'all',
+                                    label: Text(Constants.SOURCE_FILTER_ALL),
+                                    icon: const Icon(
+                                      Icons.public_rounded,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  ButtonSegment<String>(
+                                    value: 'tr',
+                                    label: Text(Constants.SOURCE_FILTER_TR),
+                                    icon: const FlagIcon(languageCode: 'tr'),
+                                  ),
+                                  ButtonSegment<String>(
+                                    value: 'el',
+                                    label: Text(Constants.SOURCE_FILTER_EL),
+                                    icon: const FlagIcon(languageCode: 'el'),
+                                  ),
+                                  ButtonSegment<String>(
+                                    value: 'en',
+                                    label: Text(Constants.SOURCE_FILTER_EN),
+                                    icon: const FlagIcon(languageCode: 'en'),
+                                  ),
+                                ],
+                                selected: {selectedSourceLang},
+                                onSelectionChanged: (selection) {
+                                  if (selection.isNotEmpty) {
+                                    Constants.setSourceLanguage(
+                                      selection.first,
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

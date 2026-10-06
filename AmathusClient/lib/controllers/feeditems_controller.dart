@@ -20,7 +20,7 @@ class FeedItemsController {
     return null;
   }
 
-  Future<List<Feed>?> readRecent({int limit = 100}) async {
+  Future<List<Feed>?> readRecent({int limit = 200}) async {
     try {
       final response =
           await http.get(Uri.parse("${Constants.URL_FEED_ITEMS}?limit=$limit"));

@@ -47,33 +47,49 @@ class _FeedItemsListState extends State<FeedItemsList> {
       return const CenteredProgressIndicator();
     }
 
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          Constants.NO_NEWS_FOUND,
-          style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade600),
-        ),
-      );
-    }
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.sourceLanguageNotifier,
+      builder: (context, _, __) {
+        final filteredItems = items
+            .where(
+              (item) =>
+                  item.feed == null ||
+                  Constants.matchesSourceLanguage(
+                    item.feed?.id,
+                    item.feed?.language,
+                  ),
+            )
+            .toList();
 
-    return RefreshIndicator(
-      onRefresh: _loadDataAndUpdateState,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              return widget.wideTile
-                  ? FeedItemListTileWide(item: items[index])
-                  : FeedItemListTile(item: items[index]);
-            },
+        if (filteredItems.isEmpty) {
+          return Center(
+            child: Text(
+              Constants.NO_NEWS_FOUND,
+              style: TextStyle(fontSize: 15, color: Colors.blueGrey.shade600),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadDataAndUpdateState,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                itemCount: filteredItems.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  return widget.wideTile
+                      ? FeedItemListTileWide(item: filteredItems[index])
+                      : FeedItemListTile(item: filteredItems[index]);
+                },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

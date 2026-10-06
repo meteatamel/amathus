@@ -17,11 +17,13 @@ Feed _$FeedFromJson(Map<String, dynamic> json) => Feed(
       (json['Items'] as List<dynamic>?)
           ?.map((e) => FeedItem.fromJson(e as Map<String, dynamic>))
           .toList(),
+      json['Language'] as String?,
     );
 
 Map<String, dynamic> _$FeedToJson(Feed instance) => <String, dynamic>{
       'Id': instance.id,
       'Title': instance.title,
+      'Language': instance.language,
       'LastUpdatedTime': instance.lastUpdatedTime.toIso8601String(),
       'ImageUrl': instance.imageUrl,
       'Url': instance.url,

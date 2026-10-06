@@ -2,104 +2,240 @@
   "Amathus": {
     "Sources": [
       {
+        "Id": "alphanews",
+        "Title": "AlphaNews.Live",
+        "Language": "el",
+        "Url": "https://www.alphanews.live/feed/",
+        "LogoUrl": "https://www.alphanews.live/wp-content/themes/alphanews/assets/images/logo.png"
+      },
+      {
+        "Id": "bagimsiz",
+        "Title": "Bağımsız Gazete",
+        "Language": "tr",
+        "Url": "https://www.bagimsiz.com/rss",
+        "LogoUrl": "https://bagimsizcom.teimg.com/bagimsiz-com/uploads/2026/01/bagimsizlogo2026-1.png"
+      },
+      {
+        "Id": "bugunkibris",
+        "Title": "Bugün Kıbrıs",
+        "Language": "tr",
+        "Url": "https://bugunkibris.com/feed/",
+        "LogoUrl": "https://bugunkibris.com/images/apple-touch-icon-152x152.png"
+      },
+      {
+        "Id": "cyprusmail",
+        "Title": "Cyprus Mail",
+        "Language": "en",
+        "Url": "https://cyprus-mail.com/feed/",
+        "LogoUrl": "https://cyprus-mail.com/apple-touch-icon-180x180.png"
+      },
+      {
         "Id": "cyprustoday",
         "Title": "Cyprus Today",
+        "Language": "en",
         "Url": "https://www.cyprustodayonline.com/rss/category/cyprus",
         "LogoUrl": "https://www.cyprustodayonline.com/uploads/logo/logo_5e6a36abc2b20.png"
       },
       {
         "Id": "detaykibris",
         "Title": "Detay Kıbrıs",
+        "Language": "tr",
         "Url": "https://www.detaykibris.com/rss/",
         "LogoUrl": "https://www.detaykibris.com/s/i/logo.png"
       },
       {
+        "Id": "dialogos",
+        "Title": "Dialogos",
+        "Language": "el",
+        "Url": "https://dialogos.com.cy/feed/",
+        "LogoUrl": "https://dialogos.com.cy/wp-content/uploads/2024/10/cropped-images1-400x400.jpg"
+      },
+      {
         "Id": "diyalog",
         "Title": "Diyalog",
+        "Language": "tr",
         "Url": "https://www.diyaloggazetesi.com/rss.php",
         "LogoUrl": "https://www.diyaloggazetesi.com/images/banner/hslogo_1_1.png"
       },
       {
+        "Id": "financialmirror",
+        "Title": "Financial Mirror",
+        "Language": "en",
+        "Url": "https://www.financialmirror.com/feed/",
+        "LogoUrl": "https://www.financialmirror.com/wp-content/uploads/2019/11/logo.png"
+      },
+      {
         "Id": "gazeddakibris",
         "Title": "Gazedda Kıbrıs",
+        "Language": "tr",
         "Url": "https://gazeddakibris.com/feed/",
         "LogoUrl": "https://gazeddakibris.com/wp-content/uploads/2020/03/Gazedda_slider.png"
       },
       {
         "Id": "giynik",
         "Title": "Gıynık Gazetesi",
+        "Language": "tr",
         "Url": "https://giynikgazetesi.com/feed/",
         "LogoUrl": "https://www.giynikgazetesi.com/wp-content/uploads/2020/01/GIYNIKson.png"
       },
       {
         "Id": "gundemkibris",
         "Title": "Gündem Kıbrıs",
+        "Language": "tr",
         "Url": "https://www.gundemkibris.com/rss",
         "LogoUrl": "https://gundemkibriscom.teimg.com/gundemkibris-com/images/banner/analogo.png"
       },
       {
+        "Id": "guneskibris",
+        "Title": "Güneş Kıbrıs",
+        "Language": "tr",
+        "Url": "https://www.guneskibris.com/rss",
+        "LogoUrl": "https://guneskibris.com/wp-content/uploads/2026/02/logogunes.png"
+      },
+      {
         "Id": "haberalkibrisli",
         "Title": "Haberal Kıbrıslı",
+        "Language": "tr",
         "Url": "https://haberalkibrisli.net/feed/",
         "LogoUrl": "https://haberalkibrisli.net/wp-content/uploads/2024/03/haberallogo.png"
       },
       {
         "Id": "halkinsesi",
         "Title": "Halkın Sesi",
+        "Language": "tr",
         "Url": "https://www.halkinsesikibris.com/rss",
         "LogoUrl": "https://halkinsesikibriscom.teimg.com/halkinsesikibris-com/images/banner/HALKIN_SESI_CMYK_1_1.jpg"
       },
       {
         "Id": "havadis",
         "Title": "Havadis",
+        "Language": "tr",
         "Url": "https://www.havadiskibris.com/feed/",
         "LogoUrl": "https://www.havadiskibris.com/wp-content/uploads/2018/12/logonew.jpg"
       },
       {
         "Id": "kibrisgazetesi",
         "Title": "Kıbrıs Gazetesi",
+        "Language": "tr",
         "Url": "https://kibrisgazetesi.com/feed/",
         "LogoUrl": "https://kibrisgazetesi.com/wp-content/uploads/2023/09/site-logo.png"
       },
       {
+        "Id": "kibrisgenctv",
+        "Title": "Kıbrıs Genç TV",
+        "Language": "tr",
+        "Url": "https://www.kibrisgenctv.com/rss",
+        "LogoUrl": "https://kibrisgenctvcom.teimg.com/kibrisgenctv-com/uploads/2023/11/logo-190x90-01.png"
+      },
+      {
         "Id": "kibrisgercek",
         "Title": "Kıbrıs Gerçek",
+        "Language": "tr",
         "Url": "https://www.kibrisgercek.com/rss",
         "LogoUrl": "https://kibrisgercekcom.teimg.com/kibrisgercek-com/uploads/2026/03/gercek-yeni-logo-beyaz.png"
       },
       {
         "Id": "kibrismanset",
         "Title": "Kıbrıs Manşet",
+        "Language": "tr",
         "Url": "https://www.kibrismanset.com/rss",
         "LogoUrl": "https://kibrismansetcom.teimg.com/kibrismanset-com/images/banner/km_site.jpg"
       },
       {
+        "Id": "kibrisobjektif",
+        "Title": "Kıbrıs Objektif",
+        "Language": "tr",
+        "Url": "https://www.kibrisobjektif.com/rss",
+        "LogoUrl": "https://www.kibrisobjektif.com/wp-content/uploads/2025/12/logoobjektif.webp"
+      },
+      {
         "Id": "kibristime",
         "Title": "Kıbrıs Time",
+        "Language": "tr",
         "Url": "https://www.kibristime.com/rss",
         "LogoUrl": "https://kibristimecom.teimg.com/kibristime-com/images/banner/ktimepng_1.png"
       },
       {
+        "Id": "lemesos",
+        "Title": "Lemesos",
+        "Language": "el",
+        "Url": "https://www.lemesosblog.com/feed/",
+        "LogoUrl": "https://lemesosblog.com/wp-content/uploads/2022/11/logo-lemesosblog.png"
+      },
+      {
         "Id": "londragazete",
         "Title": "Londra Gazete",
+        "Language": "tr",
         "Url": "https://londragazete.com/index.php/feed/",
         "LogoUrl": "https://londragazete.com/wp-content/uploads/2025/10/logo-lg.png"
       },
       {
+        "Id": "pafospress",
+        "Title": "PafosPress",
+        "Language": "el",
+        "Url": "https://pafospress.com/feed/",
+        "LogoUrl": "https://pafospress.com/wp-content/uploads/2020/01/cropped-pafospress-icon-192x192.png"
+      },
+      {
+        "Id": "philenews",
+        "Title": "Philenews",
+        "Language": "el",
+        "Url": "https://www.philenews.com/feed/",
+        "LogoUrl": "https://www.philenews.com/wp-content/themes/philenews/assets/images/favicons/transparent/apple-icon-152x152.png"
+      },
+      {
+        "Id": "politis",
+        "Title": "Politis",
+        "Language": "el",
+        "Url": "https://www.politis.com.cy/feed/",
+        "LogoUrl": "https://www.politis.com.cy/images/politis_logo_new.webp"
+      },
+      {
+        "Id": "politisen",
+        "Title": "Politis (English)",
+        "Language": "en",
+        "Url": "https://en.politis.com.cy/feed/",
+        "LogoUrl": "https://www.politis.com.cy/images/politis_en_logo.webp"
+      },
+      {
+        "Id": "sigmalive",
+        "Title": "Sigmalive",
+        "Language": "el",
+        "Url": "https://www.sigmalive.com/rss",
+        "LogoUrl": "https://www.sigmalive.com/images/sigmalive_logo_new.webp"
+      },
+      {
+        "Id": "tothemaonline",
+        "Title": "To Thema Online",
+        "Language": "el",
+        "Url": "https://www.tothemaonline.com/rss",
+        "LogoUrl": "https://www.tothemaonline.com/img/apple-touch-icon.png"
+      },
+      {
+        "Id": "tvine",
+        "Title": "T-Vine",
+        "Language": "en",
+        "Url": "https://www.t-vine.com/feed",
+        "LogoUrl": "https://www.t-vine.com/front/assets/images/Tvine-web-logo.png"
+      },
+      {
         "Id": "vatan",
         "Title": "Vatan Gazetesi",
+        "Language": "tr",
         "Url": "https://www.arti392.com/rss",
         "LogoUrl": "https://arti392com.teimg.com/arti392-com/images/banner/arti392_1.png"
       },
       {
         "Id": "yenicag",
         "Title": "Yeniçağ",
+        "Language": "tr",
         "Url": "https://www.ykp.org.cy/feed/",
         "LogoUrl": "https://www.ykp.org.cy/wp-content/uploads/2018/04/ykp-544-180-400x133.jpg"
       },
       {
         "Id": "yeniduzen",
         "Title": "Yenidüzen",
+        "Language": "tr",
         "Url": "https://www.yeniduzen.com/rss",
         "LogoUrl": "https://www.yeniduzen.com/s/i/logo.png"
       }

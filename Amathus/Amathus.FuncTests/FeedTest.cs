@@ -34,6 +34,34 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_AlphaNews_Converts()
+        {
+            var feed = Read(Source.AlphaNews);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Bagimsiz_Converts()
+        {
+            var feed = Read(Source.Bagimsiz);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_BugunKibris_Converts()
+        {
+            var feed = Read(Source.BugunKibris);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_CyprusMail_Converts()
+        {
+            var feed = Read(Source.CyprusMail);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_CyprusToday_Converts()
         {
             var feed = Read(Source.CyprusToday);
@@ -48,9 +76,23 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_Dialogos_Converts()
+        {
+            var feed = Read(Source.Dialogos);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_Diyalog_Converts()
         {
             var feed = Read(Source.Diyalog);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_FinancialMirror_Converts()
+        {
+            var feed = Read(Source.FinancialMirror);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -76,6 +118,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_GunesKibris_Converts()
+        {
+            var feed = Read(Source.GunesKibris);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_HaberalKibrisli_Converts()
         {
             var feed = Read(Source.HaberalKibrisli);
@@ -93,6 +142,13 @@ namespace Amathus.FunctionalTests
         public void Convert_Havadis_Converts()
         {
             var feed = Read(Source.Havadis);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_KibrisGencTv_Converts()
+        {
+            var feed = Read(Source.KibrisGencTv);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -118,6 +174,13 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_KibrisObjektif_Converts()
+        {
+            var feed = Read(Source.KibrisObjektif);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_KibrisTime_Converts()
         {
             var feed = Read(Source.KibrisTime);
@@ -125,9 +188,65 @@ namespace Amathus.FunctionalTests
         }
 
         [TestMethod]
+        public void Convert_Lemesos_Converts()
+        {
+            var feed = Read(Source.Lemesos);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
         public void Convert_LondraGazete_Converts()
         {
             var feed = Read(Source.LondraGazete);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_PafosPress_Converts()
+        {
+            var feed = Read(Source.PafosPress);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Philenews_Converts()
+        {
+            var feed = Read(Source.Philenews);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Politis_Converts()
+        {
+            var feed = Read(Source.Politis);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_PolitisEn_Converts()
+        {
+            var feed = Read(Source.PolitisEn);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_Sigmalive_Converts()
+        {
+            var feed = Read(Source.Sigmalive);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_ToThemaOnline_Converts()
+        {
+            var feed = Read(Source.ToThemaOnline);
+            AssertTitleLastUpdatedTimeUrlImageUrl(feed);
+        }
+
+        [TestMethod]
+        public void Convert_TVine_Converts()
+        {
+            var feed = Read(Source.TVine);
             AssertTitleLastUpdatedTimeUrlImageUrl(feed);
         }
 
@@ -156,6 +275,7 @@ namespace Amathus.FunctionalTests
         {
             Assert.IsNotNull(feed);
             Assert.IsTrue(!string.IsNullOrEmpty(feed.Title));
+            Assert.IsTrue(!string.IsNullOrEmpty(feed.Language));
             Assert.IsNotNull(feed.LastUpdatedTime);
             Assert.AreNotEqual(new DateTime(), feed.LastUpdatedTime);
             Assert.IsNotNull(feed.Url);

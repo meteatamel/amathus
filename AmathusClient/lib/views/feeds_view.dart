@@ -2,6 +2,7 @@ import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeds_list.dart';
+import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -23,9 +24,16 @@ class _FeedsViewState extends State<FeedsView> {
         title: Text(Constants.NEWSPAPERS),
       ),
       drawer: const AppDrawer(),
-      body: FeedsList(
-        loadDataStorageCallback: () => _controller.readAllStored(),
-        loadDataServerCallback: () => _controller.readAll(),
+      body: Column(
+        children: [
+          const SourceLanguageFilterBar(),
+          Expanded(
+            child: FeedsList(
+              loadDataStorageCallback: () => _controller.readAllStored(),
+              loadDataServerCallback: () => _controller.readAll(),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 1),
     );

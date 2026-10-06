@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? limit = null)
+        public async Task<IActionResult> GetAll([FromQuery] int? limit = null, [FromQuery] string language = null)
         {
             if (limit != null && limit < 1)
             {
@@ -48,6 +48,12 @@ namespace Amathus.Web.Controllers
             if (!feeds.Any())
             {
                 return NotFound();
+            }
+
+            if (!string.IsNullOrWhiteSpace(language))
+            {
+                var lang = language.Trim().ToLowerInvariant();
+                feeds = feeds.Where(f => string.Equals(f.Language ?? "tr", lang, System.StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             feeds = FilterAndOrderFeeds(feeds);

@@ -1,4 +1,5 @@
 import 'package:amathus/models/feed.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_list_tile.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:flutter/material.dart';
@@ -46,49 +47,60 @@ class _FeedsListState extends State<FeedsList> {
       return const CenteredProgressIndicator();
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _loadDataAndUpdateState(widget.loadDataServerCallback);
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final crossAxisCount = width >= 980
-              ? 3
-              : width >= 620
-                  ? 2
-                  : 1;
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.sourceLanguageNotifier,
+      builder: (context, _, __) {
+        final filteredItems = items
+            .where((f) => Constants.matchesSourceLanguage(f.id, f.language))
+            .toList();
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
-              child: crossAxisCount == 1
-                  ? ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        return FeedListTile(item: items[index]);
-                      },
-                    )
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisExtent: 80,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                      ),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        return FeedListTile(item: items[index]);
-                      },
-                    ),
-            ),
-          );
-        },
-      ),
+        return RefreshIndicator(
+          onRefresh: () async {
+            await _loadDataAndUpdateState(widget.loadDataServerCallback);
+          },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final crossAxisCount = width >= 980
+                  ? 3
+                  : width >= 620
+                      ? 2
+                      : 1;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: crossAxisCount == 1
+                      ? ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          itemCount: filteredItems.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            return FeedListTile(item: filteredItems[index]);
+                          },
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisExtent: 80,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                          ),
+                          itemCount: filteredItems.length,
+                          itemBuilder: (context, index) {
+                            return FeedListTile(item: filteredItems[index]);
+                          },
+                        ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

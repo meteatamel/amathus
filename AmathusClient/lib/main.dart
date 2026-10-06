@@ -6,6 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   timeago.setLocaleMessages('tr', timeago.TrMessages());
+  timeago.setLocaleMessages('el', timeago.GrMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   await Constants.initLanguage();
 

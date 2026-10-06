@@ -45,6 +45,7 @@ namespace Amathus.Common.Converter
                 {
                     Id = source.Id,
                     Title = source.Title,
+                    Language = string.IsNullOrWhiteSpace(source.Language) ? "tr" : source.Language.ToLowerInvariant(),
                     ImageUrl = source.LogoUrl,
                     // Some feeds do not have last updated time set. In those cases, use current time.
                     LastUpdatedTime = syncFeed.LastUpdatedTime.UtcDateTime == new DateTime() ? DateTime.UtcNow : syncFeed.LastUpdatedTime.UtcDateTime,
@@ -68,12 +69,27 @@ namespace Amathus.Common.Converter
         {
             switch (sourceId)
             {
+                case Source.AlphaNews:
+                case Source.BugunKibris:
+                case Source.CyprusMail:
+                case Source.Dialogos:
+                case Source.FinancialMirror:
                 case Source.GazeddaKibris:
                 case Source.Giynik:
+                case Source.GunesKibris:
                 case Source.Havadis:
+                case Source.KibrisObjektif:
+                case Source.Lemesos:
                 case Source.LondraGazete:
                 case Source.HaberalKibrisli:
                 case Source.KibrisGazetesi:
+                case Source.PafosPress:
+                case Source.Philenews:
+                case Source.Politis:
+                case Source.PolitisEn:
+                case Source.Sigmalive:
+                case Source.ToThemaOnline:
+                case Source.TVine:
                     return new HtmlImageFooterRemoverFeedItemConverter();
                 case Source.KibrisGercek:
                     return new HtmlImageSubtextRemoverFeedItemConverter();
@@ -88,7 +104,9 @@ namespace Amathus.Common.Converter
                 case Source.CyprusToday:
                 case Source.GundemKibris:
                     return new ImageFeedItemConverter();
+                case Source.Bagimsiz:
                 case Source.Diyalog:
+                case Source.KibrisGencTv:
                 case Source.KibrisManset:
                 case Source.KibrisTime:
                     return new ImageUrlFeedItemConverter();
