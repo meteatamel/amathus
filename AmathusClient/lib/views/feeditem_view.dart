@@ -98,8 +98,6 @@ class _FeedItemViewState extends State<FeedItemView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildMetaRow(activeLang),
-                          const SizedBox(height: 12),
                           Text(
                             displayTitle,
                             style: const TextStyle(
@@ -112,7 +110,11 @@ class _FeedItemViewState extends State<FeedItemView> {
                           _buildItemImage(),
                           const SizedBox(height: 16),
                           _buildItemDetail(translated),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
+                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          const SizedBox(height: 10),
+                          _buildMetaRow(activeLang),
+                          const SizedBox(height: 16),
                           _buildMoreButton(context),
                         ],
                       ),
@@ -141,37 +143,27 @@ class _FeedItemViewState extends State<FeedItemView> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        if (item.feed != null) ...[
+          FeedImage(
+            item: item.feed,
+            width: 72,
+            height: 28,
+            compact: true,
+          ),
+          const SizedBox(width: 10),
+        ],
         Expanded(
           child: Wrap(
             spacing: 8,
-            runSpacing: 8,
+            runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: Color(0xFF475569),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      sourceTitle.isNotEmpty ? '$sourceTitle • $time' : time,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
-                      ),
-                    ),
-                  ],
+              Text(
+                sourceTitle.isNotEmpty ? '$sourceTitle • $time' : time,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey.shade600,
                 ),
               ),
               SourceAndTranslationBadges(

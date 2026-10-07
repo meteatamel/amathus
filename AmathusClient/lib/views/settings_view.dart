@@ -347,8 +347,6 @@ class _FeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sourceLang = Constants.resolveFeedLanguage(item.id, item.language);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Card(
@@ -378,24 +376,15 @@ class _FeedCard extends StatelessWidget {
           ),
           title: Opacity(
             opacity: isVisible ? 1.0 : 0.5,
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    item.title,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                      decoration:
-                          isVisible ? null : TextDecoration.lineThrough,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FlagIcon(languageCode: sourceLang, width: 18, height: 13),
-              ],
+            child: Text(
+              item.title,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
+                decoration: isVisible ? null : TextDecoration.lineThrough,
+              ),
             ),
           ),
           trailing: Row(

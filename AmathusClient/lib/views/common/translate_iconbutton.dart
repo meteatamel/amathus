@@ -19,6 +19,9 @@ class SourceAndTranslationBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translatedLang = activeTranslationLang;
+    if (translatedLang == null) {
+      return const SizedBox.shrink();
+    }
     final flagWidth = compact ? 18.0 : 20.0;
     final flagHeight = compact ? 13.0 : 14.0;
 
@@ -30,21 +33,19 @@ class SourceAndTranslationBadges extends StatelessWidget {
           width: flagWidth,
           height: flagHeight,
         ),
-        if (translatedLang != null) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 13,
-              color: Color(0xFF475569),
-            ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(
+            Icons.arrow_forward_rounded,
+            size: 13,
+            color: Color(0xFF475569),
           ),
-          FlagIcon(
-            languageCode: translatedLang,
-            width: flagWidth,
-            height: flagHeight,
-          ),
-        ],
+        ),
+        FlagIcon(
+          languageCode: translatedLang,
+          width: flagWidth,
+          height: flagHeight,
+        ),
       ],
     );
   }

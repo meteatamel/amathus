@@ -61,52 +61,10 @@ class FeedItemListTileWide extends StatelessWidget {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      if (item.feed != null) ...[
-                        FeedImage(
-                          item: item.feed,
-                          width: 72,
-                          height: 28,
-                          compact: true,
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              sourceTitle.isNotEmpty
-                                  ? '$sourceTitle • $time'
-                                  : time,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blueGrey.shade600,
-                              ),
-                            ),
-                            SourceAndTranslationBadges(
-                              sourceLang: sourceLang,
-                              activeTranslationLang: activeLang,
-                              compact: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                      TranslateIconButton(item: item),
-                      ShareIconButton(item: item),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -157,6 +115,48 @@ class FeedItemListTileWide extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (item.feed != null) ...[
+                        FeedImage(
+                          item: item.feed,
+                          width: 72,
+                          height: 28,
+                          compact: true,
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              sourceTitle.isNotEmpty
+                                  ? '$sourceTitle • $time'
+                                  : time,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey.shade600,
+                              ),
+                            ),
+                            SourceAndTranslationBadges(
+                              sourceLang: sourceLang,
+                              activeTranslationLang: activeLang,
+                              compact: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                      TranslateIconButton(item: item),
+                      ShareIconButton(item: item),
                     ],
                   ),
                 ],

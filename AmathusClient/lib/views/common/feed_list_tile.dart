@@ -1,6 +1,5 @@
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditems_byid_view.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -29,7 +28,6 @@ class FeedListTile extends StatelessWidget {
       item.lastUpdatedTime,
       locale: Constants.currentLanguage,
     );
-    final sourceLang = Constants.resolveFeedLanguage(item.id, item.language);
 
     return Card(
       elevation: 0,
@@ -64,26 +62,15 @@ class FeedListTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SourceAndTranslationBadges(
-                          sourceLang: sourceLang,
-                          compact: true,
-                        ),
-                      ],
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(

@@ -1,6 +1,7 @@
 import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
@@ -19,6 +20,7 @@ class FeedItemListTile extends StatelessWidget {
       item.publishDate,
       locale: Constants.currentLanguage,
     );
+    final sourceTitle = item.feed?.title ?? '';
     final sourceLang = Constants.resolveFeedLanguage(
       item.feed?.id,
       item.feed?.language,
@@ -59,49 +61,10 @@ class FeedItemListTile extends StatelessWidget {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 10, 12),
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.access_time_rounded,
-                                  size: 13.5,
-                                  color: Colors.blueGrey.shade400,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  time,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.blueGrey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SourceAndTranslationBadges(
-                              sourceLang: sourceLang,
-                              activeTranslationLang: activeLang,
-                              compact: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                      TranslateIconButton(item: item),
-                      ShareIconButton(item: item),
-                    ],
-                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -159,6 +122,48 @@ class FeedItemListTile extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (item.feed != null) ...[
+                        FeedImage(
+                          item: item.feed,
+                          width: 68,
+                          height: 26,
+                          compact: true,
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              sourceTitle.isNotEmpty
+                                  ? '$sourceTitle • $time'
+                                  : time,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey.shade600,
+                              ),
+                            ),
+                            SourceAndTranslationBadges(
+                              sourceLang: sourceLang,
+                              activeTranslationLang: activeLang,
+                              compact: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                      TranslateIconButton(item: item),
+                      ShareIconButton(item: item),
                     ],
                   ),
                 ],
