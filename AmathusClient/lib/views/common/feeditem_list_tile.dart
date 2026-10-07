@@ -137,32 +137,49 @@ class FeedItemListTile extends StatelessWidget {
                         const SizedBox(width: 10),
                       ],
                       Expanded(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              sourceTitle.isNotEmpty
-                                  ? '$sourceTitle • $time'
-                                  : time,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blueGrey.shade600,
+                        child: Text(
+                          sourceTitle.isNotEmpty
+                              ? '$sourceTitle • $time'
+                              : time,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blueGrey.shade600,
+                          ),
+                        ),
+                      ),
+                      ValueListenableBuilder<bool>(
+                        valueListenable:
+                            TranslateController.loadingNotifier(item),
+                        builder: (context, isLoading, _) {
+                          if (isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF0F2942),
+                                ),
                               ),
-                            ),
-                            SourceAndTranslationBadges(
+                            );
+                          }
+                          if (activeLang == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: SourceAndTranslationBadges(
                               sourceLang: sourceLang,
                               activeTranslationLang: activeLang,
                               compact: true,
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                      TranslateIconButton(item: item),
                       ShareIconButton(item: item),
                     ],
                   ),

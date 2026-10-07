@@ -345,59 +345,78 @@ class BulkTranslateIconButton extends StatelessWidget {
               ),
             ],
           ],
-          icon: activeLang == null
-              ? Icon(
-                  Icons.translate_rounded,
-                  size: 20,
-                  color: lightOnDark ? Colors.white : const Color(0xFF0F2942),
-                )
-              : Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 7,
+            ),
+            decoration: BoxDecoration(
+              color: activeLang == null
+                  ? const Color(0xFFF8FAFC)
+                  : const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: activeLang == null
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFF93C5FD),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading)
+                  const SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.translate_rounded,
+                    size: 16,
+                    color: activeLang == null
+                        ? const Color(0xFF0F2942)
+                        : const Color(0xFF1D4ED8),
                   ),
-                  decoration: BoxDecoration(
-                    color: lightOnDark
-                        ? Colors.white.withValues(alpha: 0.20)
-                        : const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: lightOnDark
-                          ? Colors.white.withValues(alpha: 0.45)
-                          : const Color(0xFF93C5FD),
+                const SizedBox(width: 8),
+                if (activeLang != null) ...[
+                  FlagIcon(
+                    languageCode: activeLang,
+                    width: 18,
+                    height: 13,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    Constants.languageLabelFor(activeLang),
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1D4ED8),
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isLoading)
-                        SizedBox(
-                          width: 13,
-                          height: 13,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: lightOnDark
-                                ? Colors.white
-                                : const Color(0xFF1D4ED8),
-                          ),
-                        )
-                      else
-                        Icon(
-                          Icons.translate_rounded,
-                          size: 14,
-                          color: lightOnDark
-                              ? Colors.white
-                              : const Color(0xFF1D4ED8),
-                        ),
-                      const SizedBox(width: 4),
-                      FlagIcon(
-                        languageCode: activeLang,
-                        width: 15,
-                        height: 10.5,
-                      ),
-                    ],
+                ] else
+                  Text(
+                    Constants.TRANSLATE,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: activeLang == null
+                      ? const Color(0xFF475569)
+                      : const Color(0xFF1D4ED8),
                 ),
+              ],
+            ),
+          ),
         );
       },
     );
