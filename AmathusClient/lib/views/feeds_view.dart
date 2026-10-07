@@ -21,7 +21,7 @@ class _FeedsViewState extends State<FeedsView> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(Constants.NEWSPAPERS),
+        title: Text('${Constants.APP_NAME} • ${Constants.NEWSPAPERS}'),
       ),
       drawer: const AppDrawer(),
       body: Column(

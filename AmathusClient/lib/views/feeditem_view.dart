@@ -1,16 +1,38 @@
+import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
-class FeedItemView extends StatelessWidget {
+class FeedItemView extends StatefulWidget {
   final FeedItem item;
 
   const FeedItemView({super.key, required this.item});
+
+  @override
+  State<FeedItemView> createState() => _FeedItemViewState();
+}
+
+class _FeedItemViewState extends State<FeedItemView> {
+  FeedItem get item => widget.item;
+
+  @override
+  void initState() {
+    super.initState();
+    final activeLang = TranslateController.activeLanguageNotifier(item).value;
+    if (activeLang != null) {
+      TranslateController.translateItem(
+        item,
+        activeLang,
+        includeDetail: true,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,89 +63,134 @@ class FeedItemView extends StatelessWidget {
               )
             : Text(Constants.APP_NAME),
         centerTitle: true,
-        actions: [ShareIconButton(item: item)],
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            children: [
-              Card(
-                elevation: 0,
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-                ),
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildMetaRow(),
-                      const SizedBox(height: 12),
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          height: 1.32,
-                        ),
-                      ),
-                      _buildItemImage(),
-                      const SizedBox(height: 16),
-                      _buildItemDetail(),
-                      const SizedBox(height: 24),
-                      _buildMoreButton(context),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+        actions: [
+          TranslateIconButton(
+            item: item,
+            includeDetail: true,
+            lightOnDark: true,
           ),
-        ),
+          ShareIconButton(item: item),
+        ],
+      ),
+      body: ValueListenableBuilder<String?>(
+        valueListenable: TranslateController.activeLanguageNotifier(item),
+        builder: (context, activeLang, _) {
+          final translated = activeLang != null
+              ? TranslateController.getCached(item, activeLang)
+              : null;
+          final displayTitle =
+              (translated != null && translated.title.trim().isNotEmpty)
+                  ? translated.title
+                  : item.title;
+
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                children: [
+                  Card(
+                    elevation: 0,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: const BorderSide(
+                        color: Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildMetaRow(activeLang),
+                          const SizedBox(height: 12),
+                          Text(
+                            displayTitle,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              height: 1.32,
+                            ),
+                          ),
+                          _buildItemImage(),
+                          const SizedBox(height: 16),
+                          _buildItemDetail(translated),
+                          const SizedBox(height: 24),
+                          _buildMoreButton(context),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildMetaRow() {
+  Widget _buildMetaRow(String? activeLang) {
     final time = timeago.format(
       item.publishDate,
       locale: Constants.currentLanguage,
     );
     final sourceTitle = item.feed?.title ?? '';
+    final sourceLang = Constants.resolveFeedLanguage(
+      item.feed?.id,
+      item.feed?.language,
+    );
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(
-                Icons.schedule_rounded,
-                size: 14,
-                color: Color(0xFF475569),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                sourceTitle.isNotEmpty ? '$sourceTitle • $time' : time,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.schedule_rounded,
+                      size: 14,
+                      color: Color(0xFF475569),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      sourceTitle.isNotEmpty ? '$sourceTitle • $time' : time,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SourceAndTranslationBadges(
+                sourceLang: sourceLang,
+                activeTranslationLang: activeLang,
               ),
             ],
           ),
         ),
+        TranslateIconButton(item: item, includeDetail: true),
+        ShareIconButton(item: item),
       ],
     );
   }
@@ -154,8 +221,11 @@ class FeedItemView extends StatelessWidget {
     );
   }
 
-  Widget _buildItemDetail() {
-    final detail = (item.detail ?? '').trim();
+  Widget _buildItemDetail(TranslatedFeedItemContent? translated) {
+    final rawDetail = (item.detail ?? '').trim();
+    final detail = (translated != null && translated.detail.trim().isNotEmpty)
+        ? translated.detail.trim()
+        : rawDetail;
     if (detail.isNotEmpty) {
       return HtmlWidget(
         detail,
@@ -171,7 +241,10 @@ class FeedItemView extends StatelessWidget {
       );
     }
 
-    final summary = (item.summary ?? '').trim();
+    final rawSummary = (item.summary ?? '').trim();
+    final summary = (translated != null && translated.summary.trim().isNotEmpty)
+        ? translated.summary.trim()
+        : rawSummary;
     if (summary.isEmpty) {
       return const SizedBox.shrink();
     }

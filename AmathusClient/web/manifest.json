@@ -1,11 +1,11 @@
 {
-    "name": "Kıbrıs Haber | Cyprus News",
-    "short_name": "Cyprus News",
+    "name": "Cyprus Bicommunal News",
+    "short_name": "Cyprus Bicommunal News",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Cyprus News Sources in Turkish, Greek, and English",
+    "description": "Cyprus Bicommunal News in Turkish, Greek, and English",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

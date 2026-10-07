@@ -36,6 +36,37 @@ class SourceLanguageFilterBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.newspaper_rounded,
+                            size: 15,
+                            color: Color(0xFF0F2942),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            Constants.SOURCES_BAR_LABEL,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F2942),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     for (var i = 0; i < options.length; i++) ...[
                       if (i > 0) const SizedBox(width: 8),
                       ChoiceChip(

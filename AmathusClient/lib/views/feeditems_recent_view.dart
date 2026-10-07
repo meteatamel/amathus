@@ -17,7 +17,7 @@ class FeedItemsRecentView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(Constants.RECENT_NEWS),
+        title: Text('${Constants.APP_NAME} • ${Constants.RECENT_NEWS}'),
       ),
       drawer: const AppDrawer(),
       body: Column(

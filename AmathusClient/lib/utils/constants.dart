@@ -6,12 +6,14 @@ const String URL_MAIN =
     "https://amathus-web-1086570528700.europe-west1.run.app/api/v1";
 const String URL_FEEDS = "$URL_MAIN/feeds";
 const String URL_FEED_ITEMS = "$URL_MAIN/feeditems";
+const String URL_TRANSLATE = "$URL_MAIN/translate";
 const String URL_TWITTER = "https://twitter.com/meteatamel";
 
 // files / storage keys
 const String FEEDS_FILE = "feeds_v3.json";
 const String LANGUAGE_PREF_KEY = "app_language";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
+const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
 
 // contact
 const String APP_EMAIL = "atameldev@gmail.com";
@@ -22,6 +24,10 @@ final ValueNotifier<String> languageNotifier = ValueNotifier<String>('tr');
 // News source language filter ('all', 'tr', 'el', or 'en')
 final ValueNotifier<String> sourceLanguageNotifier =
     ValueNotifier<String>('all');
+
+// Hidden newspaper feed IDs (lowercase)
+final ValueNotifier<Set<String>> hiddenFeedsNotifier =
+    ValueNotifier<Set<String>>(<String>{});
 
 String get currentLanguage => languageNotifier.value;
 bool get isEnglish => languageNotifier.value == 'en';
@@ -53,6 +59,13 @@ Future<void> initLanguage() async {
       savedSourceLang == 'en') {
     sourceLanguageNotifier.value = savedSourceLang!;
   }
+  final savedHidden = prefs.getStringList(HIDDEN_FEEDS_PREF_KEY);
+  if (savedHidden != null) {
+    hiddenFeedsNotifier.value =
+        savedHidden.map((e) => e.trim().toLowerCase()).toSet();
+  } else {
+    hiddenFeedsNotifier.value = <String>{};
+  }
 }
 
 Future<void> setLanguage(String lang) async {
@@ -67,6 +80,39 @@ Future<void> setSourceLanguage(String lang) async {
   sourceLanguageNotifier.value = lang;
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(SOURCE_LANGUAGE_PREF_KEY, lang);
+}
+
+bool isFeedVisible(String? feedId) {
+  if (feedId == null || feedId.trim().isEmpty) return true;
+  return !hiddenFeedsNotifier.value.contains(feedId.trim().toLowerCase());
+}
+
+Future<void> setFeedVisible(String feedId, bool visible) async {
+  final normalized = feedId.trim().toLowerCase();
+  final updated = Set<String>.from(hiddenFeedsNotifier.value);
+  if (visible) {
+    updated.remove(normalized);
+  } else {
+    updated.add(normalized);
+  }
+  hiddenFeedsNotifier.value = updated;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList(HIDDEN_FEEDS_PREF_KEY, updated.toList());
+}
+
+Future<void> setAllFeedsVisible(Iterable<String> feedIds, bool visible) async {
+  final updated = Set<String>.from(hiddenFeedsNotifier.value);
+  for (final id in feedIds) {
+    final normalized = id.trim().toLowerCase();
+    if (visible) {
+      updated.remove(normalized);
+    } else {
+      updated.add(normalized);
+    }
+  }
+  hiddenFeedsNotifier.value = updated;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList(HIDDEN_FEEDS_PREF_KEY, updated.toList());
 }
 
 const Map<String, String> _knownFeedLanguages = {
@@ -117,21 +163,54 @@ String resolveFeedLanguage(String? feedId, String? explicitLanguage) {
 }
 
 bool matchesSourceLanguage(String? feedId, String? explicitLanguage) {
+  if (!isFeedVisible(feedId)) return false;
   final filter = sourceLanguageNotifier.value;
   if (filter == 'all') return true;
   return resolveFeedLanguage(feedId, explicitLanguage) == filter;
 }
 
+List<String> targetTranslationLanguagesFor(String sourceLang) {
+  switch (sourceLang.toLowerCase()) {
+    case 'tr':
+      return const ['el', 'en'];
+    case 'el':
+      return const ['tr', 'en'];
+    case 'en':
+      return const ['tr', 'el'];
+    default:
+      return const ['tr', 'el', 'en'];
+  }
+}
+
+String languageLabelFor(String langCode) {
+  switch (langCode.toLowerCase()) {
+    case 'tr':
+      return SOURCE_FILTER_TR;
+    case 'el':
+      return SOURCE_FILTER_EL;
+    case 'en':
+      return SOURCE_FILTER_EN;
+    default:
+      return langCode.toUpperCase();
+  }
+}
+
 // localized app strings
-String get APP_NAME =>
-    _trElEn("Kıbrıs Haber", "Ειδήσεις Κύπρου", "Cyprus News");
+String get APP_NAME => "Cyprus Bicommunal News";
 String get APP_SUBTITLE => _trElEn(
-      "Kıbrıs Güncel Haber Kaynakları",
-      "Πηγές Ειδήσεων από όλη την Κύπρο",
-      "Daily News Sources Across Cyprus",
+      "Kıbrıs İki Toplumlu Güncel Haber Kaynakları",
+      "Δικοινοτικές Πηγές Ειδήσεων από όλη την Κύπρο",
+      "Daily Bicommunal News Sources Across Cyprus",
     );
 
 // source language filter labels
+String get SOURCES_BAR_LABEL =>
+    _trElEn("Kaynaklar:", "Πηγές:", "Sources:");
+String get SOURCE_BADGE_LABEL => _trElEn("Kaynak", "Πηγή", "Source");
+String get TRANSLATED_BADGE_LABEL =>
+    _trElEn("Çeviri", "Μετάφραση", "Translated");
+String get TRANSLATE_TO_LABEL =>
+    _trElEn("Çeviri", "Μετάφραση", "Translate");
 String get SOURCE_FILTER_ALL => _trElEn("Tümü", "Όλα", "All");
 String get SOURCE_FILTER_TR => "Türkçe";
 String get SOURCE_FILTER_EL => "Ελληνικά";
@@ -164,18 +243,31 @@ String get LANGUAGE_SUBTITLE => _trElEn(
       "Switch the app interface between Turkish, Greek, and English",
     );
 String get REORDER_NEWS => _trElEn(
-      "Gazete Sırasını Değiştir",
-      "Αλλαγή Σειράς Εφημερίδων",
-      "Reorder Newspapers",
+      "Gazeteleri Sırala ve Gizle (Gazeteler Sekmesi)",
+      "Σειρά & Απόκρυψη Εφημερίδων (Καρτέλα Εφημερίδες)",
+      "Reorder & Hide Newspapers (Newspapers Tab)",
     );
 String get REORDER_HINT => _trElEn(
-      "Sıralamayı değiştirmek için basılı tutup sürükleyin",
-      "Πατήστε παρατεταμένα και σύρετε για να αλλάξετε τη σειρά",
-      "Press, hold and drag to change the order",
+      "'Gazeteler' sekmesindeki sıralamayı değiştirmek için sürükleyin. Gizlenen gazeteler 'Son Haberler' ve 'Gazeteler' sekmelerinde gösterilmez.",
+      "Σύρετε για αλλαγή σειράς στην καρτέλα 'Εφημερίδες'. Οι κρυμμένες εφημερίδες δεν εμφανίζονται στα 'Τελευταία Νέα' και τις 'Εφημερίδες'.",
+      "Drag to reorder newspapers in the 'Newspapers' tab. Hidden newspapers are excluded from both 'Latest News' and 'Newspapers'.",
     );
 
 // feeditem_view & lists
 String get SHARE => _trElEn("Paylaş", "Κοινοποίηση", "Share");
+String get TRANSLATE => _trElEn("Çevir", "Μετάφραση", "Translate");
+String get SHOW_ORIGINAL => _trElEn(
+      "Orijinal Kaynak",
+      "Πρωτότυπη Πηγή",
+      "Original Source",
+    );
+String get TRANSLATING =>
+    _trElEn("Çevriliyor...", "Μετάφραση...", "Translating...");
+String get TRANSLATE_ERROR => _trElEn(
+      "Çeviri yapılamadı",
+      "Η μετάφραση απέτυχε",
+      "Translation failed",
+    );
 String get MORE => _trElEn(
       "Haberi Kaynağında Oku",
       "Διαβάστε το πλήρες άρθρο",

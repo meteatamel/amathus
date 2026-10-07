@@ -47,9 +47,12 @@ class _FeedItemsListState extends State<FeedItemsList> {
       return const CenteredProgressIndicator();
     }
 
-    return ValueListenableBuilder<String>(
-      valueListenable: Constants.sourceLanguageNotifier,
-      builder: (context, _, __) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.sourceLanguageNotifier,
+        Constants.hiddenFeedsNotifier,
+      ]),
+      builder: (context, _) {
         final filteredItems = items
             .where(
               (item) =>
