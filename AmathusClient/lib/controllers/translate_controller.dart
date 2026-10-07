@@ -132,3 +132,103 @@ class TranslateController {
     activeLanguageNotifier(item).value = null;
   }
 }
+
+class BulkTranslateController {
+  final ValueNotifier<String?> activeLanguageNotifier =
+      ValueNotifier<String?>(null);
+  final ValueNotifier<bool> loadingNotifier = ValueNotifier<bool>(false);
+  List<FeedItem> _items = const [];
+  int _runId = 0;
+
+  void setItems(
+    List<FeedItem> items, {
+    bool Function(FeedItem)? filter,
+  }) {
+    _items = items;
+    final activeLang = activeLanguageNotifier.value;
+    if (activeLang != null) {
+      translateAll(activeLang, filter: filter);
+    }
+  }
+
+  Future<void> translateAll(
+    String targetLanguage, {
+    bool Function(FeedItem)? filter,
+  }) async {
+    final normalizedTarget = targetLanguage.trim().toLowerCase();
+    final currentRun = ++_runId;
+
+    if (normalizedTarget == 'original') {
+      activeLanguageNotifier.value = null;
+      loadingNotifier.value = false;
+      for (final item in _items) {
+        TranslateController.clearTranslation(item);
+      }
+      return;
+    }
+
+    activeLanguageNotifier.value = normalizedTarget;
+    final targetItems = filter != null
+        ? _items.where(filter).toList()
+        : List<FeedItem>.from(_items);
+
+    final pending = <FeedItem>[];
+    for (final item in targetItems) {
+      final sourceLang = Constants.resolveFeedLanguage(
+        item.feed?.id,
+        item.feed?.language,
+      );
+      if (sourceLang == normalizedTarget) {
+        TranslateController.clearTranslation(item);
+      } else if (TranslateController.getCached(item, normalizedTarget) !=
+          null) {
+        TranslateController.activeLanguageNotifier(item).value =
+            normalizedTarget;
+      } else {
+        pending.add(item);
+      }
+    }
+
+    if (pending.isEmpty) {
+      loadingNotifier.value = false;
+      return;
+    }
+
+    loadingNotifier.value = true;
+    const int concurrency = 6;
+    int nextIndex = 0;
+
+    Future<void> worker() async {
+      while (true) {
+        if (_runId != currentRun) return;
+        if (nextIndex >= pending.length) return;
+        final item = pending[nextIndex++];
+        await TranslateController.translateItem(
+          item,
+          normalizedTarget,
+          includeDetail: false,
+        );
+      }
+    }
+
+    try {
+      final workerCount =
+          pending.length < concurrency ? pending.length : concurrency;
+      await Future.wait(List.generate(workerCount, (_) => worker()));
+    } finally {
+      if (_runId == currentRun) {
+        loadingNotifier.value = false;
+      }
+    }
+  }
+
+  void clearAll() {
+    ++_runId;
+    activeLanguageNotifier.value = null;
+    loadingNotifier.value = false;
+    for (final item in _items) {
+      TranslateController.clearTranslation(item);
+    }
+  }
+}
+

@@ -1,3 +1,4 @@
+import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feeditem_list_tile.dart';
@@ -11,11 +12,13 @@ typedef LoadDataCallback = Future<List<FeedItem>?> Function();
 class FeedItemsList extends StatefulWidget {
   final LoadDataCallback loadDataCallback;
   final bool wideTile;
+  final BulkTranslateController? bulkController;
 
   const FeedItemsList({
     super.key,
     required this.loadDataCallback,
     this.wideTile = false,
+    this.bulkController,
   });
 
   @override
@@ -25,17 +28,44 @@ class FeedItemsList extends StatefulWidget {
 class _FeedItemsListState extends State<FeedItemsList> {
   List<FeedItem>? _items;
 
+  bool _matchesFilter(FeedItem item) {
+    return item.feed == null ||
+        Constants.matchesSourceLanguage(
+          item.feed?.id,
+          item.feed?.language,
+        );
+  }
+
   @override
   void initState() {
     super.initState();
+    Constants.sourceLanguageNotifier.addListener(_onFilterChanged);
+    Constants.hiddenFeedsNotifier.addListener(_onFilterChanged);
     _loadDataAndUpdateState();
+  }
+
+  @override
+  void dispose() {
+    Constants.sourceLanguageNotifier.removeListener(_onFilterChanged);
+    Constants.hiddenFeedsNotifier.removeListener(_onFilterChanged);
+    super.dispose();
+  }
+
+  void _onFilterChanged() {
+    final bulk = widget.bulkController;
+    final activeLang = bulk?.activeLanguageNotifier.value;
+    if (bulk != null && activeLang != null && _items != null) {
+      bulk.translateAll(activeLang, filter: _matchesFilter);
+    }
   }
 
   Future<void> _loadDataAndUpdateState() async {
     final items = await widget.loadDataCallback();
+    final resolved = items ?? <FeedItem>[];
+    widget.bulkController?.setItems(resolved, filter: _matchesFilter);
     if (mounted) {
       setState(() {
-        _items = items ?? <FeedItem>[];
+        _items = resolved;
       });
     }
   }
@@ -53,16 +83,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
         Constants.hiddenFeedsNotifier,
       ]),
       builder: (context, _) {
-        final filteredItems = items
-            .where(
-              (item) =>
-                  item.feed == null ||
-                  Constants.matchesSourceLanguage(
-                    item.feed?.id,
-                    item.feed?.language,
-                  ),
-            )
-            .toList();
+        final filteredItems = items.where(_matchesFilter).toList();
 
         if (filteredItems.isEmpty) {
           return Center(

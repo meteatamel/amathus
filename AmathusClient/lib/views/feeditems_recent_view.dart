@@ -1,4 +1,5 @@
 import 'package:amathus/controllers/feeditems_controller.dart';
+import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
@@ -9,8 +10,18 @@ import 'common/drawer.dart';
 
 class FeedItemsRecentView extends StatelessWidget {
   final FeedItemsController _controller = FeedItemsController();
+  final BulkTranslateController _bulkTranslateController =
+      BulkTranslateController();
 
   FeedItemsRecentView({super.key});
+
+  bool _matchesVisibleFilter(FeedItem item) {
+    return item.feed == null ||
+        Constants.matchesSourceLanguage(
+          item.feed?.id,
+          item.feed?.language,
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +53,16 @@ class FeedItemsRecentView extends StatelessWidget {
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          const SourceLanguageFilterBar(),
+          SourceLanguageFilterBar(
+            bulkController: _bulkTranslateController,
+            itemFilter: _matchesVisibleFilter,
+          ),
           Expanded(
-            child: FeedItemsList(loadDataCallback: loadData, wideTile: true),
+            child: FeedItemsList(
+              loadDataCallback: loadData,
+              wideTile: true,
+              bulkController: _bulkTranslateController,
+            ),
           ),
         ],
       ),

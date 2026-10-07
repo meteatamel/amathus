@@ -63,14 +63,6 @@ class _FeedItemViewState extends State<FeedItemView> {
               )
             : Text(Constants.APP_NAME),
         centerTitle: true,
-        actions: [
-          TranslateIconButton(
-            item: item,
-            includeDetail: true,
-            lightOnDark: true,
-          ),
-          ShareIconButton(item: item),
-        ],
       ),
       body: ValueListenableBuilder<String?>(
         valueListenable: TranslateController.activeLanguageNotifier(item),
