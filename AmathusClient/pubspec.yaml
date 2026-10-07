@@ -1,5 +1,5 @@
 name: amathus
-description: Kuzey Kıbrıs Haber - The Flutter client of Amathus
+description: Cyprus Bicommunal News - The Flutter client of Amathus
 publish_to: 'none'
 version: 2.0.0+1
 
@@ -30,3 +30,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/launcher/icon.png
