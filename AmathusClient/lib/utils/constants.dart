@@ -19,7 +19,7 @@ const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
 const String APP_EMAIL = "atameldev@gmail.com";
 
 // UI language state ('tr', 'el', or 'en')
-final ValueNotifier<String> languageNotifier = ValueNotifier<String>('tr');
+final ValueNotifier<String> languageNotifier = ValueNotifier<String>('en');
 
 // News source language filter ('all', 'tr', 'el', or 'en')
 final ValueNotifier<String> sourceLanguageNotifier =
@@ -37,12 +37,12 @@ String get currentSourceLanguage => sourceLanguageNotifier.value;
 
 String _trElEn(String tr, String el, String en) {
   switch (languageNotifier.value) {
+    case 'tr':
+      return tr;
     case 'el':
       return el;
-    case 'en':
-      return en;
     default:
-      return tr;
+      return en;
   }
 }
 
