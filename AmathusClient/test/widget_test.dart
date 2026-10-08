@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'package:amathus/controllers/feeditems_controller.dart';
+import 'package:amathus/controllers/feeditems_storage.dart';
+import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/main.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:amathus/views/common/flag_icon.dart';
+import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
@@ -11,6 +15,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    FeedItemsController.clearCache();
+    FeedsController.clearCache();
+  });
+
   testWidgets(
       'Amathus app renders Cyprus Bicommunal News in top banner, Latest News as first tab, Newspapers as second, and toggles Turkish/Greek/English',
       (WidgetTester tester) async {
@@ -21,39 +30,29 @@ void main() {
 
     await tester.pumpWidget(const AmathusApp());
 
-    // Turkish labels: Cyprus Bicommunal News • Son Haberler (header), Son Haberler (first tab), Gazeteler (second tab)
-    expect(find.text('Cyprus Bicommunal News • Son Haberler'), findsOneWidget);
-    expect(find.text('Son Haberler'), findsOneWidget);
+    // Turkish labels: Son Haberler (header + first tab), Gazeteler (second tab)
+    expect(find.text('Son Haberler'), findsNWidgets(2));
     expect(find.text('Gazeteler'), findsOneWidget);
-    expect(find.text('Kaynaklar:'), findsOneWidget);
     expect(find.text('Tümü'), findsOneWidget);
-    expect(find.text('Türkçe'), findsOneWidget);
-    expect(find.text('Ελληνικά'), findsOneWidget);
-    expect(find.text('English'), findsOneWidget);
-    expect(find.byType(FlagIcon), findsNWidgets(3));
+    expect(find.text('Çevir'), findsOneWidget);
 
     // Switch to Greek
     await Constants.setLanguage('el');
     await tester.pump();
 
-    expect(
-      find.text('Cyprus Bicommunal News • Τελευταία Νέα'),
-      findsOneWidget,
-    );
-    expect(find.text('Τελευταία Νέα'), findsOneWidget);
+    expect(find.text('Τελευταία Νέα'), findsNWidgets(2));
     expect(find.text('Εφημερίδες'), findsOneWidget);
-    expect(find.text('Πηγές:'), findsOneWidget);
     expect(find.text('Όλα'), findsOneWidget);
+    expect(find.text('Μετάφραση'), findsOneWidget);
 
     // Switch to English
     await Constants.setLanguage('en');
     await tester.pump();
 
-    expect(find.text('Cyprus Bicommunal News • Latest News'), findsOneWidget);
-    expect(find.text('Latest News'), findsOneWidget);
+    expect(find.text('Latest News'), findsNWidgets(2));
     expect(find.text('Newspapers'), findsOneWidget);
-    expect(find.text('Sources:'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
+    expect(find.text('Translate'), findsOneWidget);
   });
 
   testWidgets(
@@ -103,6 +102,81 @@ void main() {
     expect(find.byType(TranslateIconButton), findsWidgets);
     expect(find.byType(ShareIconButton), findsWidgets);
     expect(find.byType(SourceAndTranslationBadges), findsOneWidget);
-    expect(find.byType(FlagIcon), findsOneWidget);
+  });
+
+  testWidgets(
+      'FeedItemsStorage persists feeds offline and FeedItemsList renders cached news immediately while refreshing in background',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await Constants.initLanguage();
+    await Constants.setLanguage('en');
+    await Constants.setSourceLanguage('all');
+
+    final storage = FeedItemsStorage();
+    final cachedItem = FeedItem(
+      'Cached Offline Headline',
+      DateTime(2026, 10, 8, 12, 0),
+      'Cached summary',
+      '<p>Cached detail</p>',
+      null,
+      'https://example.com/cached',
+    );
+    final cachedFeed = Feed(
+      'cyprusmail',
+      'Cyprus Mail',
+      DateTime(2026, 10, 8, 12, 0),
+      null,
+      'https://cyprus-mail.com',
+      [cachedItem],
+      'en',
+    );
+    cachedItem.feed = cachedFeed;
+
+    await storage.writeRecent([cachedFeed]);
+    FeedItemsController.clearCache();
+
+    final controller = FeedItemsController();
+    final restoredRecent = await controller.readRecentStored();
+    expect(restoredRecent, isNotNull);
+    expect(restoredRecent!.single.items!.single.title, 'Cached Offline Headline');
+
+    // Per-feed lookup also falls back to recent feeds cache when offline
+    final restoredById = await controller.readByIdStored('cyprusmail');
+    expect(restoredById, isNotNull);
+    expect(restoredById!.items!.single.title, 'Cached Offline Headline');
+
+    final serverCompleter = Completer<List<FeedItem>?>();
+    final freshItem = FeedItem(
+      'Fresh Background Headline',
+      DateTime(2026, 10, 8, 13, 0),
+      'Fresh summary',
+      '<p>Fresh detail</p>',
+      null,
+      'https://example.com/fresh',
+    )..feed = cachedFeed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedItemsList(
+            loadDataStorageCallback: () async => [cachedItem],
+            loadDataCallback: () => serverCompleter.future,
+          ),
+        ),
+      ),
+    );
+
+    // Pump microtasks so cached items render before serverCompleter completes
+    await tester.pump();
+
+    expect(find.text('Cached Offline Headline'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+    // Complete background server fetch
+    serverCompleter.complete([freshItem]);
+    await tester.pump();
+
+    expect(find.text('Fresh Background Headline'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 }

@@ -3,6 +3,8 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
@@ -193,12 +195,19 @@ class _FeedItemViewState extends State<FeedItemView> {
           constraints: const BoxConstraints(maxHeight: 280),
           child: SizedBox(
             width: double.infinity,
-            child: Image.network(
-              resolvedImage,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
-            ),
+            child: kIsWeb
+                ? Image.network(
+                    resolvedImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: resolvedImage,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) =>
+                        const SizedBox.shrink(),
+                  ),
           ),
         ),
       ),

@@ -59,6 +59,7 @@ class FeedItemsRecentView extends StatelessWidget {
           ),
           Expanded(
             child: FeedItemsList(
+              loadDataStorageCallback: loadCachedData,
               loadDataCallback: loadData,
               wideTile: true,
               bulkController: _bulkTranslateController,
@@ -70,8 +71,17 @@ class FeedItemsRecentView extends StatelessWidget {
     );
   }
 
+  Future<List<FeedItem>?> loadCachedData() async {
+    final feeds = await _controller.readRecentStored();
+    return _extractSortedItems(feeds);
+  }
+
   Future<List<FeedItem>?> loadData() async {
     final feeds = await _controller.readRecent();
+    return _extractSortedItems(feeds);
+  }
+
+  List<FeedItem>? _extractSortedItems(List<dynamic>? feeds) {
     if (feeds == null) {
       return null;
     }

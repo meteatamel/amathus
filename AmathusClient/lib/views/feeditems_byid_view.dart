@@ -47,6 +47,7 @@ class FeedItemsByIdView extends StatelessWidget {
           ),
           Expanded(
             child: FeedItemsList(
+              loadDataStorageCallback: loadCachedData,
               loadDataCallback: loadData,
               bulkController: _bulkTranslateController,
             ),
@@ -54,6 +55,11 @@ class FeedItemsByIdView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<List<FeedItem>?> loadCachedData() async {
+    final cachedFeed = await _controller.readByIdStored(feed.id);
+    return cachedFeed?.items ?? feed.items;
   }
 
   Future<List<FeedItem>?> loadData() async {

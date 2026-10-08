@@ -8,7 +8,11 @@ import 'feeds_storage.dart';
 
 class FeedsController {
   final FeedsStorage _storage = FeedsStorage();
-  List<Feed>? _storedFeeds;
+  static List<Feed>? _storedFeeds;
+
+  static void clearCache() {
+    _storedFeeds = null;
+  }
 
   Future<List<Feed>?> readAll() async {
     try {
@@ -25,10 +29,13 @@ class FeedsController {
       // Ignore network error and fall back to stored feeds
     }
 
-    return _storedFeeds;
+    return _storedFeeds ?? await readAllStored();
   }
 
   Future<List<Feed>?> readAllStored() async {
+    if (_storedFeeds != null && _storedFeeds!.isNotEmpty) {
+      return _storedFeeds;
+    }
     _storedFeeds = await _storage.read();
     return _storedFeeds;
   }

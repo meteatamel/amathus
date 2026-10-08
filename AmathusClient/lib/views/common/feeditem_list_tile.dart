@@ -5,6 +5,8 @@ import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -106,19 +108,34 @@ class FeedItemListTile extends StatelessWidget {
                           child: SizedBox(
                             width: 96,
                             height: 76,
-                            child: Image.network(
-                              resolvedImage,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                color: const Color(0xFFF1F5F9),
-                                child: Icon(
-                                  Icons.article_outlined,
-                                  color: Colors.blueGrey.shade300,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
+                            child: kIsWeb
+                                ? Image.network(
+                                    resolvedImage,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                      color: const Color(0xFFF1F5F9),
+                                      child: Icon(
+                                        Icons.article_outlined,
+                                        color: Colors.blueGrey.shade300,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: resolvedImage,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                      color: const Color(0xFFF1F5F9),
+                                      child: Icon(
+                                        Icons.article_outlined,
+                                        color: Colors.blueGrey.shade300,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
                       ],

@@ -5,6 +5,8 @@ import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -106,12 +108,20 @@ class FeedItemListTileWide extends StatelessWidget {
                           child: SizedBox(
                             width: 124,
                             height: 92,
-                            child: Image.network(
-                              resolvedImage,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const SizedBox.shrink(),
-                            ),
+                            child: kIsWeb
+                                ? Image.network(
+                                    resolvedImage,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const SizedBox.shrink(),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: resolvedImage,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        const SizedBox.shrink(),
+                                  ),
                           ),
                         ),
                       ],

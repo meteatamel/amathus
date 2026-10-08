@@ -11,6 +11,8 @@ const String URL_TWITTER = "https://twitter.com/meteatamel";
 
 // files / storage keys
 const String FEEDS_FILE = "feeds_v3.json";
+const String FEED_ITEMS_RECENT_KEY = "feed_items_recent_v1.json";
+const String FEED_ITEMS_BY_ID_PREFIX = "feed_items_by_id_v1_";
 const String LANGUAGE_PREF_KEY = "app_language";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
 const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
