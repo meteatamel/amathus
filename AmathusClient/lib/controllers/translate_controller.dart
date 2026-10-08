@@ -112,7 +112,11 @@ class TranslateController {
           targetLanguage: normalizedTarget,
         );
         _cache[cacheKey] = translated;
-        activeLanguageNotifier(item).value = normalizedTarget;
+        final langNotifier = activeLanguageNotifier(item);
+        if (langNotifier.value == normalizedTarget) {
+          langNotifier.value = null;
+        }
+        langNotifier.value = normalizedTarget;
         return translated;
       } else {
         debugPrint(

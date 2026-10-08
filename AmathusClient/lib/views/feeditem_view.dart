@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
 class FeedItemView extends StatefulWidget {
@@ -66,9 +65,14 @@ class _FeedItemViewState extends State<FeedItemView> {
             : Text(Constants.APP_NAME),
         centerTitle: true,
       ),
-      body: ValueListenableBuilder<String?>(
-        valueListenable: TranslateController.activeLanguageNotifier(item),
-        builder: (context, activeLang, _) {
+      body: ListenableBuilder(
+        listenable: Listenable.merge([
+          TranslateController.activeLanguageNotifier(item),
+          TranslateController.loadingNotifier(item),
+        ]),
+        builder: (context, _) {
+          final activeLang =
+              TranslateController.activeLanguageNotifier(item).value;
           final translated = activeLang != null
               ? TranslateController.getCached(item, activeLang)
               : null;
@@ -77,107 +81,98 @@ class _FeedItemViewState extends State<FeedItemView> {
                   ? translated.title
                   : item.title;
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                children: [
-                  Card(
-                    elevation: 0,
-                    margin: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      side: const BorderSide(
-                        color: Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                    ),
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayTitle,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                              height: 1.32,
+          return Column(
+            children: [
+              _buildTopActionBar(activeLang),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                      children: [
+                        Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            side: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                              width: 1,
                             ),
                           ),
-                          _buildItemImage(),
-                          const SizedBox(height: 16),
-                          _buildItemDetail(translated),
-                          const SizedBox(height: 20),
-                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                          const SizedBox(height: 10),
-                          _buildMetaRow(activeLang),
-                          const SizedBox(height: 16),
-                          _buildMoreButton(context),
-                        ],
-                      ),
+                          color: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayTitle,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                    height: 1.32,
+                                  ),
+                                ),
+                                _buildItemImage(),
+                                const SizedBox(height: 16),
+                                _buildItemDetail(translated),
+                                const SizedBox(height: 20),
+                                _buildMoreButton(context),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildMetaRow(String? activeLang) {
-    final time = timeago.format(
-      item.publishDate,
-      locale: Constants.currentLanguage,
-    );
-    final sourceTitle = item.feed?.title ?? '';
+  Widget _buildTopActionBar(String? activeLang) {
     final sourceLang = Constants.resolveFeedLanguage(
       item.feed?.id,
       item.feed?.language,
     );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (item.feed != null) ...[
-          FeedImage(
-            item: item.feed,
-            width: 72,
-            height: 28,
-            compact: true,
-          ),
-          const SizedBox(width: 10),
-        ],
-        Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                sourceTitle.isNotEmpty ? '$sourceTitle • $time' : time,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blueGrey.shade600,
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+      ),
+      child: Align(
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                SourceAndTranslationBadges(
+                  sourceLang: sourceLang,
+                  activeTranslationLang: activeLang,
                 ),
-              ),
-              SourceAndTranslationBadges(
-                sourceLang: sourceLang,
-                activeTranslationLang: activeLang,
-              ),
-            ],
+                const Spacer(),
+                TranslateIconButton(item: item, includeDetail: true),
+                const SizedBox(width: 8),
+                ShareIconButton(item: item, showLabel: true),
+              ],
+            ),
           ),
         ),
-        TranslateIconButton(item: item, includeDetail: true),
-        ShareIconButton(item: item),
-      ],
+      ),
     );
   }
 

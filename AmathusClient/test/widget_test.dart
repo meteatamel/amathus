@@ -99,8 +99,12 @@ void main() {
       ),
     );
 
-    expect(find.byType(TranslateIconButton), findsWidgets);
-    expect(find.byType(ShareIconButton), findsWidgets);
+    expect(find.byType(TranslateIconButton), findsOneWidget);
+    expect(find.byType(ShareIconButton), findsOneWidget);
+    expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+    expect(find.text('Translate'), findsOneWidget);
+    expect(find.text('Share'), findsOneWidget);
     expect(find.byType(SourceAndTranslationBadges), findsOneWidget);
   });
 
