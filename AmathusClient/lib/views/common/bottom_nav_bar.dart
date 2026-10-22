@@ -1,5 +1,5 @@
 import 'package:amathus/views/feeditems_recent_view.dart';
-import 'package:amathus/views/feeds_view.dart';
+import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -20,7 +20,7 @@ class AppBottomNavigationBar extends StatelessWidget {
         height: 64,
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFF0F2942).withValues(alpha: 0.12),
-        selectedIndex: selectedIndex,
+        selectedIndex: selectedIndex.clamp(0, 1),
         onDestinationSelected: (index) {
           if (index == selectedIndex) return;
           switch (index) {
@@ -28,7 +28,7 @@ class AppBottomNavigationBar extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => FeedItemsRecentView(),
+                  pageBuilder: (_, __, ___) => const OverviewView(),
                   transitionDuration: const Duration(milliseconds: 180),
                   transitionsBuilder: (_, animation, __, child) =>
                       FadeTransition(opacity: animation, child: child),
@@ -39,7 +39,7 @@ class AppBottomNavigationBar extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const FeedsView(),
+                  pageBuilder: (_, __, ___) => FeedItemsRecentView(),
                   transitionDuration: const Duration(milliseconds: 180),
                   transitionsBuilder: (_, animation, __, child) =>
                       FadeTransition(opacity: animation, child: child),
@@ -50,20 +50,20 @@ class AppBottomNavigationBar extends StatelessWidget {
         },
         destinations: [
           NavigationDestination(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            selectedIcon: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Color(0xFF0F2942),
+            ),
+            label: Constants.OVERVIEW,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.bolt_outlined),
             selectedIcon: const Icon(
               Icons.bolt_rounded,
               color: Color(0xFF0F2942),
             ),
             label: Constants.RECENT_NEWS,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.newspaper_outlined),
-            selectedIcon: const Icon(
-              Icons.newspaper_rounded,
-              color: Color(0xFF0F2942),
-            ),
-            label: Constants.NEWSPAPERS,
           ),
         ],
       ),

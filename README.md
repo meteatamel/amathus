@@ -9,9 +9,9 @@ Amathus reads Cyprus RSS news feeds in Turkish, Greek, and English, transforms t
 
 ![Architecture](./Amathus/Shared/architecture.png)
 
-1. **`Amathus.Reader` (`amathus-reader`)**: Invoked every 10 minutes by Cloud Scheduler (`amathus-reader-job`). Fetches the 34 active RSS feeds configured in [`Amathus/Shared/amathussources.json`](./Amathus/Shared/amathussources.json) in parallel and uploads raw XML feeds to Cloud Storage (`gs://amathus-events-atamel-bucket`).
-2. **`Amathus.Converter` (`amathus-converter`)**: Triggered by Pub/Sub push notifications (`amathus-events-atamel-topic`) on Cloud Storage `OBJECT_FINALIZE` events. Parses and cleans the raw feeds into normalized `Feed` / `FeedItem` documents and stores them in Firestore (`feeds` collection).
-3. **`Amathus.Web` (`amathus-web`)**: Public REST API serving `/api/v1/feeds`, `/api/v1/feeditems`, `/api/v1/feeditems/{id}`, `/api/v1/translate` (powered by Google Cloud Translation API V2 `translate.googleapis.com`), and `/api/v1/imageproxy?url=...` (CORS-enabled image proxy for Flutter Web).
+1. **`Amathus.Reader` (`amathus-reader`)**: Invoked every hour (`0 * * * *`) by Cloud Scheduler (`amathus-reader-job`). Fetches the 34 active RSS feeds configured in [`Amathus/Shared/amathussources.json`](./Amathus/Shared/amathussources.json) in parallel and uploads raw XML feeds to Cloud Storage (`gs://amathus-events-atamel-bucket`).
+2. **`Amathus.Converter` (`amathus-converter`)**: Triggered by Pub/Sub push notifications (`amathus-events-atamel-topic`) on Cloud Storage `OBJECT_FINALIZE` events. Parses and cleans the raw feeds into normalized `Feed` / `FeedItem` documents, stores them in Firestore (`feeds` collection), and analyzes all feeds to generate the daily `NewsOverview` (top stories with narratives in English, Turkish, and Greek plus links to reporting newspapers) in Firestore (`overviews` collection).
+3. **`Amathus.Web` (`amathus-web`)**: Public REST API serving `/api/v1/overview`, `/api/v1/feeds`, `/api/v1/feeditems`, `/api/v1/feeditems/{id}`, `/api/v1/translate` (powered by Google Cloud Translation API V2 `translate.googleapis.com`), and `/api/v1/imageproxy?url=...` (CORS-enabled image proxy for Flutter Web).
 4. **`AmathusClient` (`amathus-client`)**: Flutter client for Web, iOS, Android, and macOS.
 
 ---

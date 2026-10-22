@@ -1,4 +1,4 @@
-﻿// Copyright 2020 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
+using Amathus.Common.Overview;
 
 namespace Amathus.Common.FeedStore
 {
     public class InMemoryFeedStore : IFeedStore
     {
-        Dictionary<string, Feed> _feeds;
+        private readonly Dictionary<string, Feed> _feeds;
+        private NewsOverview _overview;
     
         public InMemoryFeedStore()
         {
@@ -51,6 +53,17 @@ namespace Amathus.Common.FeedStore
                 feeds.Add(feed.Copy());
             }
             return Task.FromResult(feeds);
+        }
+
+        public Task SaveOverviewAsync(NewsOverview overview)
+        {
+            _overview = overview?.Copy();
+            return Task.CompletedTask;
+        }
+
+        public Task<NewsOverview> ReadOverviewAsync()
+        {
+            return Task.FromResult(_overview?.Copy());
         }
     }
 }

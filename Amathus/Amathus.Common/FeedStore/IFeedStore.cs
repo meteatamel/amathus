@@ -1,4 +1,4 @@
-﻿// Copyright 2020 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
+using Amathus.Common.Overview;
 
 namespace Amathus.Common.FeedStore
 {
@@ -24,5 +25,9 @@ namespace Amathus.Common.FeedStore
         Task<Feed> ReadAsync(string feedId);
 
         Task<List<Feed>> ReadAllAsync();
+
+        Task SaveOverviewAsync(NewsOverview overview);
+
+        Task<NewsOverview> ReadOverviewAsync();
     }
 }

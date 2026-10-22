@@ -56,6 +56,7 @@ class FeedItemsRecentView extends StatelessWidget {
           SourceLanguageFilterBar(
             bulkController: _bulkTranslateController,
             itemFilter: _matchesVisibleFilter,
+            showNewspaperSelector: true,
           ),
           Expanded(
             child: FeedItemsList(
@@ -63,11 +64,12 @@ class FeedItemsRecentView extends StatelessWidget {
               loadDataCallback: loadData,
               wideTile: true,
               bulkController: _bulkTranslateController,
+              bannerText: Constants.RECENT_NEWS_BANNER,
             ),
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 0),
+      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 1),
     );
   }
 

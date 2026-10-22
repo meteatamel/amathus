@@ -2,10 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // urls
-const String URL_MAIN =
+const String PROD_URL_MAIN =
     "https://amathus-web-1086570528700.europe-west1.run.app/api/v1";
+const String LOCAL_URL_MAIN = "http://localhost:5002/api/v1";
+const String URL_MAIN = String.fromEnvironment(
+  'API_URL',
+  defaultValue: kDebugMode ? LOCAL_URL_MAIN : PROD_URL_MAIN,
+);
 const String URL_FEEDS = "$URL_MAIN/feeds";
 const String URL_FEED_ITEMS = "$URL_MAIN/feeditems";
+const String URL_OVERVIEW = "$URL_MAIN/overview";
 const String URL_TRANSLATE = "$URL_MAIN/translate";
 const String URL_TWITTER = "https://twitter.com/meteatamel";
 
@@ -13,6 +19,7 @@ const String URL_TWITTER = "https://twitter.com/meteatamel";
 const String FEEDS_FILE = "feeds_v3.json";
 const String FEED_ITEMS_RECENT_KEY = "feed_items_recent_v1.json";
 const String FEED_ITEMS_BY_ID_PREFIX = "feed_items_by_id_v1_";
+const String OVERVIEW_STORAGE_KEY = "news_overview_v1.json";
 const String LANGUAGE_PREF_KEY = "app_language";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
 const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
@@ -26,6 +33,10 @@ final ValueNotifier<String> languageNotifier = ValueNotifier<String>('en');
 // News source language filter ('all', 'tr', 'el', or 'en')
 final ValueNotifier<String> sourceLanguageNotifier =
     ValueNotifier<String>('all');
+
+// Selected newspaper feed ID filter (null = all newspapers)
+final ValueNotifier<String?> selectedFeedIdNotifier =
+    ValueNotifier<String?>(null);
 
 // Hidden newspaper feed IDs (lowercase)
 final ValueNotifier<Set<String>> hiddenFeedsNotifier =
@@ -80,8 +91,22 @@ Future<void> setLanguage(String lang) async {
 Future<void> setSourceLanguage(String lang) async {
   if (lang != 'all' && lang != 'tr' && lang != 'el' && lang != 'en') return;
   sourceLanguageNotifier.value = lang;
+  final currentFeed = selectedFeedIdNotifier.value;
+  if (currentFeed != null &&
+      lang != 'all' &&
+      resolveFeedLanguage(currentFeed, null) != lang) {
+    selectedFeedIdNotifier.value = null;
+  }
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(SOURCE_LANGUAGE_PREF_KEY, lang);
+}
+
+void setSelectedFeedId(String? feedId) {
+  if (feedId == null || feedId.trim().isEmpty || feedId == 'all') {
+    selectedFeedIdNotifier.value = null;
+  } else {
+    selectedFeedIdNotifier.value = feedId.trim().toLowerCase();
+  }
 }
 
 bool isFeedVisible(String? feedId) {
@@ -96,6 +121,9 @@ Future<void> setFeedVisible(String feedId, bool visible) async {
     updated.remove(normalized);
   } else {
     updated.add(normalized);
+    if (selectedFeedIdNotifier.value == normalized) {
+      selectedFeedIdNotifier.value = null;
+    }
   }
   hiddenFeedsNotifier.value = updated;
   final prefs = await SharedPreferences.getInstance();
@@ -164,11 +192,19 @@ String resolveFeedLanguage(String? feedId, String? explicitLanguage) {
   return 'tr';
 }
 
-bool matchesSourceLanguage(String? feedId, String? explicitLanguage) {
+bool matchesSourceLanguageOnly(String? feedId, String? explicitLanguage) {
   if (!isFeedVisible(feedId)) return false;
   final filter = sourceLanguageNotifier.value;
   if (filter == 'all') return true;
   return resolveFeedLanguage(feedId, explicitLanguage) == filter;
+}
+
+bool matchesSourceLanguage(String? feedId, String? explicitLanguage) {
+  if (!matchesSourceLanguageOnly(feedId, explicitLanguage)) return false;
+  final selectedFeed = selectedFeedIdNotifier.value;
+  if (selectedFeed == null) return true;
+  if (feedId == null || feedId.trim().isEmpty) return false;
+  return feedId.trim().toLowerCase() == selectedFeed;
 }
 
 List<String> targetTranslationLanguagesFor(String sourceLang) {
@@ -208,12 +244,20 @@ String get APP_SUBTITLE => _trElEn(
 // source language filter labels
 String get SOURCES_BAR_LABEL =>
     _trElEn("Kaynaklar:", "Πηγές:", "Sources:");
+String get READ_IN_LABEL =>
+    _trElEn("Okuma Dili:", "Γλώσσα:", "Read in:");
+String get READ_IN_BUTTON =>
+    _trElEn("Okuma Dili", "Γλώσσα", "Read in");
 String get SOURCE_BADGE_LABEL => _trElEn("Kaynak", "Πηγή", "Source");
 String get TRANSLATED_BADGE_LABEL =>
     _trElEn("Çeviri", "Μετάφραση", "Translated");
-String get TRANSLATE_TO_LABEL =>
-    _trElEn("Çeviri", "Μετάφραση", "Translate");
+String get TRANSLATE_TO_LABEL => READ_IN_LABEL;
 String get SOURCE_FILTER_ALL => _trElEn("Tümü", "Όλα", "All");
+String get ALL_NEWSPAPERS => _trElEn(
+      "Tüm Gazeteler",
+      "Όλες οι Εφημερίδες",
+      "All Newspapers",
+    );
 String get SOURCE_FILTER_TR => "Türkçe";
 String get SOURCE_FILTER_EL => "Ελληνικά";
 String get SOURCE_FILTER_EN => "English";
@@ -229,8 +273,39 @@ String get SOURCE_LANGUAGE_SUBTITLE => _trElEn(
     );
 
 // drawer & navigation
+String get OVERVIEW => _trElEn(
+      "Öne Çıkan Haberler",
+      "Κυριότερες Ειδήσεις",
+      "Top Stories",
+    );
+String get TOP_STORIES_TITLE => OVERVIEW;
+String get COVERED_BY => _trElEn(
+      "Haberi Yapan Gazeteler",
+      "Κάλυψη από Εφημερίδες",
+      "Covered by Newspapers",
+    );
+String get OVERVIEW_LOADING => _trElEn(
+      "Haberler analiz ediliyor ve günün özeti hazırlanıyor...",
+      "Ανάλυση ειδήσεων και προετοιμασία της επισκόπησης...",
+      "Analyzing news and preparing today's overview...",
+    );
+String get OVERVIEW_EMPTY => _trElEn(
+      "Günün özeti henüz hazır değil.",
+      "Η επισκόπηση δεν είναι ακόμη διαθέσιμη.",
+      "Today's overview is not available yet.",
+    );
+String sourcesCountLabel(int count) => _trElEn(
+      "$count gazete",
+      "$count ${count == 1 ? 'εφημερίδα' : 'εφημερίδες'}",
+      "$count ${count == 1 ? 'newspaper' : 'newspapers'}",
+    );
 String get RECENT_NEWS =>
     _trElEn("Son Haberler", "Τελευταία Νέα", "Latest News");
+String get RECENT_NEWS_BANNER => _trElEn(
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden son dakika ve güncel haberler.",
+      "Τελευταία νέα από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
+      "Latest news across Turkish, Greek, and English newspapers in Cyprus.",
+    );
 String get NEWSPAPERS => _trElEn("Gazeteler", "Εφημερίδες", "Newspapers");
 String get ALL_NEWS => NEWSPAPERS;
 String get SETTINGS => _trElEn("Ayarlar", "Ρυθμίσεις", "Settings");
@@ -245,14 +320,14 @@ String get LANGUAGE_SUBTITLE => _trElEn(
       "Switch the app interface between Turkish, Greek, and English",
     );
 String get REORDER_NEWS => _trElEn(
-      "Gazeteleri Sırala ve Gizle (Gazeteler Sekmesi)",
-      "Σειρά & Απόκρυψη Εφημερίδων (Καρτέλα Εφημερίδες)",
-      "Reorder & Hide Newspapers (Newspapers Tab)",
+      "Gazeteleri Sırala ve Gizle",
+      "Σειρά & Απόκρυψη Εφημερίδων",
+      "Reorder & Hide Newspapers",
     );
 String get REORDER_HINT => _trElEn(
-      "'Gazeteler' sekmesindeki sıralamayı değiştirmek için sürükleyin. Gizlenen gazeteler 'Son Haberler' ve 'Gazeteler' sekmelerinde gösterilmez.",
-      "Σύρετε για αλλαγή σειράς στην καρτέλα 'Εφημερίδες'. Οι κρυμμένες εφημερίδες δεν εμφανίζονται στα 'Τελευταία Νέα' και τις 'Εφημερίδες'.",
-      "Drag to reorder newspapers in the 'Newspapers' tab. Hidden newspapers are excluded from both 'Latest News' and 'Newspapers'.",
+      "Gazete filtre çubuğundaki sıralamayı değiştirmek için sürükleyin. Gizlenen gazeteler haber listelerinde gösterilmez.",
+      "Σύρετε για αλλαγή σειράς στη γραμμή φίλτρου εφημερίδων. Οι κρυμμένες εφημερίδες δεν εμφανίζονται στις ειδήσεις.",
+      "Drag to reorder newspapers in the filter bar. Hidden newspapers are excluded from Top Stories and Latest News.",
     );
 
 // feeditem_view & lists

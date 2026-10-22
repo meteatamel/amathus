@@ -1,5 +1,5 @@
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:amathus/views/feeditems_recent_view.dart';
+import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -51,7 +51,7 @@ class AmathusApp extends StatelessWidget {
               iconTheme: IconThemeData(color: Colors.white),
             ),
           ),
-          home: FeedItemsRecentView(),
+          home: const OverviewView(),
         );
       },
     );

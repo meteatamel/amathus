@@ -37,7 +37,7 @@ gcloud scheduler jobs delete "${SERVICE_NAME}-job" --project="${PROJECT_ID}" --l
 gcloud scheduler jobs create http "${SERVICE_NAME}-job" \
   --project="${PROJECT_ID}" \
   --location="${REGION}" \
-  --schedule="*/10 * * * *" \
+  --schedule="0 * * * *" \
   --http-method=GET \
   --uri="${SERVICE_URL}" \
   --oidc-service-account-email="${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com" \

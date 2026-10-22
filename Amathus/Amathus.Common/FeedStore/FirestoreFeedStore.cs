@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
+using Amathus.Common.Overview;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 
@@ -24,6 +25,7 @@ namespace Amathus.Common.FeedStore
     {
         private readonly FirestoreDb _firestore;
         private readonly CollectionReference _feeds;
+        private readonly CollectionReference _overviews;
 
         public FirestoreFeedStore(string projectId)
         {
@@ -40,6 +42,7 @@ namespace Amathus.Common.FeedStore
                 _firestore = FirestoreDb.Create(projectId);
             }
             _feeds = _firestore.Collection("feeds");
+            _overviews = _firestore.Collection("overviews");
         }
 
         public async Task InsertAsync(Feed feed)
@@ -77,6 +80,29 @@ namespace Amathus.Common.FeedStore
             }
 
             return feeds;
+        }
+
+        public async Task SaveOverviewAsync(NewsOverview overview)
+        {
+            if (overview == null)
+            {
+                return;
+            }
+
+            var id = string.IsNullOrWhiteSpace(overview.Id) ? "latest" : overview.Id;
+            var docRef = _overviews.Document(id);
+            await docRef.SetAsync(overview, SetOptions.Overwrite);
+        }
+
+        public async Task<NewsOverview> ReadOverviewAsync()
+        {
+            var snapshot = await _overviews.Document("latest").GetSnapshotAsync();
+            if (!snapshot.Exists)
+            {
+                return null;
+            }
+
+            return snapshot.ConvertTo<NewsOverview>();
         }
     }
 }

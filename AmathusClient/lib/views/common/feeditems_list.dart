@@ -1,3 +1,4 @@
+import 'package:amathus/controllers/feeditems_controller.dart';
 import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
@@ -14,6 +15,7 @@ class FeedItemsList extends StatefulWidget {
   final LoadDataCallback loadDataCallback;
   final bool wideTile;
   final BulkTranslateController? bulkController;
+  final String? bannerText;
 
   const FeedItemsList({
     super.key,
@@ -21,6 +23,7 @@ class FeedItemsList extends StatefulWidget {
     required this.loadDataCallback,
     this.wideTile = false,
     this.bulkController,
+    this.bannerText,
   });
 
   @override
@@ -28,6 +31,8 @@ class FeedItemsList extends StatefulWidget {
 }
 
 class _FeedItemsListState extends State<FeedItemsList> {
+  final FeedItemsController _feedItemsController = FeedItemsController();
+  final Set<String> _loadedFullFeedIds = <String>{};
   List<FeedItem>? _items;
   bool _isRefreshing = false;
 
@@ -43,6 +48,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
   void initState() {
     super.initState();
     Constants.sourceLanguageNotifier.addListener(_onFilterChanged);
+    Constants.selectedFeedIdNotifier.addListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.addListener(_onFilterChanged);
     _loadInitialData();
   }
@@ -50,8 +56,49 @@ class _FeedItemsListState extends State<FeedItemsList> {
   @override
   void dispose() {
     Constants.sourceLanguageNotifier.removeListener(_onFilterChanged);
+    Constants.selectedFeedIdNotifier.removeListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.removeListener(_onFilterChanged);
     super.dispose();
+  }
+
+  void _onSelectedFeedChanged() {
+    _onFilterChanged();
+    final selectedId = Constants.selectedFeedIdNotifier.value;
+    if (selectedId != null && !_loadedFullFeedIds.contains(selectedId)) {
+      _loadFullFeedFor(selectedId);
+    }
+  }
+
+  Future<void> _loadFullFeedFor(String feedId) async {
+    _loadedFullFeedIds.add(feedId);
+    final feed = await _feedItemsController.readById(feedId);
+    if (feed?.items == null || feed!.items!.isEmpty || !mounted) {
+      return;
+    }
+
+    final current = List<FeedItem>.from(_items ?? const []);
+    final existingUrls = current
+        .map((e) => '${e.feed?.id ?? ''}:${e.url ?? e.title}')
+        .toSet();
+
+    var added = false;
+    for (final item in feed.items!) {
+      item.feed ??= feed;
+      final key = '${feed.id}:${item.url ?? item.title}';
+      if (existingUrls.add(key)) {
+        current.add(item);
+        added = true;
+      }
+    }
+
+    if (added && mounted) {
+      current.sort((a, b) => b.publishDate.compareTo(a.publishDate));
+      widget.bulkController?.setItems(current, filter: _matchesFilter);
+      setState(() {
+        _items = current;
+      });
+      _onFilterChanged();
+    }
   }
 
   void _onFilterChanged() {
@@ -76,6 +123,10 @@ class _FeedItemsListState extends State<FeedItemsList> {
       }
     }
     await _loadDataAndUpdateState();
+    final selectedId = Constants.selectedFeedIdNotifier.value;
+    if (selectedId != null) {
+      await _loadFullFeedFor(selectedId);
+    }
   }
 
   Future<void> _loadDataAndUpdateState() async {
@@ -118,6 +169,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.sourceLanguageNotifier,
+        Constants.selectedFeedIdNotifier,
         Constants.hiddenFeedsNotifier,
       ]),
       builder: (context, _) {
@@ -132,6 +184,10 @@ class _FeedItemsListState extends State<FeedItemsList> {
             ),
           );
         } else {
+          final banner = widget.bannerText;
+          final hasBanner = banner != null && banner.trim().isNotEmpty;
+          final totalCount = filteredItems.length + (hasBanner ? 1 : 0);
+
           content = RefreshIndicator(
             onRefresh: _loadDataAndUpdateState,
             child: Align(
@@ -140,12 +196,51 @@ class _FeedItemsListState extends State<FeedItemsList> {
                 constraints: const BoxConstraints(maxWidth: 860),
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                  itemCount: filteredItems.length,
+                  itemCount: totalCount,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
+                    if (hasBanner && index == 0) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 20,
+                              color: Color(0xFFFBBF24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                banner,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.45,
+                                  color: Colors.white.withValues(alpha: 0.94),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    final itemIndex = hasBanner ? index - 1 : index;
                     return widget.wideTile
-                        ? FeedItemListTileWide(item: filteredItems[index])
-                        : FeedItemListTile(item: filteredItems[index]);
+                        ? FeedItemListTileWide(item: filteredItems[itemIndex])
+                        : FeedItemListTile(item: filteredItems[itemIndex]);
                   },
                 ),
               ),
@@ -155,8 +250,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
         return Column(
           children: [
-            if (_isRefreshing)
-              const LinearProgressIndicator(minHeight: 2),
+            if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
             Expanded(child: content),
           ],
         );

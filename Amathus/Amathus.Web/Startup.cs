@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using Amathus.Web.HostedServices;
+using System.Collections.Generic;
+using Amathus.Common.Converter;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Overview;
+using Amathus.Common.Reader;
+using Amathus.Common.Sources;
+using Amathus.Web.HostedServices;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,11 +26,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
-// Removed unused Jsonp formatter
-using Amathus.Common.Reader;
-using System.Collections.Generic;
-using Amathus.Common.Sources;
-using Amathus.Common.Converter;
 
 namespace Amathus.Web
 {
@@ -43,8 +43,6 @@ namespace Amathus.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Enable Cors. You can test by running this in console:
-            // fetch('<replace with service url>', ()=> {debugger});
             services.AddCors(options =>
             {
                 options.AddPolicy("MyPolicy", policyBuilder =>
@@ -62,12 +60,19 @@ namespace Amathus.Web
                     options.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
 
+            services.AddSingleton<IOverviewAnalyzer>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<OverviewAnalyzer>>();
+                var projectId = Configuration["Amathus:ProjectId"] ?? "events-atamel";
+                return new OverviewAnalyzer(projectId, logger);
+            });
+
             _backend = Enum.Parse<FeedStoreBackend>(Configuration["Amathus:FeedStore"], ignoreCase: true);
 
             switch (_backend)
             {
                 // InMemory is for local testing. When it's used, it sets up a
-                // an local hosted service that reads the feeds and saves into
+                // local hosted service that reads the feeds and saves into
                 // memory.
                 case FeedStoreBackend.InMemory:
                     services.AddSingleton<IFeedStore, InMemoryFeedStore>();
@@ -84,7 +89,7 @@ namespace Amathus.Web
                         return new FeedConverter(_sources, logger);
                     });
                     break;
-                // Firestore backedend. It assumes that the backend is already populated.
+                // Firestore backend. It assumes that the backend is already populated.
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
                         new FirestoreFeedStore(

@@ -199,8 +199,17 @@ class TranslateIconButton extends StatelessWidget {
                             ? const Color(0xFF0F2942)
                             : const Color(0xFF1D4ED8),
                       ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     if (activeLang != null) ...[
+                      Text(
+                        Constants.TRANSLATE_TO_LABEL,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       FlagIcon(
                         languageCode: activeLang,
                         width: 18,
@@ -217,7 +226,7 @@ class TranslateIconButton extends StatelessWidget {
                       ),
                     ] else
                       Text(
-                        Constants.TRANSLATE,
+                        Constants.READ_IN_BUTTON,
                         style: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
@@ -398,8 +407,17 @@ class BulkTranslateIconButton extends StatelessWidget {
                         ? const Color(0xFF0F2942)
                         : const Color(0xFF1D4ED8),
                   ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 if (activeLang != null) ...[
+                  Text(
+                    Constants.TRANSLATE_TO_LABEL,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   FlagIcon(
                     languageCode: activeLang,
                     width: 18,
@@ -416,7 +434,7 @@ class BulkTranslateIconButton extends StatelessWidget {
                   ),
                 ] else
                   Text(
-                    Constants.TRANSLATE,
+                    Constants.READ_IN_BUTTON,
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,

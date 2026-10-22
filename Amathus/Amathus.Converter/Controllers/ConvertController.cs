@@ -1,4 +1,4 @@
-﻿// Copyright 2020 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Common.Converter;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Overview;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -26,16 +28,26 @@ namespace Amathus.Converter.Controllers
     [Route("")]
     public class ConvertController : ControllerBase
     {
+        private static readonly SemaphoreSlim OverviewRefreshLock = new(1, 1);
+        private static DateTime _lastOverviewCheckUtc = DateTime.MinValue;
+
         private readonly ILogger _logger;
         private readonly ISyndFeedStore _syndStore;
         private readonly IFeedConverter _converter;
         private readonly IFeedStore _store;
+        private readonly IOverviewAnalyzer _overviewAnalyzer;
 
-        public ConvertController(ISyndFeedStore syndStore, IFeedConverter converter, IFeedStore store, ILogger<ConvertController> logger)
+        public ConvertController(
+            ISyndFeedStore syndStore,
+            IFeedConverter converter,
+            IFeedStore store,
+            IOverviewAnalyzer overviewAnalyzer,
+            ILogger<ConvertController> logger)
         {
             _syndStore = syndStore;
             _converter = converter;
             _store = store;
+            _overviewAnalyzer = overviewAnalyzer;
             _logger = logger;
         }
 
@@ -73,6 +85,8 @@ namespace Amathus.Converter.Controllers
 
                     stopWatch.Stop();
                     _logger?.LogInformation($"Converting feed finished in {stopWatch.Elapsed.Seconds} seconds.");
+
+                    await RefreshOverviewIfStaleAsync();
                 }
                 catch (Exception e)
                 {
@@ -81,6 +95,51 @@ namespace Amathus.Converter.Controllers
             }
 
             return Ok();
+        }
+
+        private async Task RefreshOverviewIfStaleAsync()
+        {
+            if (_overviewAnalyzer == null)
+            {
+                return;
+            }
+
+            if ((DateTime.UtcNow - _lastOverviewCheckUtc) < TimeSpan.FromMinutes(45))
+            {
+                return;
+            }
+
+            if (!await OverviewRefreshLock.WaitAsync(0))
+            {
+                return;
+            }
+
+            try
+            {
+                var currentOverview = await _store.ReadOverviewAsync();
+                if (currentOverview != null && (DateTime.UtcNow - currentOverview.GeneratedAt.ToUniversalTime()) < TimeSpan.FromMinutes(45))
+                {
+                    _lastOverviewCheckUtc = DateTime.UtcNow;
+                    return;
+                }
+
+                var allFeeds = await _store.ReadAllAsync();
+                if (allFeeds != null && allFeeds.Count >= 5)
+                {
+                    _logger?.LogInformation("Refreshing daily overview in Firestore after feed conversion batch...");
+                    var overview = await _overviewAnalyzer.AnalyzeAsync(allFeeds);
+                    await _store.SaveOverviewAsync(overview);
+                    _lastOverviewCheckUtc = DateTime.UtcNow;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning($"Could not refresh overview during convert: {ex.Message}");
+            }
+            finally
+            {
+                OverviewRefreshLock.Release();
+            }
         }
 
         private string ConstructStorageUrl(dynamic attributes)

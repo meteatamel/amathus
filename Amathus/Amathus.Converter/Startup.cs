@@ -11,8 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.Collections.Generic;
+using Amathus.Common.Converter;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Overview;
 using Amathus.Common.Sources;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -20,8 +23,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Amathus.Common.Converter;
-using System;
 
 namespace Amathus.Converter
 {
@@ -41,7 +42,6 @@ namespace Amathus.Converter
         {
             services.AddControllers();
 
-
             services.AddSingleton<ISyndFeedStore>(container =>
             {
                 var bucketId = Configuration["Amathus:BucketId"];
@@ -55,6 +55,13 @@ namespace Amathus.Converter
             {
                 var logger = container.GetRequiredService<ILogger<IFeedConverter>>();
                 return new FeedConverter(_sources, logger);
+            });
+
+            services.AddSingleton<IOverviewAnalyzer>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<OverviewAnalyzer>>();
+                var projectId = Configuration["Amathus:ProjectId"] ?? "events-atamel";
+                return new OverviewAnalyzer(projectId, logger);
             });
 
             _backend = Enum.Parse<FeedStoreBackend>(Configuration["Amathus:FeedStore"], ignoreCase: true);

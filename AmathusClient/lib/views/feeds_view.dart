@@ -55,7 +55,7 @@ class _FeedsViewState extends State<FeedsView> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 1),
+      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 2),
     );
   }
 }
