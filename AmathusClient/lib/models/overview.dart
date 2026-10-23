@@ -1,5 +1,6 @@
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/models/feeditem.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 
 class NewsOverview {
   final String id;
@@ -108,6 +109,37 @@ class OverviewStory {
       default:
         return narrativeEn.trim().isNotEmpty ? narrativeEn : narrativeTr;
     }
+  }
+
+  String majorityLanguage([List<OverviewStorySource>? visibleSources]) {
+    final list = (visibleSources != null && visibleSources.isNotEmpty)
+        ? visibleSources
+        : sources;
+    if (list.isEmpty) {
+      return 'en';
+    }
+
+    final counts = <String, int>{};
+    for (final s in list) {
+      final lang = Constants.resolveFeedLanguage(s.feedId, s.feedLanguage);
+      counts[lang] = (counts[lang] ?? 0) + 1;
+    }
+
+    var bestLang = Constants.resolveFeedLanguage(
+      list.first.feedId,
+      list.first.feedLanguage,
+    );
+    var bestCount = counts[bestLang] ?? 0;
+
+    for (final lang in const ['el', 'tr', 'en']) {
+      final count = counts[lang] ?? 0;
+      if (count > bestCount) {
+        bestLang = lang;
+        bestCount = count;
+      }
+    }
+
+    return bestLang;
   }
 
   factory OverviewStory.fromJson(Map<String, dynamic> json) {

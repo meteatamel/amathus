@@ -165,8 +165,8 @@ class TranslateIconButton extends StatelessWidget {
               ],
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: activeLang == null
@@ -184,8 +184,8 @@ class TranslateIconButton extends StatelessWidget {
                   children: [
                     if (isLoading)
                       const SizedBox(
-                        width: 15,
-                        height: 15,
+                        width: 14,
+                        height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Color(0xFF1D4ED8),
@@ -194,32 +194,23 @@ class TranslateIconButton extends StatelessWidget {
                     else
                       Icon(
                         Icons.translate_rounded,
-                        size: 16,
+                        size: 15,
                         color: activeLang == null
                             ? const Color(0xFF0F2942)
                             : const Color(0xFF1D4ED8),
                       ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     if (activeLang != null) ...[
-                      Text(
-                        Constants.TRANSLATE_TO_LABEL,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1D4ED8),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
                       FlagIcon(
                         languageCode: activeLang,
                         width: 18,
                         height: 13,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Text(
                         Constants.languageLabelFor(activeLang),
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1D4ED8),
                         ),
@@ -228,15 +219,15 @@ class TranslateIconButton extends StatelessWidget {
                       Text(
                         Constants.READ_IN_BUTTON,
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      size: 18,
+                      size: 16,
                       color: activeLang == null
                           ? const Color(0xFF475569)
                           : const Color(0xFF1D4ED8),
@@ -283,7 +274,7 @@ class BulkTranslateIconButton extends StatelessWidget {
                 effectiveSource == 'el' ||
                 effectiveSource == 'en')
             ? Constants.targetTranslationLanguagesFor(effectiveSource)
-            : const ['tr', 'el', 'en'];
+            : const ['el', 'tr', 'en'];
 
         return PopupMenuButton<String>(
           tooltip: Constants.TRANSLATE,
@@ -373,8 +364,8 @@ class BulkTranslateIconButton extends StatelessWidget {
           ],
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 7,
+              horizontal: 10,
+              vertical: 6,
             ),
             decoration: BoxDecoration(
               color: activeLang == null
@@ -392,8 +383,8 @@ class BulkTranslateIconButton extends StatelessWidget {
               children: [
                 if (isLoading)
                   const SizedBox(
-                    width: 15,
-                    height: 15,
+                    width: 14,
+                    height: 14,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Color(0xFF1D4ED8),
@@ -402,32 +393,23 @@ class BulkTranslateIconButton extends StatelessWidget {
                 else
                   Icon(
                     Icons.translate_rounded,
-                    size: 16,
+                    size: 15,
                     color: activeLang == null
                         ? const Color(0xFF0F2942)
                         : const Color(0xFF1D4ED8),
                   ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 if (activeLang != null) ...[
-                  Text(
-                    Constants.TRANSLATE_TO_LABEL,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1D4ED8),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
                   FlagIcon(
                     languageCode: activeLang,
                     width: 18,
                     height: 13,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   Text(
                     Constants.languageLabelFor(activeLang),
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1D4ED8),
                     ),
@@ -436,15 +418,15 @@ class BulkTranslateIconButton extends StatelessWidget {
                   Text(
                     Constants.READ_IN_BUTTON,
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF0F172A),
                     ),
                   ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  size: 18,
+                  size: 16,
                   color: activeLang == null
                       ? const Color(0xFF475569)
                       : const Color(0xFF1D4ED8),

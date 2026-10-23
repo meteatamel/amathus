@@ -23,6 +23,7 @@ void main() {
     FeedsController.clearCache();
     OverviewController.clearCache();
     Constants.setSelectedFeedId(null);
+    Constants.setOverviewTranslateLanguage(null);
   });
 
   testWidgets(
@@ -58,7 +59,7 @@ void main() {
   });
 
   testWidgets(
-      'OverviewView renders top stories in English, Turkish, and Greek and opens FeedItemView when tapping a newspaper link',
+      'OverviewView renders top stories in English, Turkish, and Greek, opens OverviewStoryView detail page when tapping story card, and opens FeedItemView when tapping a newspaper logo',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -98,16 +99,29 @@ void main() {
               ),
             ),
             OverviewStorySource(
-              feedId: 'cyprusmail',
-              feedTitle: 'Cyprus Mail',
-              feedLanguage: 'en',
+              feedId: 'diyalog',
+              feedTitle: 'Diyalog',
+              feedLanguage: 'tr',
               article: FeedItem(
-                'Progress on crossing points discussed',
-                DateTime(2026, 10, 22, 11, 15),
-                'Cyprus Mail summary',
-                '<p>Cyprus Mail detail</p>',
+                'Geçiş kapılarında ilerleme',
+                DateTime(2026, 10, 22, 11, 20),
+                'Diyalog özeti',
+                '<p>Diyalog detay metni</p>',
                 null,
-                'https://cyprus-mail.com/crossing',
+                'https://www.diyaloggazetesi.com/gecis',
+              ),
+            ),
+            OverviewStorySource(
+              feedId: 'philenews',
+              feedTitle: 'Philenews',
+              feedLanguage: 'el',
+              article: FeedItem(
+                'Συζητήσεις για οδοφράγματα',
+                DateTime(2026, 10, 22, 11, 15),
+                'Philenews summary',
+                '<p>Philenews detail</p>',
+                null,
+                'https://philenews.com/crossing',
               ),
             ),
           ],
@@ -125,19 +139,22 @@ void main() {
     );
     await tester.pump();
 
+    // Default translate is null: story has 2 TR sources and 1 EL source, so majority language is TR
+    expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
+    expect(find.text('English daily summary across Cyprus.'), findsOneWidget);
+    expect(find.text('Translate'), findsOneWidget);
+    expect(find.text('Yenidüzen'), findsWidgets);
+    expect(find.text('Diyalog'), findsWidgets);
+    expect(find.text('Philenews'), findsWidgets);
+
+    // Translate to English and verify English title & summary display
+    Constants.setOverviewTranslateLanguage('en');
+    await tester.pump();
     expect(find.text('New Crossing Point Discussions Advance'), findsOneWidget);
     expect(find.text('English daily summary across Cyprus.'), findsOneWidget);
-    expect(find.text('Yenidüzen'), findsWidgets);
-    expect(find.text('Cyprus Mail'), findsWidgets);
 
-    // Switch language to Turkish and verify Turkish title & narrative display
-    await Constants.setLanguage('tr');
-    await tester.pump();
-    expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
-    expect(find.text('Kıbrıs genelinde Türkçe günlük özet.'), findsOneWidget);
-
-    // Switch language to Greek and verify Greek title & narrative display
-    await Constants.setLanguage('el');
+    // Translate to Greek and verify Greek title & summary display
+    Constants.setOverviewTranslateLanguage('el');
     await tester.pump();
     expect(
       find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
@@ -145,7 +162,19 @@ void main() {
     );
     expect(find.text('Ελληνική ημερήσια σύνοψη στην Κύπρο.'), findsOneWidget);
 
-    // Tap newspaper chip to open FeedItemView
+    // Tap the story title to open OverviewStoryView (detail page)
+    await tester.tap(
+      find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OverviewStoryView), findsOneWidget);
+    expect(
+      find.text('Οι εφημερίδες και των δύο κοινοτήτων αναφέρουν πρόοδο.'),
+      findsOneWidget,
+    );
+
+    // Tap newspaper logo inside OverviewStoryView to open FeedItemView
     await tester.tap(find.text('Yenidüzen').first);
     await tester.pumpAndSettle();
 
@@ -163,7 +192,7 @@ void main() {
 
     expect(Constants.targetTranslationLanguagesFor('tr'), ['el', 'en']);
     expect(Constants.targetTranslationLanguagesFor('el'), ['tr', 'en']);
-    expect(Constants.targetTranslationLanguagesFor('en'), ['tr', 'el']);
+    expect(Constants.targetTranslationLanguagesFor('en'), ['el', 'tr']);
 
     expect(Constants.matchesSourceLanguage('yeniduzen', 'tr'), isTrue);
     await Constants.setFeedVisible('yeniduzen', false);
@@ -201,7 +230,7 @@ void main() {
     expect(find.byType(ShareIconButton), findsOneWidget);
     expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
-    expect(find.text('Read in'), findsOneWidget);
+    expect(find.text('Translate'), findsOneWidget);
     expect(find.text('Share'), findsOneWidget);
     expect(find.byType(SourceAndTranslationBadges), findsOneWidget);
   });

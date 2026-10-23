@@ -38,6 +38,10 @@ final ValueNotifier<String> sourceLanguageNotifier =
 final ValueNotifier<String?> selectedFeedIdNotifier =
     ValueNotifier<String?>(null);
 
+// Active translation language for Top Stories (null = original majority language per story)
+final ValueNotifier<String?> overviewTranslateLanguageNotifier =
+    ValueNotifier<String?>(null);
+
 // Hidden newspaper feed IDs (lowercase)
 final ValueNotifier<Set<String>> hiddenFeedsNotifier =
     ValueNotifier<Set<String>>(<String>{});
@@ -106,6 +110,14 @@ void setSelectedFeedId(String? feedId) {
     selectedFeedIdNotifier.value = null;
   } else {
     selectedFeedIdNotifier.value = feedId.trim().toLowerCase();
+  }
+}
+
+void setOverviewTranslateLanguage(String? lang) {
+  if (lang == null || lang == 'original' || lang.trim().isEmpty) {
+    overviewTranslateLanguageNotifier.value = null;
+  } else if (lang == 'el' || lang == 'tr' || lang == 'en') {
+    overviewTranslateLanguageNotifier.value = lang;
   }
 }
 
@@ -209,14 +221,14 @@ bool matchesSourceLanguage(String? feedId, String? explicitLanguage) {
 
 List<String> targetTranslationLanguagesFor(String sourceLang) {
   switch (sourceLang.toLowerCase()) {
-    case 'tr':
-      return const ['el', 'en'];
     case 'el':
       return const ['tr', 'en'];
+    case 'tr':
+      return const ['el', 'en'];
     case 'en':
-      return const ['tr', 'el'];
+      return const ['el', 'tr'];
     default:
-      return const ['tr', 'el', 'en'];
+      return const ['el', 'tr', 'en'];
   }
 }
 
@@ -245,9 +257,9 @@ String get APP_SUBTITLE => _trElEn(
 String get SOURCES_BAR_LABEL =>
     _trElEn("Kaynaklar:", "Πηγές:", "Sources:");
 String get READ_IN_LABEL =>
-    _trElEn("Okuma Dili:", "Γλώσσα:", "Read in:");
+    _trElEn("Çevir:", "Μετάφραση:", "Translate:");
 String get READ_IN_BUTTON =>
-    _trElEn("Okuma Dili", "Γλώσσα", "Read in");
+    _trElEn("Çevir", "Μετάφραση", "Translate");
 String get SOURCE_BADGE_LABEL => _trElEn("Kaynak", "Πηγή", "Source");
 String get TRANSLATED_BADGE_LABEL =>
     _trElEn("Çeviri", "Μετάφραση", "Translated");

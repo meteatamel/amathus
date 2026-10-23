@@ -127,14 +127,14 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                               child: SegmentedButton<String>(
                                 segments: const [
                                   ButtonSegment<String>(
-                                    value: 'tr',
-                                    label: Text('Türkçe'),
-                                    icon: FlagIcon(languageCode: 'tr'),
-                                  ),
-                                  ButtonSegment<String>(
                                     value: 'el',
                                     label: Text('Ελληνικά'),
                                     icon: FlagIcon(languageCode: 'el'),
+                                  ),
+                                  ButtonSegment<String>(
+                                    value: 'tr',
+                                    label: Text('Türkçe'),
+                                    icon: FlagIcon(languageCode: 'tr'),
                                   ),
                                   ButtonSegment<String>(
                                     value: 'en',
@@ -215,17 +215,17 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                                         ),
                                       ),
                                       ButtonSegment<String>(
-                                        value: 'tr',
-                                        label: Text(Constants.SOURCE_FILTER_TR),
-                                        icon: const FlagIcon(
-                                          languageCode: 'tr',
-                                        ),
-                                      ),
-                                      ButtonSegment<String>(
                                         value: 'el',
                                         label: Text(Constants.SOURCE_FILTER_EL),
                                         icon: const FlagIcon(
                                           languageCode: 'el',
+                                        ),
+                                      ),
+                                      ButtonSegment<String>(
+                                        value: 'tr',
+                                        label: Text(Constants.SOURCE_FILTER_TR),
+                                        icon: const FlagIcon(
+                                          languageCode: 'tr',
                                         ),
                                       ),
                                       ButtonSegment<String>(
@@ -329,6 +329,7 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
       items.insert(newIndex, item);
     });
 
+    FeedsController.setCachedFeeds(items);
     _storage.write(items);
   }
 }

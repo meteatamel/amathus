@@ -14,6 +14,10 @@ class FeedsController {
     _storedFeeds = null;
   }
 
+  static void setCachedFeeds(List<Feed> feeds) {
+    _storedFeeds = List<Feed>.from(feeds);
+  }
+
   Future<List<Feed>?> readAll() async {
     try {
       final response = await http.get(Uri.parse(Constants.URL_FEEDS));

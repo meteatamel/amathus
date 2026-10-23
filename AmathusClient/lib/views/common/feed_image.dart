@@ -26,10 +26,6 @@ class FeedImage extends StatelessWidget {
     }
 
     final resolvedUrl = Constants.resolveImageUrl(feed.imageUrl);
-    if (resolvedUrl.isEmpty) {
-      return _buildReplacementText(context, feed.title);
-    }
-
     final darkBg = Constants.needsDarkLogoBackground(feed.id);
     final bgColor = darkBg ? const Color(0xFF1E293B) : Colors.white;
     final borderColor =
@@ -47,31 +43,33 @@ class FeedImage extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 8 : 10),
         border: Border.all(color: borderColor, width: 1),
       ),
-      child: kIsWeb
-          ? Image.network(
-              resolvedUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
-                  _buildReplacementText(context, feed.title, darkBg: darkBg),
-            )
-          : CachedNetworkImage(
-              imageUrl: resolvedUrl,
-              fit: BoxFit.contain,
-              placeholder: (context, url) => Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: darkBg
-                        ? Colors.white70
-                        : Theme.of(context).colorScheme.primary,
+      child: resolvedUrl.isEmpty
+          ? _buildReplacementText(context, feed.title, darkBg: darkBg)
+          : kIsWeb
+              ? Image.network(
+                  resolvedUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildReplacementText(context, feed.title, darkBg: darkBg),
+                )
+              : CachedNetworkImage(
+                  imageUrl: resolvedUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: darkBg
+                            ? Colors.white70
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ),
+                  errorWidget: (context, url, error) =>
+                      _buildReplacementText(context, feed.title, darkBg: darkBg),
                 ),
-              ),
-              errorWidget: (context, url, error) =>
-                  _buildReplacementText(context, feed.title, darkBg: darkBg),
-            ),
     );
   }
 

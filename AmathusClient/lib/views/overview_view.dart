@@ -1,4 +1,5 @@
 import 'package:amathus/controllers/overview_controller.dart';
+import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/bottom_nav_bar.dart';
@@ -6,11 +7,14 @@ import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
+import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class OverviewView extends StatefulWidget {
   final Future<NewsOverview?> Function()? loadCachedCallback;
@@ -178,11 +182,14 @@ class _OverviewViewState extends State<OverviewView> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.languageNotifier,
+        Constants.overviewTranslateLanguageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
       ]),
       builder: (context, _) {
-        final lang = Constants.currentLanguage;
+        final activeTranslateLang =
+            Constants.overviewTranslateLanguageNotifier.value;
+        final bannerLang = activeTranslateLang ?? Constants.currentLanguage;
         final visibleStories = <(OverviewStory, List<OverviewStorySource>)>[];
 
         for (final story in overview.stories) {
@@ -210,19 +217,19 @@ class _OverviewViewState extends State<OverviewView> {
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 itemCount: visibleStories.length + 1,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return _OverviewHeaderBanner(
                       overview: overview,
-                      language: lang,
+                      language: bannerLang,
                     );
                   }
                   final (story, sources) = visibleStories[index - 1];
                   return _OverviewStoryCard(
                     story: story,
                     sources: sources,
-                    language: lang,
+                    activeTranslateLanguage: activeTranslateLang,
                   );
                 },
               ),
@@ -237,93 +244,147 @@ class _OverviewViewState extends State<OverviewView> {
 class _OverviewLanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final current = Constants.currentLanguage;
-    return PopupMenuButton<String>(
-      tooltip: Constants.LANGUAGE_TITLE,
-      position: PopupMenuPosition.under,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (lang) => Constants.setLanguage(lang),
-      itemBuilder: (context) => [
-        for (final entry in const [
-          ('en', 'English'),
-          ('tr', 'Türkçe'),
-          ('el', 'Ελληνικά'),
-        ])
-          PopupMenuItem<String>(
-            value: entry.$1,
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.overviewTranslateLanguageNotifier,
+      ]),
+      builder: (context, _) {
+        final activeLang = Constants.overviewTranslateLanguageNotifier.value;
+        return PopupMenuButton<String>(
+          tooltip: Constants.TRANSLATE,
+          position: PopupMenuPosition.under,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (lang) {
+            if (lang == 'original' || lang == activeLang) {
+              Constants.setOverviewTranslateLanguage(null);
+            } else {
+              Constants.setOverviewTranslateLanguage(lang);
+            }
+          },
+          itemBuilder: (context) => [
+            for (final entry in const [
+              ('el', 'Ελληνικά'),
+              ('tr', 'Türkçe'),
+              ('en', 'English'),
+            ])
+              PopupMenuItem<String>(
+                value: entry.$1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FlagIcon(languageCode: entry.$1, width: 20, height: 14),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        entry.$2,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: activeLang == entry.$1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    if (activeLang == entry.$1) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            if (activeLang != null) ...[
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'original',
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.restore_rounded,
+                      size: 18,
+                      color: Color(0xFF475569),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        Constants.SHOW_ORIGINAL,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: activeLang == null
+                  ? const Color(0xFFF8FAFC)
+                  : const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: activeLang == null
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFF93C5FD),
+              ),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FlagIcon(languageCode: entry.$1, width: 20, height: 14),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    entry.$2,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: current == entry.$1
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: const Color(0xFF0F172A),
+                Icon(
+                  Icons.translate_rounded,
+                  size: 15,
+                  color: activeLang == null
+                      ? const Color(0xFF0F2942)
+                      : const Color(0xFF1D4ED8),
+                ),
+                const SizedBox(width: 5),
+                if (activeLang != null) ...[
+                  FlagIcon(languageCode: activeLang, width: 18, height: 13),
+                  const SizedBox(width: 5),
+                  Text(
+                    Constants.languageLabelFor(activeLang),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1D4ED8),
                     ),
                   ),
-                ),
-                if (current == entry.$1) ...[
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.check_rounded,
-                    size: 18,
-                    color: Color(0xFF1D4ED8),
+                ] else
+                  Text(
+                    Constants.READ_IN_BUTTON,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ],
+                const SizedBox(width: 3),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: activeLang == null
+                      ? const Color(0xFF475569)
+                      : const Color(0xFF1D4ED8),
+                ),
               ],
             ),
           ),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF93C5FD)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.translate_rounded,
-              size: 16,
-              color: Color(0xFF1D4ED8),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              Constants.READ_IN_LABEL,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1D4ED8),
-              ),
-            ),
-            const SizedBox(width: 6),
-            FlagIcon(languageCode: current, width: 18, height: 13),
-            const SizedBox(width: 6),
-            Text(
-              Constants.languageLabelFor(current),
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1D4ED8),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 18,
-              color: Color(0xFF1D4ED8),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -383,103 +444,388 @@ class _OverviewHeaderBanner extends StatelessWidget {
 class _OverviewStoryCard extends StatelessWidget {
   final OverviewStory story;
   final List<OverviewStorySource> sources;
-  final String language;
+  final String? activeTranslateLanguage;
 
   const _OverviewStoryCard({
     required this.story,
     required this.sources,
-    required this.language,
+    required this.activeTranslateLanguage,
   });
 
   @override
   Widget build(BuildContext context) {
-    final title = story.titleFor(language);
-    final narrative = story.narrativeFor(language);
+    final sourceLang = story.majorityLanguage(sources);
+    final effectiveLang = activeTranslateLanguage ?? sourceLang;
+    final title = story.titleFor(effectiveLang);
+    final narrative = story.narrativeFor(effectiveLang);
     final resolvedImage = Constants.resolveImageUrl(story.imageUrl);
+    final time = timeago.format(
+      story.publishDate,
+      locale: Constants.currentLanguage,
+    );
+    final shareItem = FeedItem(
+      title,
+      story.publishDate,
+      narrative,
+      narrative,
+      story.imageUrl,
+      sources.isNotEmpty ? sources.first.article.url : null,
+    );
 
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
       ),
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          height: 1.32,
-                        ),
-                      ),
-                      if (narrative.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OverviewStoryView(story: story),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          narrative,
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 14.5,
-                            color: Color(0xFF334155),
-                            height: 1.55,
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            height: 1.35,
+                          ),
+                        ),
+                        if (narrative.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            narrative,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.blueGrey.shade700,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (resolvedImage.isNotEmpty) ...[
+                    const SizedBox(width: 14),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 124,
+                        height: 92,
+                        child: kIsWeb
+                            ? Image.network(
+                                resolvedImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox.shrink(),
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: resolvedImage,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) =>
+                                    const SizedBox.shrink(),
+                              ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        for (final source in sources)
+                          _NewspaperStoryChip(source: source),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            time,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blueGrey.shade600,
+                            ),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                if (resolvedImage.isNotEmpty) ...[
-                  const SizedBox(width: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 132,
-                      height: 98,
-                      child: kIsWeb
-                          ? Image.network(
-                              resolvedImage,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const SizedBox.shrink(),
-                            )
-                          : CachedNetworkImage(
-                              imageUrl: resolvedImage,
-                              fit: BoxFit.cover,
-                              errorWidget: (context, url, error) =>
-                                  const SizedBox.shrink(),
-                            ),
                     ),
                   ),
+                  if (activeTranslateLanguage != null &&
+                      activeTranslateLanguage != sourceLang)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: SourceAndTranslationBadges(
+                        sourceLang: sourceLang,
+                        activeTranslationLang: activeTranslateLanguage,
+                        compact: true,
+                      ),
+                    ),
+                  ShareIconButton(item: shareItem),
                 ],
-              ],
-            ),
-            const SizedBox(height: 14),
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final source in sources)
-                  _NewspaperStoryChip(source: source),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class OverviewStoryView extends StatelessWidget {
+  final OverviewStory story;
+
+  const OverviewStoryView({super.key, required this.story});
+
+  List<OverviewStorySource> _visibleSources() {
+    final filtered = story.sources
+        .where(
+          (s) => Constants.matchesSourceLanguageOnly(s.feedId, s.feedLanguage),
+        )
+        .toList();
+    return filtered.isNotEmpty ? filtered : story.sources;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.overviewTranslateLanguageNotifier,
+        Constants.sourceLanguageNotifier,
+        Constants.hiddenFeedsNotifier,
+      ]),
+      builder: (context, _) {
+        final sources = _visibleSources();
+        final sourceLang = story.majorityLanguage(sources);
+        final activeTranslateLang =
+            Constants.overviewTranslateLanguageNotifier.value;
+        final effectiveLang = activeTranslateLang ?? sourceLang;
+        final title = story.titleFor(effectiveLang);
+        final narrative = story.narrativeFor(effectiveLang);
+        final resolvedImage = Constants.resolveImageUrl(story.imageUrl);
+        final shareItem = FeedItem(
+          title,
+          story.publishDate,
+          narrative,
+          narrative,
+          story.imageUrl,
+          sources.isNotEmpty ? sources.first.article.url : null,
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Image.asset(
+                    'assets/launcher/icon.png',
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    Constants.OVERVIEW,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          SourceAndTranslationBadges(
+                            sourceLang: sourceLang,
+                            activeTranslationLang:
+                                activeTranslateLang != sourceLang
+                                    ? activeTranslateLang
+                                    : null,
+                          ),
+                          const Spacer(),
+                          _OverviewLanguageSelector(),
+                          const SizedBox(width: 8),
+                          ShareIconButton(item: shareItem, showLabel: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                      children: [
+                        Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            side: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          color: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                    height: 1.32,
+                                  ),
+                                ),
+                                if (resolvedImage.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxHeight: 280,
+                                        ),
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: kIsWeb
+                                              ? Image.network(
+                                                  resolvedImage,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) =>
+                                                      const SizedBox.shrink(),
+                                                )
+                                              : CachedNetworkImage(
+                                                  imageUrl: resolvedImage,
+                                                  fit: BoxFit.cover,
+                                                  errorWidget: (
+                                                    context,
+                                                    url,
+                                                    error,
+                                                  ) =>
+                                                      const SizedBox.shrink(),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (narrative.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    narrative,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      height: 1.65,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ],
+                                if (sources.isNotEmpty) ...[
+                                  const SizedBox(height: 20),
+                                  const Divider(
+                                    height: 1,
+                                    color: Color(0xFFE2E8F0),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    Constants.COVERED_BY,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.blueGrey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      for (final source in sources)
+                                        _NewspaperStoryChip(source: source),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -493,54 +839,27 @@ class _NewspaperStoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final feed = source.toFeed();
     final feedItem = source.toFeedItem();
-    final hasLogo = Constants.resolveImageUrl(feed.imageUrl).isNotEmpty;
 
-    return Material(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FeedItemView(item: feedItem),
-            ),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (hasLogo) ...[
-                FeedImage(
-                  item: feed,
-                  width: 54,
-                  height: 22,
-                  compact: true,
-                ),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                source.feedTitle,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F2942),
-                ),
+    return Tooltip(
+      message: source.feedTitle,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FeedItemView(item: feedItem),
               ),
-              const SizedBox(width: 5),
-              const Icon(
-                Icons.arrow_outward_rounded,
-                size: 14,
-                color: Color(0xFF64748B),
-              ),
-            ],
+            );
+          },
+          child: FeedImage(
+            item: feed,
+            width: 68,
+            height: 28,
+            compact: true,
           ),
         ),
       ),
