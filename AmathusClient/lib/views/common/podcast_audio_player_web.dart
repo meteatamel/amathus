@@ -9,20 +9,79 @@ class PodcastAudioPlayer {
   VoidCallback? onEnded;
   VoidCallback? onError;
   ValueChanged<double>? onPositionFractionChanged;
+  ValueChanged<bool>? onLoadingChanged;
 
-  html.AudioElement? _audio;
-  html.AudioElement? _jingleAudio;
-  html.AudioElement? _prefetchedAudio;
-  String? _prefetchedUrl;
+  html.AudioElement? _sharedAudio;
+  bool _isAudioUnlocked = false;
+  bool _hasActiveTurnAudio = false;
+  int _activePlayToken = 0;
   StreamSubscription<html.Event>? _endedSub;
   StreamSubscription<html.Event>? _errorSub;
   StreamSubscription<html.Event>? _timeUpdateSub;
+  StreamSubscription<html.Event>? _playingSub;
+  StreamSubscription<html.Event>? _waitingSub;
   double _playbackRate = 1.0;
 
   static final Map<String, String> _cachedJingleUris = <String, String>{};
   static final Map<String, String> _cachedChimeUris = <String, String>{};
+  static final Map<String, String> _blobUrlCache = <String, String>{};
+  static final Map<String, Future<String?>> _inFlightBlobDownloads =
+      <String, Future<String?>>{};
+  static String? _silentWavDataUri;
 
-  bool get hasActiveAudio => _audio != null;
+  bool get hasActiveAudio => _hasActiveTurnAudio && _sharedAudio != null;
+
+  html.AudioElement _ensureAudioElement() {
+    return _sharedAudio ??= (html.AudioElement()..preload = 'auto');
+  }
+
+  void _unlockAudioSynchronously() {
+    if (_isAudioUnlocked) return;
+    _isAudioUnlocked = true;
+    final element = _ensureAudioElement();
+    final silentUri = _silentWavDataUri ??= _encodeSamplesToWavDataUri(
+      Float64List(400),
+      22050,
+    );
+    try {
+      element.src = silentUri;
+      element.play();
+    } catch (_) {}
+  }
+
+  Future<String?> _fetchBlobUrl(String url) {
+    final cached = _blobUrlCache[url];
+    if (cached != null) {
+      return Future<String?>.value(cached);
+    }
+    final inFlight = _inFlightBlobDownloads[url];
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final future = () async {
+      try {
+        final req = await html.HttpRequest.request(
+          url,
+          method: 'GET',
+          responseType: 'blob',
+        );
+        final blob = req.response as html.Blob?;
+        if (blob != null && blob.size > 0) {
+          final objectUrl = html.Url.createObjectUrlFromBlob(blob);
+          _blobUrlCache[url] = objectUrl;
+          return objectUrl;
+        }
+      } catch (_) {}
+      return null;
+    }();
+
+    _inFlightBlobDownloads[url] = future;
+    future.whenComplete(() {
+      _inFlightBlobDownloads.remove(url);
+    });
+    return future;
+  }
 
   Future<void> playIntroJingle({
     double playbackRate = 1.0,
@@ -65,10 +124,16 @@ class PodcastAudioPlayer {
     String dataUri, {
     int timeoutMs = 2600,
   }) async {
-    _stopJingle();
+    _cancelSubscriptions();
+    _hasActiveTurnAudio = false;
+    _isAudioUnlocked = true;
+    final token = ++_activePlayToken;
     final completer = Completer<void>();
-    final element = html.AudioElement(dataUri)..preload = 'auto';
-    _jingleAudio = element;
+    final element = _ensureAudioElement();
+    element.pause();
+    element.src = dataUri;
+    element.playbackRate = 1.0;
+    element.defaultPlaybackRate = 1.0;
 
     StreamSubscription<html.Event>? endSub;
     StreamSubscription<html.Event>? errSub;
@@ -90,20 +155,17 @@ class PodcastAudioPlayer {
       finish();
     }
 
+    if (token != _activePlayToken) {
+      finish();
+      return;
+    }
+
     await completer.future.timeout(
       Duration(milliseconds: timeoutMs),
       onTimeout: () {},
     );
-  }
-
-  void _stopJingle() {
-    if (_jingleAudio != null) {
-      try {
-        _jingleAudio!.pause();
-        _jingleAudio!.src = '';
-      } catch (_) {}
-      _jingleAudio = null;
-    }
+    endSub.cancel();
+    errSub.cancel();
   }
 
   Future<void> playUrl(
@@ -114,24 +176,32 @@ class PodcastAudioPlayer {
     required bool isHostA,
     double initialSeekFraction = 0.0,
   }) async {
-    stop();
+    _cancelSubscriptions();
+    _hasActiveTurnAudio = false;
     _playbackRate = playbackRate;
+    final token = ++_activePlayToken;
+    final element = _ensureAudioElement();
 
-    html.AudioElement element;
-    if (_prefetchedAudio != null && _prefetchedUrl == url) {
-      element = _prefetchedAudio!;
-      _prefetchedAudio = null;
-      _prefetchedUrl = null;
-    } else {
-      element = html.AudioElement(url)..preload = 'auto';
+    // If not already cached in memory, signal loading state while downloading
+    String? resolvedSrc = _blobUrlCache[url];
+    if (resolvedSrc == null) {
+      _unlockAudioSynchronously();
+      onLoadingChanged?.call(true);
+      resolvedSrc = await _fetchBlobUrl(url);
+      if (token != _activePlayToken) {
+        return;
+      }
     }
 
-    _audio = element;
+    final effectiveSrc = resolvedSrc ?? url;
+    _hasActiveTurnAudio = true;
+    element.pause();
+    element.src = effectiveSrc;
     element.playbackRate = _playbackRate;
     element.defaultPlaybackRate = _playbackRate;
 
     void applyInitialSeek() {
-      if (_audio != element) return;
+      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
       final dur = element.duration;
       if (dur.isFinite && dur > 0) {
         try {
@@ -148,37 +218,54 @@ class PodcastAudioPlayer {
       }
     }
 
+    _playingSub = element.onPlaying.listen((_) {
+      if (token != _activePlayToken) return;
+      onLoadingChanged?.call(false);
+    });
+
+    _waitingSub = element.onWaiting.listen((_) {
+      if (token != _activePlayToken) return;
+      onLoadingChanged?.call(true);
+    });
+
     _timeUpdateSub = element.onTimeUpdate.listen((_) {
-      if (_audio != element) return;
+      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
       final dur = element.duration;
       final cur = element.currentTime;
       if (dur.isFinite && dur > 0) {
+        onLoadingChanged?.call(false);
         onPositionFractionChanged?.call((cur / dur).clamp(0.0, 1.0));
       }
     });
 
     _endedSub = element.onEnded.listen((_) {
-      if (_audio != element) return;
+      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
+      onLoadingChanged?.call(false);
       onPositionFractionChanged?.call(1.0);
       onEnded?.call();
     });
 
     _errorSub = element.onError.listen((_) {
-      if (_audio != element) return;
+      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
+      onLoadingChanged?.call(false);
       onError?.call();
     });
 
     try {
       await element.play();
+      if (token == _activePlayToken) {
+        onLoadingChanged?.call(false);
+      }
     } catch (_) {
-      if (_audio != element) return;
+      if (token != _activePlayToken) return;
+      onLoadingChanged?.call(false);
       onError?.call();
     }
   }
 
   void seekWithinTurn(double fraction) {
-    final element = _audio;
-    if (element == null) return;
+    final element = _sharedAudio;
+    if (element == null || !_hasActiveTurnAudio) return;
     final dur = element.duration;
     if (dur.isFinite && dur > 0) {
       try {
@@ -189,23 +276,23 @@ class PodcastAudioPlayer {
   }
 
   void prefetchUrl(String url) {
-    if (url.isEmpty || _prefetchedUrl == url) return;
-    _prefetchedUrl = url;
-    _prefetchedAudio = html.AudioElement(url)..preload = 'auto';
-    _prefetchedAudio!.load();
+    if (url.isEmpty) return;
+    _fetchBlobUrl(url);
   }
 
   void pause() {
-    _stopJingle();
-    _audio?.pause();
+    _activePlayToken++;
+    onLoadingChanged?.call(false);
+    _sharedAudio?.pause();
   }
 
   Future<bool> resume() async {
-    final element = _audio;
-    if (element != null) {
+    final element = _sharedAudio;
+    if (element != null && _hasActiveTurnAudio) {
       try {
         element.playbackRate = _playbackRate;
         await element.play();
+        onLoadingChanged?.call(false);
         return true;
       } catch (_) {
         return false;
@@ -216,34 +303,39 @@ class PodcastAudioPlayer {
 
   void setPlaybackRate(double rate) {
     _playbackRate = rate;
-    if (_audio != null) {
-      _audio!.playbackRate = rate;
-      _audio!.defaultPlaybackRate = rate;
+    if (_sharedAudio != null && _hasActiveTurnAudio) {
+      _sharedAudio!.playbackRate = rate;
+      _sharedAudio!.defaultPlaybackRate = rate;
     }
   }
 
-  void stop() {
-    _stopJingle();
+  void _cancelSubscriptions() {
     _endedSub?.cancel();
     _endedSub = null;
     _errorSub?.cancel();
     _errorSub = null;
     _timeUpdateSub?.cancel();
     _timeUpdateSub = null;
-    final oldAudio = _audio;
-    _audio = null;
-    if (oldAudio != null) {
+    _playingSub?.cancel();
+    _playingSub = null;
+    _waitingSub?.cancel();
+    _waitingSub = null;
+  }
+
+  void stop() {
+    _activePlayToken++;
+    _hasActiveTurnAudio = false;
+    onLoadingChanged?.call(false);
+    _cancelSubscriptions();
+    if (_sharedAudio != null) {
       try {
-        oldAudio.pause();
-        oldAudio.src = '';
+        _sharedAudio!.pause();
       } catch (_) {}
     }
   }
 
   void dispose() {
     stop();
-    _prefetchedAudio = null;
-    _prefetchedUrl = null;
   }
 
   static String _buildMusicJingleDataUri({

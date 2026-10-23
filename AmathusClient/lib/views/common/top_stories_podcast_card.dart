@@ -94,6 +94,7 @@ class PodcastPlaybackController extends ChangeNotifier {
   double? _draggingOverallFraction;
   bool _isPlaying = false;
   bool _isPaused = false;
+  bool _isLoadingAudio = false;
   bool _needsReloadOnResume = false;
   int _playSessionId = 0;
   double _playbackRate = 1.0;
@@ -106,15 +107,43 @@ class PodcastPlaybackController extends ChangeNotifier {
     _randomizeSessionPresets();
     _player.onEnded = _handleTurnEnded;
     _player.onError = _handleTurnError;
+    _player.onLoadingChanged = (loading) {
+      if (_isLoadingAudio != loading) {
+        _isLoadingAudio = loading;
+        notifyListeners();
+      }
+    };
     _player.onPositionFractionChanged = (fraction) {
       if (_draggingOverallFraction != null) return;
       _withinTurnFraction = fraction.clamp(0.0, 1.0);
       notifyListeners();
     };
+    Constants.languageNotifier.addListener(() {
+      final newLang = Constants.languageNotifier.value;
+      if (newLang != _defaultLanguage || _selectedLanguage != null) {
+        _defaultLanguage = newLang;
+        _selectedLanguage = null;
+        _stopAndReset();
+      }
+    });
+  }
+
+  void _stopAndReset() {
+    _playSessionId++;
+    _player.stop();
+    _isPlaying = false;
+    _isPaused = false;
+    _isLoadingAudio = false;
+    _needsReloadOnResume = false;
+    _currentTurnIndex = 0;
+    _withinTurnFraction = 0.0;
+    _draggingOverallFraction = null;
+    notifyListeners();
   }
 
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;
+  bool get isLoadingAudio => _isLoadingAudio && _isPlaying && !_isPaused;
   double get playbackRate => _playbackRate;
   double? get draggingOverallFraction => _draggingOverallFraction;
   String get voicePreset => _voicePreset;
@@ -151,12 +180,7 @@ class PodcastPlaybackController extends ChangeNotifier {
 
     if (prevDefaultLang != defaultLanguage) {
       _selectedLanguage = null;
-      if (_isPlaying && !_isPaused) {
-        _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
-      } else if (_isPlaying && _isPaused) {
-        _needsReloadOnResume = true;
-        _player.stop();
-      }
+      _stopAndReset();
     }
   }
 
@@ -246,8 +270,10 @@ class PodcastPlaybackController extends ChangeNotifier {
       );
       _isPlaying = false;
       _isPaused = false;
+      _isLoadingAudio = false;
       _currentTurnIndex = 0;
       _withinTurnFraction = 0.0;
+      _randomizeSessionPresets();
       notifyListeners();
     }
   }
@@ -255,6 +281,7 @@ class PodcastPlaybackController extends ChangeNotifier {
   void _handleTurnError() {
     _isPlaying = false;
     _isPaused = false;
+    _isLoadingAudio = false;
     notifyListeners();
   }
 
@@ -276,8 +303,13 @@ class PodcastPlaybackController extends ChangeNotifier {
     final lang = effectiveLanguage;
     final url = _buildAudioUrl(currentTurn, lang);
 
+    // Immediately start downloading current turn and next turn in parallel
+    _player.prefetchUrl(url);
+    if (_currentTurnIndex + 1 < list.length) {
+      _player.prefetchUrl(_buildAudioUrl(list[_currentTurnIndex + 1], lang));
+    }
+
     if (withIntroJingle) {
-      _player.prefetchUrl(url);
       await _player.playIntroJingle(
         playbackRate: _playbackRate,
         style: _musicPreset,
@@ -286,7 +318,6 @@ class PodcastPlaybackController extends ChangeNotifier {
         return;
       }
     } else if (withStoryChime) {
-      _player.prefetchUrl(url);
       await _player.playStoryChime(
         playbackRate: _playbackRate,
         style: _chimePreset,
@@ -309,9 +340,13 @@ class PodcastPlaybackController extends ChangeNotifier {
 
     if (_currentTurnIndex + 1 < list.length) {
       final nextTurn = list[_currentTurnIndex + 1];
-      Future.delayed(const Duration(milliseconds: 900), () {
+      _player.prefetchUrl(_buildAudioUrl(nextTurn, effectiveLanguage));
+    }
+    if (_currentTurnIndex + 2 < list.length) {
+      final afterNextTurn = list[_currentTurnIndex + 2];
+      Future.delayed(const Duration(milliseconds: 600), () {
         if (!_isPlaying || sessionId != _playSessionId) return;
-        _player.prefetchUrl(_buildAudioUrl(nextTurn, effectiveLanguage));
+        _player.prefetchUrl(_buildAudioUrl(afterNextTurn, effectiveLanguage));
       });
     }
   }
@@ -324,6 +359,7 @@ class PodcastPlaybackController extends ChangeNotifier {
       _playSessionId++;
       _player.pause();
       _isPaused = true;
+      _isLoadingAudio = false;
       notifyListeners();
     } else if (_isPlaying && _isPaused) {
       _isPaused = false;
@@ -405,13 +441,7 @@ class PodcastPlaybackController extends ChangeNotifier {
   void selectLanguage(String lang) {
     if (effectiveLanguage == lang) return;
     _selectedLanguage = lang;
-    notifyListeners();
-    if (_isPlaying && !_isPaused) {
-      _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
-    } else if (_isPlaying && _isPaused) {
-      _needsReloadOnResume = true;
-      _player.stop();
-    }
+    _stopAndReset();
   }
 }
 
@@ -479,6 +509,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
         final lang = _controller.effectiveLanguage;
         final edition = _controller.effectiveEdition;
         final isPlayingNow = _controller.isPlaying && !_controller.isPaused;
+        final isLoadingAudio = _controller.isLoadingAudio;
 
         return Container(
           decoration: BoxDecoration(
@@ -571,12 +602,23 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                           ),
                         ),
                         onPressed: _controller.togglePlayPause,
-                        child: Icon(
-                          isPlayingNow
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          size: 24,
-                        ),
+                        child: isLoadingAudio
+                            ? const SizedBox(
+                                width: 19,
+                                height: 19,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFFBBF24),
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                isPlayingNow
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                size: 24,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 8),

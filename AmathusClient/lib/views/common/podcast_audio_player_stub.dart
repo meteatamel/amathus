@@ -5,6 +5,7 @@ class PodcastAudioPlayer {
   VoidCallback? onEnded;
   VoidCallback? onError;
   ValueChanged<double>? onPositionFractionChanged;
+  ValueChanged<bool>? onLoadingChanged;
   Timer? _simulatedTimer;
   bool _isPaused = false;
 
