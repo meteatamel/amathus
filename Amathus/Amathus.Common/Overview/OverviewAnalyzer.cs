@@ -263,26 +263,30 @@ namespace Amathus.Common.Overview
                 {
                     var modelsToTry = new[]
                     {
+                        ("global", "gemini-3-flash-preview"),
+                        ("global", "gemini-3.1-pro-preview"),
                         (_location, "gemini-2.5-flash"),
-                        ("us-central1", "gemini-2.5-flash"),
-                        (_location, "gemini-2.0-flash"),
-                        ("us-central1", "gemini-2.0-flash")
+                        ("us-central1", "gemini-2.5-flash")
                     };
 
                     foreach (var (loc, model) in modelsToTry)
                     {
                         try
                         {
-                            var url = $"https://{loc}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{loc}/publishers/google/models/{model}:generateContent";
+                            var host = loc == "global"
+                                ? "aiplatform.googleapis.com"
+                                : $"{loc}-aiplatform.googleapis.com";
+                            var url = $"https://{host}/v1/projects/{_projectId}/locations/{loc}/publishers/google/models/{model}:generateContent";
                             responseText = await CallGeminiEndpointAsync(url, token, prompt);
                             if (!string.IsNullOrWhiteSpace(responseText))
                             {
+                                _logger?.LogInformation($"Gemini synthesis succeeded using model {model} in {loc}.");
                                 break;
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger?.LogDebug($"Vertex AI {model} in {loc} failed: {ex.Message}");
+                            _logger?.LogWarning($"Vertex AI {model} in {loc} failed: {ex.Message}");
                         }
                     }
                 }
