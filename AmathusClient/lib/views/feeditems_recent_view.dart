@@ -4,6 +4,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'common/drawer.dart';
@@ -49,13 +50,23 @@ class FeedItemsRecentView extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: BulkTranslateIconButton(
+                controller: _bulkTranslateController,
+                itemFilter: _matchesVisibleFilter,
+                lightOnDark: true,
+              ),
+            ),
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          SourceLanguageFilterBar(
-            bulkController: _bulkTranslateController,
-            itemFilter: _matchesVisibleFilter,
+          const SourceLanguageFilterBar(
             showNewspaperSelector: true,
           ),
           Expanded(

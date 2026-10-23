@@ -390,10 +390,11 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
                 if (hasSelectedLogo) ...[
                   FeedImage(
                     item: selectedFeed,
-                    width: 48,
-                    height: 20,
+                    width: 38,
+                    height: 18,
                     compact: true,
                   ),
+                  const SizedBox(width: 6),
                 ] else ...[
                   const Icon(
                     Icons.newspaper_rounded,
@@ -401,20 +402,20 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
                     color: Color(0xFF475569),
                   ),
                   const SizedBox(width: 5),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 110),
-                    child: Text(
-                      selectedFeed?.title ?? Constants.NEWSPAPERS,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
+                ],
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  child: Text(
+                    selectedFeed?.title ?? Constants.NEWSPAPERS,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                ],
+                ),
                 const SizedBox(width: 3),
                 const Icon(
                   Icons.keyboard_arrow_down_rounded,
@@ -633,7 +634,7 @@ class ColumnistDropdownSelector extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 105),
+                  constraints: const BoxConstraints(maxWidth: 140),
                   child: Text(
                     activeAuthor ?? Constants.COLUMNISTS,
                     maxLines: 1,

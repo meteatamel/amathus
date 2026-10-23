@@ -270,9 +270,9 @@ String get APP_SUBTITLE => _trElEn(
 String get SOURCES_BAR_LABEL =>
     _trElEn("Kaynaklar:", "Πηγές:", "Sources:");
 String get READ_IN_LABEL =>
-    _trElEn("Çevir:", "Μετάφραση:", "Translate:");
+    _trElEn("Dilde oku:", "Ανάγνωση σε:", "Read in:");
 String get READ_IN_BUTTON =>
-    _trElEn("Çevir", "Μετάφραση", "Translate");
+    _trElEn("Dilde oku", "Ανάγνωση σε", "Read in");
 String get SOURCE_BADGE_LABEL => _trElEn("Kaynak", "Πηγή", "Source");
 String get TRANSLATED_BADGE_LABEL =>
     _trElEn("Çeviri", "Μετάφραση", "Translated");
@@ -371,7 +371,7 @@ String get REORDER_HINT => _trElEn(
 
 // feeditem_view & lists
 String get SHARE => _trElEn("Paylaş", "Κοινοποίηση", "Share");
-String get TRANSLATE => _trElEn("Çevir", "Μετάφραση", "Translate");
+String get TRANSLATE => READ_IN_BUTTON;
 String get SHOW_ORIGINAL => _trElEn(
       "Orijinal Kaynak",
       "Πρωτότυπη Πηγή",

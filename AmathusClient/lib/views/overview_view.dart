@@ -112,13 +112,19 @@ class _OverviewViewState extends State<OverviewView> {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: _OverviewLanguageSelector(lightOnDark: true),
+            ),
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          SourceLanguageFilterBar(
-            trailing: _OverviewLanguageSelector(),
-          ),
+          const SourceLanguageFilterBar(),
           if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
           Expanded(
             child: _buildBody(context),
@@ -242,6 +248,10 @@ class _OverviewViewState extends State<OverviewView> {
 }
 
 class _OverviewLanguageSelector extends StatelessWidget {
+  final bool lightOnDark;
+
+  const _OverviewLanguageSelector({this.lightOnDark = false});
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -331,14 +341,22 @@ class _OverviewLanguageSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: activeLang == null
-                  ? const Color(0xFFF8FAFC)
-                  : const Color(0xFFEFF6FF),
+              color: lightOnDark
+                  ? (activeLang == null
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : Colors.white)
+                  : (activeLang == null
+                      ? const Color(0xFFF8FAFC)
+                      : const Color(0xFFEFF6FF)),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: activeLang == null
-                    ? const Color(0xFFCBD5E1)
-                    : const Color(0xFF93C5FD),
+                color: lightOnDark
+                    ? (activeLang == null
+                        ? Colors.white.withValues(alpha: 0.30)
+                        : Colors.white)
+                    : (activeLang == null
+                        ? const Color(0xFFCBD5E1)
+                        : const Color(0xFF93C5FD)),
               ),
             ),
             child: Row(
@@ -347,9 +365,13 @@ class _OverviewLanguageSelector extends StatelessWidget {
                 Icon(
                   Icons.translate_rounded,
                   size: 15,
-                  color: activeLang == null
-                      ? const Color(0xFF0F2942)
-                      : const Color(0xFF1D4ED8),
+                  color: lightOnDark
+                      ? (activeLang == null
+                          ? Colors.white
+                          : const Color(0xFF0F2942))
+                      : (activeLang == null
+                          ? const Color(0xFF0F2942)
+                          : const Color(0xFF1D4ED8)),
                 ),
                 const SizedBox(width: 5),
                 if (activeLang != null) ...[
@@ -357,28 +379,36 @@ class _OverviewLanguageSelector extends StatelessWidget {
                   const SizedBox(width: 5),
                   Text(
                     Constants.languageLabelFor(activeLang),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1D4ED8),
+                      color: lightOnDark
+                          ? const Color(0xFF0F2942)
+                          : const Color(0xFF1D4ED8),
                     ),
                   ),
                 ] else
                   Text(
                     Constants.READ_IN_BUTTON,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                      color: lightOnDark
+                          ? Colors.white
+                          : const Color(0xFF0F172A),
                     ),
                   ),
                 const SizedBox(width: 3),
                 Icon(
                   Icons.keyboard_arrow_down_rounded,
                   size: 16,
-                  color: activeLang == null
-                      ? const Color(0xFF475569)
-                      : const Color(0xFF1D4ED8),
+                  color: lightOnDark
+                      ? (activeLang == null
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : const Color(0xFF0F2942))
+                      : (activeLang == null
+                          ? const Color(0xFF475569)
+                          : const Color(0xFF1D4ED8)),
                 ),
               ],
             ),
