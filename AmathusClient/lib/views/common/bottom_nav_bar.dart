@@ -1,78 +1,136 @@
+import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/columnists_view.dart';
 import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
-import 'package:amathus/utils/constants.dart' as Constants;
 
 class AppBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
 
   const AppBottomNavigationBar({super.key, required this.selectedIndex});
 
+  void _navigateTo(BuildContext context, int index, int currentIndex) {
+    if (index == currentIndex) return;
+    final Widget destination =
+        index == 0 ? const OverviewView() : const ColumnistsView();
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => destination,
+        transitionDuration: const Duration(milliseconds: 180),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final normalizedIndex = selectedIndex <= 0 ? 0 : 1;
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+    return Material(
+      color: Colors.white,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.center,
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _BottomNavTabButton(
+                      emoji: '📰',
+                      label: Constants.NEWS,
+                      selected: normalizedIndex == 0,
+                      onTap: () => _navigateTo(context, 0, normalizedIndex),
+                    ),
+                  ),
+                  Expanded(
+                    child: _BottomNavTabButton(
+                      emoji: '✍️',
+                      label: Constants.COLUMNISTS,
+                      selected: normalizedIndex == 1,
+                      onTap: () => _navigateTo(context, 1, normalizedIndex),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-      child: NavigationBar(
-        height: 64,
-        backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFF0F2942).withValues(alpha: 0.12),
-        selectedIndex: normalizedIndex,
-        onDestinationSelected: (index) {
-          if (index == normalizedIndex) return;
-          switch (index) {
-            case 0:
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const OverviewView(),
-                  transitionDuration: const Duration(milliseconds: 180),
-                  transitionsBuilder: (_, animation, __, child) =>
-                      FadeTransition(opacity: animation, child: child),
-                ),
-              );
-              break;
-            case 1:
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const ColumnistsView(),
-                  transitionDuration: const Duration(milliseconds: 180),
-                  transitionsBuilder: (_, animation, __, child) =>
-                      FadeTransition(opacity: animation, child: child),
-                ),
-              );
-              break;
-          }
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Text(
-              '📰',
-              style: TextStyle(fontSize: 19, height: 1.0),
+    );
+  }
+}
+
+class _BottomNavTabButton extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BottomNavTabButton({
+    required this.emoji,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const activeNavy = Color(0xFF0F2942);
+    const inactiveSlate = Color(0xFF334155);
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: selected
+              ? activeNavy.withValues(alpha: 0.05)
+              : Colors.transparent,
+          border: Border(
+            top: BorderSide(
+              color: selected ? activeNavy : Colors.transparent,
+              width: 3,
             ),
-            selectedIcon: const Text(
-              '📰',
-              style: TextStyle(fontSize: 21, height: 1.0),
-            ),
-            label: Constants.NEWS,
           ),
-          NavigationDestination(
-            icon: const Text(
-              '✍️',
-              style: TextStyle(fontSize: 19, height: 1.0),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(
+                fontSize: 17,
+                height: 1.0,
+              ),
             ),
-            selectedIcon: const Text(
-              '✍️',
-              style: TextStyle(fontSize: 21, height: 1.0),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected ? activeNavy : inactiveSlate,
+                  letterSpacing: -0.1,
+                ),
+              ),
             ),
-            label: Constants.COLUMNISTS,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

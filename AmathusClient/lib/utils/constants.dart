@@ -505,7 +505,11 @@ String languageLabelFor(String langCode) {
 }
 
 // localized app strings
-String get APP_NAME => "Cyprus Bicommunal News";
+String get APP_NAME => _trElEn(
+      "Kıbrıs İki Toplumlu Haberler",
+      "Δικοινοτικές Ειδήσεις Κύπρου",
+      "Cyprus Bicommunal News",
+    );
 String get APP_SUBTITLE => _trElEn(
       "Kıbrıs genelinden günlük haberler",
       "Καθημερινές ειδήσεις από όλη την Κύπρο",

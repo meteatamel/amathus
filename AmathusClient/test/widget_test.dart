@@ -39,8 +39,9 @@ void main() {
 
     await tester.pumpWidget(const AmathusApp());
 
-    // Turkish labels: Haberler (header + first tab), Öne Çıkan Haberler & Son Haberler (AppBar tabs), Köşe Yazarları (second tab)
-    expect(find.text('Haberler'), findsNWidgets(2));
+    // Turkish labels: Kıbrıs İki Toplumlu Haberler (AppBar header), Öne Çıkan Haberler & Son Haberler (AppBar tabs), Haberler & Köşe Yazarları (bottom tabs)
+    expect(find.text('Kıbrıs İki Toplumlu Haberler'), findsOneWidget);
+    expect(find.text('Haberler'), findsOneWidget);
     expect(find.text('Öne Çıkan Haberler'), findsOneWidget);
     expect(find.text('Son Haberler'), findsOneWidget);
     expect(find.text('Köşe Yazarları'), findsOneWidget);
@@ -50,7 +51,8 @@ void main() {
     await Constants.setLanguage('el');
     await tester.pump();
 
-    expect(find.text('Ειδήσεις'), findsNWidgets(2));
+    expect(find.text('Δικοινοτικές Ειδήσεις Κύπρου'), findsOneWidget);
+    expect(find.text('Ειδήσεις'), findsOneWidget);
     expect(find.text('Κυριότερες Ειδήσεις'), findsOneWidget);
     expect(find.text('Τελευταία Νέα'), findsOneWidget);
     expect(find.text('Αρθρογράφοι'), findsOneWidget);
@@ -60,7 +62,8 @@ void main() {
     await Constants.setLanguage('en');
     await tester.pump();
 
-    expect(find.text('News'), findsNWidgets(2));
+    expect(find.text('Cyprus Bicommunal News'), findsOneWidget);
+    expect(find.text('News'), findsOneWidget);
     expect(find.text('Top Stories'), findsOneWidget);
     expect(find.text('Latest News'), findsOneWidget);
     expect(find.text('Columnists'), findsOneWidget);

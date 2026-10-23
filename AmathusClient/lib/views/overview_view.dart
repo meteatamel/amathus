@@ -194,30 +194,34 @@ class _OverviewViewState extends State<OverviewView> {
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
+            titleSpacing: 4,
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(9),
                   child: SizedBox(
-                    width: 42,
-                    height: 42,
+                    width: 38,
+                    height: 38,
                     child: Transform.scale(
                       scale: 1.14,
                       child: Image.asset(
                         'assets/launcher/icon.png',
-                        width: 42,
-                        height: 42,
+                        width: 38,
+                        height: 38,
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 9),
                 Flexible(
-                  child: Text(
-                    Constants.NEWS,
-                    overflow: TextOverflow.ellipsis,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      Constants.APP_NAME,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
               ],
