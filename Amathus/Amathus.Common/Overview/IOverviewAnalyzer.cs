@@ -19,6 +19,6 @@ namespace Amathus.Common.Overview
 {
     public interface IOverviewAnalyzer
     {
-        Task<NewsOverview> AnalyzeAsync(List<Feed> feeds);
+        Task<NewsOverview> AnalyzeAsync(List<Feed> feeds, bool columnistsOnly = false);
     }
 }

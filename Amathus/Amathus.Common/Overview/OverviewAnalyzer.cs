@@ -77,6 +77,7 @@ namespace Amathus.Common.Overview
             public Feed Feed { get; set; }
             public FeedItem Item { get; set; }
             public string Language { get; set; }
+            public int GeoTier { get; set; }
             public string EnglishTitle { get; set; }
             public string EnglishSummary { get; set; }
             public HashSet<string> Tokens { get; set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -139,28 +140,29 @@ namespace Amathus.Common.Overview
             public List<int> ArticleIndices { get; set; }
         }
 
-        public async Task<NewsOverview> AnalyzeAsync(List<Feed> feeds)
+        public async Task<NewsOverview> AnalyzeAsync(List<Feed> feeds, bool columnistsOnly = false)
         {
+            var overviewId = columnistsOnly ? "latest_columnists" : "latest";
             var validFeeds = (feeds ?? new List<Feed>())
                 .Where(f => f?.Items != null && f.Items.Count > 0)
                 .ToList();
 
-            var candidates = CollectCandidates(validFeeds);
-            var totalArticles = validFeeds.Sum(f => f.Items?.Count ?? 0);
+            var candidates = CollectCandidates(validFeeds, columnistsOnly);
+            var totalArticles = validFeeds.Sum(f => f.Items?.Count(i => i != null && i.IsColumnist == columnistsOnly) ?? 0);
 
-            _logger?.LogInformation($"Analyzing overview across {validFeeds.Count} feeds ({candidates.Count} candidate articles out of {totalArticles} total).");
+            _logger?.LogInformation($"Analyzing overview (columnistsOnly={columnistsOnly}) across {validFeeds.Count} feeds ({candidates.Count} candidate articles out of {totalArticles} total).");
 
             if (candidates.Count == 0)
             {
                 return new NewsOverview
                 {
-                    Id = "latest",
+                    Id = overviewId,
                     GeneratedAt = DateTime.UtcNow,
                     TotalFeedsAnalyzed = validFeeds.Count,
                     TotalArticlesAnalyzed = 0,
-                    SummaryEn = "No news stories are available for analysis yet.",
-                    SummaryTr = "Henüz analiz edilecek haber bulunamadı.",
-                    SummaryEl = "Δεν υπάρχουν ακόμη διαθέσιμες ειδήσεις για ανάλυση.",
+                    SummaryEn = "No stories are available for analysis yet.",
+                    SummaryTr = "Henüz analiz edilecek içerik bulunamadı.",
+                    SummaryEl = "Δεν υπάρχουν ακόμη διαθέσιμα άρθρα για ανάλυση.",
                     Stories = new List<OverviewStory>()
                 };
             }
@@ -168,11 +170,12 @@ namespace Amathus.Common.Overview
             // 1. Try Gemini via Vertex AI (or GEMINI_API_KEY)
             try
             {
-                var geminiOverview = await TryAnalyzeWithGeminiAsync(candidates, validFeeds.Count, totalArticles);
+                var geminiOverview = await TryAnalyzeWithGeminiAsync(candidates, validFeeds.Count, totalArticles, columnistsOnly);
                 if (geminiOverview != null && geminiOverview.Stories != null && geminiOverview.Stories.Count > 0)
                 {
+                    geminiOverview.Id = overviewId;
                     PodcastScriptBuilder.EnsurePodcastPopulated(geminiOverview);
-                    _logger?.LogInformation($"Successfully generated news overview via Gemini with {geminiOverview.Stories.Count} top stories.");
+                    _logger?.LogInformation($"Successfully generated overview (columnistsOnly={columnistsOnly}) via Gemini with {geminiOverview.Stories.Count} top stories.");
                     return geminiOverview;
                 }
             }
@@ -183,22 +186,23 @@ namespace Amathus.Common.Overview
 
             // 2. Automatic Fallback: Cross-language clustering + synthesis + translation
             var fallbackOverview = await AnalyzeWithClusteringFallbackAsync(candidates, validFeeds.Count, totalArticles);
+            fallbackOverview.Id = overviewId;
             PodcastScriptBuilder.EnsurePodcastPopulated(fallbackOverview);
-            _logger?.LogInformation($"Generated news overview via fallback analyzer with {fallbackOverview.Stories.Count} top stories.");
+            _logger?.LogInformation($"Generated overview (columnistsOnly={columnistsOnly}) via fallback analyzer with {fallbackOverview.Stories.Count} top stories.");
             return fallbackOverview;
         }
 
-        private List<CandidateArticle> CollectCandidates(List<Feed> feeds)
+        private List<CandidateArticle> CollectCandidates(List<Feed> feeds, bool columnistsOnly = false)
         {
             var result = new List<CandidateArticle>();
-            var cutoff = DateTime.UtcNow.AddDays(-3);
+            var cutoff = DateTime.UtcNow.AddDays(columnistsOnly ? -7 : -3);
 
             foreach (var feed in feeds)
             {
                 var lang = string.IsNullOrWhiteSpace(feed.Language) ? "tr" : feed.Language.Trim().ToLowerInvariant();
                 var filtered = feed.Items
                     .Where(item => item != null &&
-                                   !item.IsColumnist &&
+                                   item.IsColumnist == columnistsOnly &&
                                    !string.IsNullOrWhiteSpace(item.Title) &&
                                    !(string.IsNullOrEmpty(item.Summary) && item.ImageUrl == null) &&
                                    !TextUtil.ContainsBannedWords(item.Title) &&
@@ -207,10 +211,21 @@ namespace Amathus.Common.Overview
                     .OrderByDescending(item => item.PublishDate)
                     .ToList();
 
-                var recent = filtered.Where(i => i.PublishDate >= cutoff).Take(5).ToList();
+                var recent = filtered
+                    .Where(i => i.PublishDate >= cutoff)
+                    .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
+                    .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
+                    .ThenByDescending(i => i.PublishDate)
+                    .Take(5)
+                    .ToList();
                 if (recent.Count == 0)
                 {
-                    recent = filtered.Take(4).ToList();
+                    recent = filtered
+                        .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
+                        .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
+                        .ThenByDescending(i => i.PublishDate)
+                        .Take(4)
+                        .ToList();
                 }
 
                 foreach (var item in recent)
@@ -219,13 +234,15 @@ namespace Amathus.Common.Overview
                     {
                         Feed = feed,
                         Item = item,
-                        Language = lang
+                        Language = lang,
+                        GeoTier = TextUtil.GetGeoRelevanceTier(item.Title, item.Summary, item.Detail)
                     });
                 }
             }
 
             result = result
-                .OrderByDescending(c => c.Item.PublishDate)
+                .OrderByDescending(c => c.GeoTier >= 3 ? 3 : c.GeoTier)
+                .ThenByDescending(c => c.Item.PublishDate)
                 .Take(160)
                 .ToList();
 
@@ -240,9 +257,10 @@ namespace Amathus.Common.Overview
         private async Task<NewsOverview> TryAnalyzeWithGeminiAsync(
             List<CandidateArticle> candidates,
             int totalFeeds,
-            int totalArticles)
+            int totalArticles,
+            bool columnistsOnly = false)
         {
-            var prompt = BuildGeminiPrompt(candidates, totalFeeds);
+            var prompt = BuildGeminiPrompt(candidates, totalFeeds, columnistsOnly);
             string responseText = null;
 
             var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
@@ -351,6 +369,25 @@ namespace Amathus.Common.Overview
                 return null;
             }
 
+            // Ensure stories are strictly ordered by geographic priority: Cyprus (3) -> Greece (2) -> Turkey (1) -> World (0)
+            stories = stories
+                .Select((story, originalIndex) =>
+                {
+                    var tier = TextUtil.GetGeoRelevanceTier(
+                        $"{story.TitleEn} {story.TitleTr} {story.TitleEl}",
+                        $"{story.NarrativeEn} {story.NarrativeTr} {story.NarrativeEl}");
+                    var bucket = tier >= 3 ? 3 : tier;
+                    return (story, bucket, originalIndex);
+                })
+                .OrderByDescending(x => x.bucket)
+                .ThenBy(x => x.originalIndex)
+                .Select((x, i) =>
+                {
+                    x.story.Id = $"story-{i + 1}";
+                    return x.story;
+                })
+                .ToList();
+
             var currentEdition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
             var podcastTurns = new List<PodcastDialogueTurn>();
             if (parsed.PodcastTurns != null && parsed.PodcastTurns.Count >= 6)
@@ -442,44 +479,42 @@ namespace Amathus.Common.Overview
             return root["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
         }
 
-        private static string BuildGeminiPrompt(List<CandidateArticle> candidates, int totalFeeds)
+        private static string BuildGeminiPrompt(List<CandidateArticle> candidates, int totalFeeds, bool columnistsOnly = false)
         {
-            var edition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
-            var (editionEn, editionTr, editionEl) = edition switch
-            {
-                "morning" => (
-                    "Cyprus Bicommunal News - Morning Top Stories",
-                    "Kıbrıs İki Toplumlu Haberler - Sabah Öne Çıkan Haberler",
-                    "Δικοινοτικές Ειδήσεις Κύπρου - Πρωινές Κύριες Ειδήσεις"
-                ),
-                "midday" => (
-                    "Cyprus Bicommunal News - Mid-Day Top Stories",
-                    "Kıbrıs İki Toplumlu Haberler - Öğle Öne Çıkan Haberler",
-                    "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημεριανές Κύριες Ειδήσεις"
-                ),
-                _ => (
-                    "Cyprus Bicommunal News - Evening Top Stories",
-                    "Kıbrıs İki Toplumlu Haberler - Akşam Öne Çıkan Haberler",
-                    "Δικοινοτικές Ειδήσεις Κύπρου - Βραδινές Κύριες Ειδήσεις"
-                )
-            };
+            const string editionEn = "Cyprus Bicommunal News - Top Stories";
+            const string editionTr = "Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler";
+            const string editionEl = "Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις";
 
             var sb = new StringBuilder();
             sb.AppendLine("You are an expert bicommunal Cyprus news editor and broadcast podcast producer fluent in English, Turkish, and Greek.");
-            sb.AppendLine($"Below are {candidates.Count} recent news articles from Turkish, Greek, and English newspapers across Cyprus.");
-            sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (typically between 10 and 16 stories).");
-            sb.AppendLine("Prioritize stories covered by multiple newspapers (especially across different language communities in Cyprus) and major island-wide developments, ensuring a balanced selection across Turkish, Greek, and English sources.");
-            sb.AppendLine("1. For each top story:");
+            if (columnistsOnly)
+            {
+                sb.AppendLine($"Below are {candidates.Count} recent opinion columns and commentaries from Turkish, Greek, and English newspaper columnists across Cyprus.");
+                sb.AppendLine("Analyze all columns and identify the major opinion themes and top columns of the day (typically between 8 and 14 top column topics/pieces).");
+            }
+            else
+            {
+                sb.AppendLine($"Below are {candidates.Count} recent news articles from Turkish, Greek, and English newspapers across Cyprus.");
+                sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (typically between 10 and 16 stories).");
+            }
+            sb.AppendLine("GEOGRAPHIC PRIORITY (STRICT): You MUST prioritize and order stories/columns in this exact geographic hierarchy:");
+            sb.AppendLine("  1st Priority: CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, legal, social, and cultural developments).");
+            sb.AppendLine("  2nd Priority: GREECE (especially developments in Greece relevant to Cyprus or the Eastern Mediterranean).");
+            sb.AppendLine("  3rd Priority: TURKEY (especially developments in Turkey relevant to Cyprus or the Eastern Mediterranean).");
+            sb.AppendLine("  4th Priority: WORLD (general international news).");
+            sb.AppendLine("The selected list and the 5-minute podcast MUST be predominantly about Cyprus-related topics (at least 85-90% Cyprus topics). Only include topics exclusively about Greece or Turkey after all major Cyprus topics are covered, and avoid unrelated general world topics unless no Cyprus, Greece, or Turkey topics remain. Always order the 'stories' array and 'podcastTurns' discussion with Cyprus topics first, followed by Greece, then Turkey, and World last.");
+            sb.AppendLine("Within Cyprus topics, prioritize themes covered across different language communities in Cyprus and major island-wide developments, ensuring a balanced selection across Turkish, Greek, and English sources.");
+            sb.AppendLine("1. For each top story/column:");
             sb.AppendLine("- Write a clear, journalistic headline in English (titleEn), Turkish (titleTr), and Greek (titleEl).");
-            sb.AppendLine("- Write a rich 2-4 sentence narrative synthesis in English (narrativeEn), Turkish (narrativeTr), and Greek (narrativeEl) explaining what happened and how the newspapers cover it.");
-            sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles from the list below that cover or relate to this story (include at least 1 and up to 6 matching articles from different newspapers).");
-            sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl).");
+            sb.AppendLine("- Write a rich 2-4 sentence narrative synthesis in English (narrativeEn), Turkish (narrativeTr), and Greek (narrativeEl) explaining the key arguments/developments and how the newspapers/columnists cover it.");
+            sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
+            sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
             sb.AppendLine("3. Also generate a ~5-minute two-host broadcast news podcast script (podcastTurns, 18 to 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
-            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\") and give the first half of a quick headline rundown before discussing the stories in detail.");
-            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline rundown and transition into examining the top stories one by one.");
-            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per story across the top 8 stories): the first speaker introduces the story and key facts, and the second speaker adds natural journalistic context, analysis, and cross-community perspective without repeating the first speaker.");
+            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\") and give the first half of a quick headline rundown before discussing the topics in detail.");
+            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline rundown and transition into examining the top topics one by one.");
+            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces the topic and key facts/arguments, and the second speaker adds natural journalistic context, analysis, and cross-community perspective without repeating the first speaker.");
             sb.AppendLine("- The final 2 turns (\"A\" then \"B\") wrap up the briefing and sign off.");
-            sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two hosts. Do NOT mention the number of stories, the number of newspapers/news sources, or the number of articles analyzed.");
+            sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two podcast hosts. Do NOT mention the number of stories/columns, the number of newspapers/news sources, or the number of articles analyzed.");
             sb.AppendLine("Return strictly valid JSON with schema:");
             sb.AppendLine(@"{
   ""summaryEn"": ""..."",
@@ -511,7 +546,9 @@ namespace Amathus.Common.Overview
             foreach (var c in candidates)
             {
                 var cleanSummary = CleanSnippet(c.Item.Summary ?? c.Item.Detail, 180);
-                sb.AppendLine($"[{c.Index}] ({c.Feed.Id} | {c.Feed.Title} | {c.Language}) {c.Item.Title} — {cleanSummary}");
+                var geoLabel = TextUtil.GetGeoRelevanceLabel(c.GeoTier);
+                var authorPart = !string.IsNullOrWhiteSpace(c.Item.Author) ? $" | Author: {c.Item.Author}" : string.Empty;
+                sb.AppendLine($"[{c.Index}] ({c.Feed.Id} | {c.Feed.Title} | {c.Language} | Geo: {geoLabel}{authorPart}) {c.Item.Title} — {cleanSummary}");
             }
 
             return sb.ToString();
@@ -706,10 +743,17 @@ namespace Amathus.Common.Overview
                 rawClusters.Add(cluster);
             }
 
-            // Rank clusters by: number of distinct languages covered, number of distinct newspapers, image availability, and recency
+            // Rank clusters by: geographic priority (Cyprus -> Greece -> Turkey -> World), distinct languages covered, distinct newspapers, image availability, and recency
+            int ClusterGeoBucket(List<CandidateArticle> cluster)
+            {
+                int maxTier = cluster.Max(a => a.GeoTier);
+                return maxTier >= 3 ? 3 : maxTier;
+            }
+
             var multiSource = rawClusters
                 .Where(c => c.Count >= 2)
-                .OrderByDescending(c => c.Select(a => a.Language).Distinct().Count())
+                .OrderByDescending(ClusterGeoBucket)
+                .ThenByDescending(c => c.Select(a => a.Language).Distinct().Count())
                 .ThenByDescending(c => c.Count)
                 .ThenByDescending(c => c.Any(a => a.Item.ImageUrl != null))
                 .ThenByDescending(c => c.Max(a => a.Item.PublishDate))
@@ -720,10 +764,11 @@ namespace Amathus.Common.Overview
 
             if (selected.Count < minStories)
             {
-                // Ensure balanced representation across TR, EL, and EN single-source top headlines if needed
+                // Ensure balanced representation across TR, EL, and EN single-source top headlines, prioritizing Cyprus -> Greece -> Turkey -> World
                 var remainingSingle = rawClusters
                     .Where(c => c.Count == 1)
-                    .OrderByDescending(c => c[0].Item.ImageUrl != null)
+                    .OrderByDescending(ClusterGeoBucket)
+                    .ThenByDescending(c => c[0].Item.ImageUrl != null)
                     .ThenByDescending(c => (c[0].Item.Summary ?? string.Empty).Length)
                     .ThenByDescending(c => c[0].Item.PublishDate)
                     .ToList();
@@ -786,7 +831,9 @@ namespace Amathus.Common.Overview
                         Summary = c.Item.Summary,
                         Detail = c.Item.Detail,
                         ImageUrl = c.Item.ImageUrl,
-                        Url = c.Item.Url
+                        Url = c.Item.Url,
+                        Author = c.Item.Author,
+                        IsColumnist = c.Item.IsColumnist
                     }
                 });
             }

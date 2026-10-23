@@ -2,7 +2,6 @@ import 'package:amathus/views/columnists_view.dart';
 import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:amathus/views/feeditems_recent_view.dart';
 import 'package:amathus/views/overview_view.dart';
 import 'package:amathus/views/settings_view.dart';
 
@@ -80,23 +79,12 @@ class AppDrawer extends StatelessWidget {
               children: [
                 _buildDrawerItem(
                   context,
-                  icon: Icons.auto_awesome_rounded,
-                  title: Constants.OVERVIEW,
+                  icon: Icons.newspaper_rounded,
+                  title: Constants.NEWS,
                   onTap: () => Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                       builder: (_) => const OverviewView(),
-                    ),
-                  ),
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.bolt_rounded,
-                  title: Constants.RECENT_NEWS,
-                  onTap: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => FeedItemsRecentView(),
                     ),
                   ),
                 ),

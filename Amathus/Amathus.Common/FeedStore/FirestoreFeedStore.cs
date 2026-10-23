@@ -94,9 +94,10 @@ namespace Amathus.Common.FeedStore
             await docRef.SetAsync(overview, SetOptions.Overwrite);
         }
 
-        public async Task<NewsOverview> ReadOverviewAsync()
+        public async Task<NewsOverview> ReadOverviewAsync(string id = "latest")
         {
-            var snapshot = await _overviews.Document("latest").GetSnapshotAsync();
+            var docId = string.IsNullOrWhiteSpace(id) ? "latest" : id;
+            var snapshot = await _overviews.Document(docId).GetSnapshotAsync();
             if (!snapshot.Exists)
             {
                 return null;

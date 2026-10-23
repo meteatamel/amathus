@@ -6,25 +6,30 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
+import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SourceLanguageFilterBar extends StatelessWidget {
+  final Widget? leadingSelector;
   final BulkTranslateController? bulkController;
   final bool Function(FeedItem)? itemFilter;
   final Widget? trailing;
   final bool showNewspaperSelector;
   final Widget? extraSelector;
   final ValueListenable<Set<String>?>? allowedNewspaperIdsListenable;
+  final bool showFeedbackLink;
 
   const SourceLanguageFilterBar({
     super.key,
+    this.leadingSelector,
     this.bulkController,
     this.itemFilter,
     this.trailing,
     this.showNewspaperSelector = false,
     this.extraSelector,
     this.allowedNewspaperIdsListenable,
+    this.showFeedbackLink = true,
   });
 
   String _labelFor(String code) {
@@ -88,6 +93,10 @@ class SourceLanguageFilterBar extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (leadingSelector != null) ...[
+                              leadingSelector!,
+                              const SizedBox(width: 6),
+                            ],
                             PopupMenuButton<String>(
                               tooltip: Constants.SOURCE_LANGUAGE_TITLE,
                               position: PopupMenuPosition.under,
@@ -190,10 +199,188 @@ class SourceLanguageFilterBar extends StatelessWidget {
                         controller: bulkController!,
                         itemFilter: itemFilter,
                       ),
+                    ] else if (showFeedbackLink) ...[
+                      const SizedBox(width: 6),
+                      const _FeedbackLinkButton(),
                     ],
                   ],
                 ),
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _FeedbackLinkButton extends StatelessWidget {
+  const _FeedbackLinkButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ContactView()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 14,
+              color: Color(0xFF0F2942),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              Constants.HAVE_FEEDBACK,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F2942),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ViewModeDropdownSelector extends StatelessWidget {
+  final ValueNotifier<String> modeNotifier;
+  final String topLabel;
+  final String latestLabel;
+
+  const ViewModeDropdownSelector({
+    super.key,
+    required this.modeNotifier,
+    required this.topLabel,
+    required this.latestLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: modeNotifier,
+      builder: (context, mode, _) {
+        final isTop = mode != 'latest';
+        return PopupMenuButton<String>(
+          position: PopupMenuPosition.under,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            modeNotifier.value = value;
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              value: 'top',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 18,
+                    color: Color(0xFF0F2942),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      topLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isTop ? FontWeight.w700 : FontWeight.w500,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  if (isTop) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Color(0xFF0F2942),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'latest',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.bolt_rounded,
+                    size: 18,
+                    color: Color(0xFF0F2942),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      latestLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: !isTop ? FontWeight.w700 : FontWeight.w500,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  if (!isTop) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Color(0xFF0F2942),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF0F2942)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isTop ? Icons.auto_awesome_rounded : Icons.bolt_rounded,
+                  size: 15,
+                  color: const Color(0xFF0F2942),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isTop ? topLabel : latestLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: Color(0xFF475569),
+                ),
+              ],
             ),
           ),
         );

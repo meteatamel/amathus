@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed.dart';
+import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
 import 'feeditems_storage.dart';
@@ -16,6 +17,30 @@ class FeedItemsController {
     _cachedRecentFeeds = null;
     _cachedColumnistFeeds = null;
     _cachedFeedsById.clear();
+  }
+
+  static FeedItem? findCachedItemByUrl(String? url) {
+    final target = (url ?? '').trim();
+    if (target.isEmpty) return null;
+
+    for (final list in <List<Feed>?>[
+      _cachedRecentFeeds,
+      _cachedColumnistFeeds,
+      _cachedFeedsById.values.toList(),
+    ]) {
+      if (list == null) continue;
+      for (final feed in list) {
+        final items = feed.items;
+        if (items == null) continue;
+        for (final item in items) {
+          if ((item.url ?? '').trim() == target) {
+            item.feed ??= feed;
+            return item;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   String _normId(String feedId) => feedId.trim().toLowerCase();

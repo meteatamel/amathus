@@ -171,12 +171,7 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostAEl(string edition, List<OverviewStory> stories)
         {
-            var title = edition switch
-            {
-                "morning" => "Δικοινοτικές Ειδήσεις Κύπρου - Πρωινές Κύριες Ειδήσεις",
-                "midday" => "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημεριανές Κύριες Ειδήσεις",
-                _ => "Δικοινοτικές Ειδήσεις Κύπρου - Βραδινές Κύριες Ειδήσεις"
-            };
+            const string title = "Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις";
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEl ?? s.TitleEn)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
@@ -187,12 +182,7 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostATr(string edition, List<OverviewStory> stories)
         {
-            var title = edition switch
-            {
-                "morning" => "Kıbrıs İki Toplumlu Haberler - Sabah Öne Çıkan Haberler",
-                "midday" => "Kıbrıs İki Toplumlu Haberler - Öğle Öne Çıkan Haberler",
-                _ => "Kıbrıs İki Toplumlu Haberler - Akşam Öne Çıkan Haberler"
-            };
+            const string title = "Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler";
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleTr ?? s.TitleEn)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
@@ -203,12 +193,7 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostAEn(string edition, List<OverviewStory> stories)
         {
-            var title = edition switch
-            {
-                "morning" => "Cyprus Bicommunal News - Morning Top Stories",
-                "midday" => "Cyprus Bicommunal News - Mid-Day Top Stories",
-                _ => "Cyprus Bicommunal News - Evening Top Stories"
-            };
+            const string title = "Cyprus Bicommunal News - Top Stories";
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEn ?? s.TitleTr)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))

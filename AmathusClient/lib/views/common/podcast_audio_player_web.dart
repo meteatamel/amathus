@@ -22,6 +22,8 @@ class PodcastAudioPlayer {
   static String? _cachedIntroDataUri;
   static String? _cachedOutroDataUri;
 
+  bool get hasActiveAudio => _audio != null;
+
   Future<void> playIntroJingle({double playbackRate = 1.0}) async {
     _cachedIntroDataUri ??= _buildNewsJingleDataUri(isIntro: true);
     await _playJingleDataUri(_cachedIntroDataUri!);
@@ -98,16 +100,26 @@ class PodcastAudioPlayer {
     element.playbackRate = _playbackRate;
     element.defaultPlaybackRate = _playbackRate;
 
-    if (initialSeekFraction > 0.01) {
-      element.onLoadedMetadata.first.then((_) {
-        final dur = element.duration;
-        if (dur.isFinite && dur > 0) {
+    void applyInitialSeek() {
+      if (_audio != element) return;
+      final dur = element.duration;
+      if (dur.isFinite && dur > 0) {
+        try {
           element.currentTime = (dur * initialSeekFraction.clamp(0.0, 0.98));
-        }
-      });
+        } catch (_) {}
+      }
+    }
+
+    if (initialSeekFraction > 0.01) {
+      if (element.readyState >= 1) {
+        applyInitialSeek();
+      } else {
+        element.onLoadedMetadata.first.then((_) => applyInitialSeek());
+      }
     }
 
     _timeUpdateSub = element.onTimeUpdate.listen((_) {
+      if (_audio != element) return;
       final dur = element.duration;
       final cur = element.currentTime;
       if (dur.isFinite && dur > 0) {
@@ -116,17 +128,20 @@ class PodcastAudioPlayer {
     });
 
     _endedSub = element.onEnded.listen((_) {
+      if (_audio != element) return;
       onPositionFractionChanged?.call(1.0);
       onEnded?.call();
     });
 
     _errorSub = element.onError.listen((_) {
+      if (_audio != element) return;
       onError?.call();
     });
 
     try {
       await element.play();
     } catch (_) {
+      if (_audio != element) return;
       onError?.call();
     }
   }
@@ -136,8 +151,10 @@ class PodcastAudioPlayer {
     if (element == null) return;
     final dur = element.duration;
     if (dur.isFinite && dur > 0) {
-      element.currentTime = dur * fraction.clamp(0.0, 0.99);
-      onPositionFractionChanged?.call(fraction.clamp(0.0, 1.0));
+      try {
+        element.currentTime = dur * fraction.clamp(0.0, 0.99);
+        onPositionFractionChanged?.call(fraction.clamp(0.0, 1.0));
+      } catch (_) {}
     }
   }
 
@@ -153,14 +170,18 @@ class PodcastAudioPlayer {
     _audio?.pause();
   }
 
-  Future<void> resume() async {
-    if (_audio != null) {
+  Future<bool> resume() async {
+    final element = _audio;
+    if (element != null) {
       try {
-        _audio!.playbackRate = _playbackRate;
-        await _audio!.play();
-        return;
-      } catch (_) {}
+        element.playbackRate = _playbackRate;
+        await element.play();
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
+    return false;
   }
 
   void setPlaybackRate(double rate) {
@@ -179,12 +200,13 @@ class PodcastAudioPlayer {
     _errorSub = null;
     _timeUpdateSub?.cancel();
     _timeUpdateSub = null;
-    if (_audio != null) {
+    final oldAudio = _audio;
+    _audio = null;
+    if (oldAudio != null) {
       try {
-        _audio!.pause();
-        _audio!.src = '';
+        oldAudio.pause();
+        oldAudio.src = '';
       } catch (_) {}
-      _audio = null;
     }
   }
 

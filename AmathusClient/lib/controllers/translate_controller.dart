@@ -135,6 +135,51 @@ class TranslateController {
   static void clearTranslation(FeedItem item) {
     activeLanguageNotifier(item).value = null;
   }
+
+  static void seedOverviewTranslations(
+    FeedItem item, {
+    required String titleEl,
+    required String summaryEl,
+    required String titleTr,
+    required String summaryTr,
+    required String titleEn,
+    required String summaryEn,
+    String? activeTargetLang,
+  }) {
+    final key = _itemKey(item);
+    final entries = <String, (String, String)>{
+      'el': (titleEl, summaryEl),
+      'tr': (titleTr, summaryTr),
+      'en': (titleEn, summaryEn),
+    };
+    for (final entry in entries.entries) {
+      final lang = entry.key;
+      final t = entry.value.$1.trim();
+      final s = entry.value.$2.trim();
+      if (t.isEmpty && s.isEmpty) continue;
+      final cacheKey = '$key|$lang';
+      final prev = _cache[cacheKey];
+      _cache[cacheKey] = TranslatedFeedItemContent(
+        title: t.isNotEmpty ? t : item.title,
+        summary: s.isNotEmpty ? s : (item.summary ?? ''),
+        detail: prev?.detail ?? '',
+        targetLanguage: lang,
+      );
+    }
+
+    final sourceLang = Constants.resolveFeedLanguage(
+      item.feed?.id,
+      item.feed?.language,
+    );
+    if (activeTargetLang != null &&
+        activeTargetLang.trim().isNotEmpty &&
+        activeTargetLang.trim().toLowerCase() != sourceLang) {
+      activeLanguageNotifier(item).value =
+          activeTargetLang.trim().toLowerCase();
+    } else {
+      activeLanguageNotifier(item).value = null;
+    }
+  }
 }
 
 class BulkTranslateController {

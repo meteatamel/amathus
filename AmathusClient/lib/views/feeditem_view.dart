@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 
 class FeedItemView extends StatefulWidget {
@@ -37,6 +38,22 @@ class _FeedItemViewState extends State<FeedItemView> {
 
   @override
   Widget build(BuildContext context) {
+    final sourceLang = Constants.resolveFeedLanguage(
+      item.feed?.id,
+      item.feed?.language,
+    );
+    final sourceTitle = item.feed?.title ?? '';
+    final rawAuthor = (item.author ?? '').trim();
+    final time = timeago.format(
+      item.publishDate,
+      locale: Constants.currentLanguage,
+    );
+    final bottomLabel = <String>[
+      if (rawAuthor.isNotEmpty) rawAuthor,
+      if (sourceTitle.isNotEmpty) sourceTitle,
+      time,
+    ].join(' • ');
+
     return Scaffold(
       appBar: AppBar(
         title: item.feed != null
@@ -64,15 +81,29 @@ class _FeedItemViewState extends State<FeedItemView> {
               )
             : Text(Constants.APP_NAME),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: TranslateIconButton(
+                item: item,
+                includeDetail: true,
+                lightOnDark: true,
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListenableBuilder(
         listenable: Listenable.merge([
           TranslateController.activeLanguageNotifier(item),
           TranslateController.loadingNotifier(item),
+          Constants.languageNotifier,
         ]),
         builder: (context, _) {
           final activeLang =
               TranslateController.activeLanguageNotifier(item).value;
+          final isLoading = TranslateController.loadingNotifier(item).value;
           final translated = activeLang != null
               ? TranslateController.getCached(item, activeLang)
               : null;
@@ -81,144 +112,102 @@ class _FeedItemViewState extends State<FeedItemView> {
                   ? translated.title
                   : item.title;
 
-          return Column(
-            children: [
-              _buildTopActionBar(activeLang),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                      children: [
-                        Card(
-                          elevation: 0,
-                          margin: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            side: const BorderSide(
-                              color: Color(0xFFE2E8F0),
-                              width: 1,
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                children: [
+                  Card(
+                    elevation: 0,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: const BorderSide(
+                        color: Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayTitle,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              height: 1.32,
                             ),
                           ),
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayTitle,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
-                                    height: 1.32,
+                          _buildItemImage(),
+                          const SizedBox(height: 16),
+                          _buildItemDetail(translated),
+                          const SizedBox(height: 20),
+                          _buildMoreButton(context),
+                          const SizedBox(height: 14),
+                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (item.feed != null) ...[
+                                FeedImage(
+                                  item: item.feed,
+                                  width: 72,
+                                  height: 28,
+                                  compact: true,
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  bottomLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.blueGrey.shade600,
                                   ),
                                 ),
-                                if ((item.author ?? '').trim().isNotEmpty ||
-                                    item.isColumnist) ...[
-                                  const SizedBox(height: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF0F2942,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF0F2942,
-                                        ).withValues(alpha: 0.18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.edit_note_rounded,
-                                          size: 16,
-                                          color: Color(0xFF0F2942),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(
-                                            (item.author ?? '')
-                                                    .trim()
-                                                    .isNotEmpty
-                                                ? item.author!.trim()
-                                                : Constants
-                                                    .COLUMNIST_BADGE_FALLBACK,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0F2942),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                              ),
+                              if (isLoading)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF0F2942),
                                     ),
                                   ),
-                                ],
-                                _buildItemImage(),
-                                const SizedBox(height: 16),
-                                _buildItemDetail(translated),
-                                const SizedBox(height: 20),
-                                _buildMoreButton(context),
-                              ],
-                            ),
+                                )
+                              else if (activeLang != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: SourceAndTranslationBadges(
+                                    sourceLang: sourceLang,
+                                    activeTranslationLang: activeLang,
+                                    compact: true,
+                                  ),
+                                ),
+                              ShareIconButton(item: item),
+                            ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildTopActionBar(String? activeLang) {
-    final sourceLang = Constants.resolveFeedLanguage(
-      item.feed?.id,
-      item.feed?.language,
-    );
-
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
-      ),
-      child: Align(
-        alignment: Alignment.center,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                SourceAndTranslationBadges(
-                  sourceLang: sourceLang,
-                  activeTranslationLang: activeLang,
-                ),
-                const Spacer(),
-                TranslateIconButton(item: item, includeDetail: true),
-                const SizedBox(width: 8),
-                ShareIconButton(item: item, showLabel: true),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

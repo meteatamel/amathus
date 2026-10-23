@@ -1,10 +1,13 @@
+import 'package:amathus/controllers/feeditems_controller.dart';
 import 'package:amathus/controllers/overview_controller.dart';
+import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
+import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
@@ -33,6 +36,9 @@ class OverviewView extends StatefulWidget {
 
 class _OverviewViewState extends State<OverviewView> {
   final OverviewController _controller = OverviewController();
+  final FeedItemsController _feedItemsController = FeedItemsController();
+  final BulkTranslateController _bulkTranslateController =
+      BulkTranslateController();
   NewsOverview? _overview;
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -40,6 +46,7 @@ class _OverviewViewState extends State<OverviewView> {
   @override
   void initState() {
     super.initState();
+    _feedItemsController.readRecentStored();
     _loadInitial();
   }
 
@@ -87,52 +94,117 @@ class _OverviewViewState extends State<OverviewView> {
         .toList();
   }
 
+  bool _matchesVisibleLatestFilter(FeedItem item) {
+    return item.feed == null ||
+        Constants.matchesSourceLanguage(
+          item.feed?.id,
+          item.feed?.language,
+        );
+  }
+
+  Future<List<FeedItem>?> _loadLatestCachedData() async {
+    final feeds = await _feedItemsController.readRecentStored();
+    return _extractSortedLatestItems(feeds);
+  }
+
+  Future<List<FeedItem>?> _loadLatestData() async {
+    final feeds = await _feedItemsController.readRecent();
+    return _extractSortedLatestItems(feeds);
+  }
+
+  List<FeedItem>? _extractSortedLatestItems(List<dynamic>? feeds) {
+    if (feeds == null) {
+      return null;
+    }
+
+    final feedItems = <FeedItem>[];
+    for (final feed in feeds) {
+      if (feed.items != null) {
+        for (final item in feed.items!) {
+          if (!item.isColumnist) {
+            feedItems.add(item);
+          }
+        }
+      }
+    }
+    feedItems.sort((a, b) => b.publishDate.compareTo(a.publishDate));
+    return feedItems;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Image.asset(
-                'assets/launcher/icon.png',
-                width: 30,
-                height: 30,
-                fit: BoxFit.cover,
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.newsViewModeNotifier,
+      builder: (context, mode, _) {
+        final isTopMode = mode != 'latest';
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Image.asset(
+                    'assets/launcher/icon.png',
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    Constants.NEWS,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: isTopMode
+                      ? const OverviewLanguageSelector(lightOnDark: true)
+                      : BulkTranslateIconButton(
+                          controller: _bulkTranslateController,
+                          itemFilter: _matchesVisibleLatestFilter,
+                          lightOnDark: true,
+                        ),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                Constants.OVERVIEW,
-                overflow: TextOverflow.ellipsis,
+            ],
+          ),
+          drawer: const AppDrawer(),
+          body: Column(
+            children: [
+              SourceLanguageFilterBar(
+                leadingSelector: ViewModeDropdownSelector(
+                  modeNotifier: Constants.newsViewModeNotifier,
+                  topLabel: Constants.OVERVIEW,
+                  latestLabel: Constants.RECENT_NEWS,
+                ),
+                showNewspaperSelector: !isTopMode,
               ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: _OverviewLanguageSelector(lightOnDark: true),
-            ),
+              if (isTopMode && _isRefreshing)
+                const LinearProgressIndicator(minHeight: 2),
+              Expanded(
+                child: isTopMode
+                    ? _buildBody(context)
+                    : FeedItemsList(
+                        loadDataStorageCallback: _loadLatestCachedData,
+                        loadDataCallback: _loadLatestData,
+                        wideTile: true,
+                        bulkController: _bulkTranslateController,
+                        bannerText: Constants.RECENT_NEWS_BANNER,
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
-        children: [
-          const SourceLanguageFilterBar(),
-          if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
-          Expanded(
-            child: _buildBody(context),
-          ),
-        ],
-      ),
-      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 0),
+          bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 0),
+        );
+      },
     );
   }
 
@@ -230,18 +302,10 @@ class _OverviewViewState extends State<OverviewView> {
                     return TopStoriesPodcastCard(
                       overview: overview,
                       defaultLanguage: bannerLang,
-                      onOpenStory: (story) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OverviewStoryView(story: story),
-                          ),
-                        );
-                      },
                     );
                   }
                   final (story, sources) = visibleStories[index - 1];
-                  return _OverviewStoryCard(
+                  return OverviewStoryCard(
                     story: story,
                     sources: sources,
                     activeTranslateLanguage: activeTranslateLang,
@@ -256,10 +320,10 @@ class _OverviewViewState extends State<OverviewView> {
   }
 }
 
-class _OverviewLanguageSelector extends StatelessWidget {
+class OverviewLanguageSelector extends StatelessWidget {
   final bool lightOnDark;
 
-  const _OverviewLanguageSelector({this.lightOnDark = false});
+  const OverviewLanguageSelector({super.key, this.lightOnDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -428,12 +492,13 @@ class _OverviewLanguageSelector extends StatelessWidget {
   }
 }
 
-class _OverviewStoryCard extends StatelessWidget {
+class OverviewStoryCard extends StatelessWidget {
   final OverviewStory story;
   final List<OverviewStorySource> sources;
   final String? activeTranslateLanguage;
 
-  const _OverviewStoryCard({
+  const OverviewStoryCard({
+    super.key,
     required this.story,
     required this.sources,
     required this.activeTranslateLanguage,
@@ -468,119 +533,105 @@ class _OverviewStoryCard extends StatelessWidget {
       ),
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OverviewStoryView(story: story),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                          height: 1.35,
+                        ),
+                      ),
+                      if (narrative.isNotEmpty) ...[
+                        const SizedBox(height: 6),
                         Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                            height: 1.35,
-                          ),
-                        ),
-                        if (narrative.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            narrative,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.blueGrey.shade700,
-                              height: 1.45,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (resolvedImage.isNotEmpty) ...[
-                    const SizedBox(width: 14),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 124,
-                        height: 92,
-                        child: kIsWeb
-                            ? Image.network(
-                                resolvedImage,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox.shrink(),
-                              )
-                            : CachedNetworkImage(
-                                imageUrl: resolvedImage,
-                                fit: BoxFit.cover,
-                                errorWidget: (context, url, error) =>
-                                    const SizedBox.shrink(),
-                              ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        for (final source in sources)
-                          _NewspaperStoryChip(source: source),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Text(
-                            time,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blueGrey.shade600,
-                            ),
+                          narrative,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blueGrey.shade700,
+                            height: 1.45,
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+                if (resolvedImage.isNotEmpty) ...[
+                  const SizedBox(width: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 124,
+                      height: 92,
+                      child: kIsWeb
+                          ? Image.network(
+                              resolvedImage,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const SizedBox.shrink(),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: resolvedImage,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) =>
+                                  const SizedBox.shrink(),
+                            ),
                     ),
                   ),
-                  if (activeTranslateLanguage != null &&
-                      activeTranslateLanguage != sourceLang)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: SourceAndTranslationBadges(
-                        sourceLang: sourceLang,
-                        activeTranslationLang: activeTranslateLanguage,
-                        compact: true,
-                      ),
-                    ),
-                  ShareIconButton(item: shareItem),
                 ],
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      for (final source in sources)
+                        _NewspaperStoryChip(source: source),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blueGrey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (activeTranslateLanguage != null &&
+                    activeTranslateLanguage != sourceLang)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: SourceAndTranslationBadges(
+                      sourceLang: sourceLang,
+                      activeTranslationLang: activeTranslateLanguage,
+                      compact: true,
+                    ),
+                  ),
+                ShareIconButton(item: shareItem),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -686,7 +737,7 @@ class OverviewStoryView extends StatelessWidget {
                                     : null,
                           ),
                           const Spacer(),
-                          _OverviewLanguageSelector(),
+                          const OverviewLanguageSelector(),
                           const SizedBox(width: 8),
                           ShareIconButton(item: shareItem, showLabel: true),
                         ],
@@ -825,7 +876,6 @@ class _NewspaperStoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final feed = source.toFeed();
-    final feedItem = source.toFeedItem();
 
     return Tooltip(
       message: source.feedTitle,
@@ -835,6 +885,24 @@ class _NewspaperStoryChip extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () {
+            final cached = FeedItemsController.findCachedItemByUrl(
+              source.article.url,
+            );
+            final feedItem = cached ?? source.toFeedItem();
+            feedItem.feed ??= feed;
+
+            final activeOverviewLang =
+                Constants.overviewTranslateLanguageNotifier.value;
+            final sourceLang = Constants.resolveFeedLanguage(
+              source.feedId,
+              source.feedLanguage,
+            );
+            if (activeOverviewLang != null &&
+                activeOverviewLang != sourceLang) {
+              TranslateController.activeLanguageNotifier(feedItem).value =
+                  activeOverviewLang;
+            }
+
             Navigator.push(
               context,
               MaterialPageRoute(

@@ -24,10 +24,12 @@ void main() {
     OverviewController.clearCache();
     Constants.setSelectedFeedId(null);
     Constants.setOverviewTranslateLanguage(null);
+    Constants.newsViewModeNotifier.value = 'top';
+    Constants.columnistsViewModeNotifier.value = 'top';
   });
 
   testWidgets(
-      'Amathus app renders Top Stories as default first tab, Latest News as second, and toggles Turkish/Greek/English',
+      'Amathus app renders News as default first tab with Top Stories selector, Columnists as second tab, and toggles Turkish/Greek/English',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -36,30 +38,36 @@ void main() {
 
     await tester.pumpWidget(const AmathusApp());
 
-    // Turkish labels: Öne Çıkan Haberler (header + first tab), Son Haberler (second tab)
-    expect(find.text('Öne Çıkan Haberler'), findsNWidgets(2));
-    expect(find.text('Son Haberler'), findsOneWidget);
+    // Turkish labels: Haberler (header + first tab), Öne Çıkan Haberler (mode selector), Köşe Yazarları (second tab)
+    expect(find.text('Haberler'), findsNWidgets(2));
+    expect(find.text('Öne Çıkan Haberler'), findsOneWidget);
+    expect(find.text('Köşe Yazarları'), findsOneWidget);
     expect(find.text('Tümü'), findsOneWidget);
+    expect(find.text('Geri bildirim?'), findsOneWidget);
 
     // Switch to Greek
     await Constants.setLanguage('el');
     await tester.pump();
 
-    expect(find.text('Κυριότερες Ειδήσεις'), findsNWidgets(2));
-    expect(find.text('Τελευταία Νέα'), findsOneWidget);
+    expect(find.text('Ειδήσεις'), findsNWidgets(2));
+    expect(find.text('Κυριότερες Ειδήσεις'), findsOneWidget);
+    expect(find.text('Αρθρογράφοι'), findsOneWidget);
     expect(find.text('Όλα'), findsOneWidget);
+    expect(find.text('Σχόλια;'), findsOneWidget);
 
     // Switch to English
     await Constants.setLanguage('en');
     await tester.pump();
 
-    expect(find.text('Top Stories'), findsNWidgets(2));
-    expect(find.text('Latest News'), findsOneWidget);
+    expect(find.text('News'), findsNWidgets(2));
+    expect(find.text('Top Stories'), findsOneWidget);
+    expect(find.text('Columnists'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
+    expect(find.text('Have feedback?'), findsOneWidget);
   });
 
   testWidgets(
-      'OverviewView renders top stories in English, Turkish, and Greek, opens OverviewStoryView detail page when tapping story card, and opens FeedItemView when tapping a newspaper logo',
+      'OverviewView renders top stories in English, Turkish, and Greek, keeps story card non-clickable, and opens FeedItemView when tapping a newspaper logo',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -139,6 +147,9 @@ void main() {
     );
     await tester.pump();
 
+    // Podcast title is always Cyprus Bicommunal News - Top Stories in English
+    expect(find.text('Cyprus Bicommunal News - Top Stories'), findsOneWidget);
+
     // Default translate is null: story has 2 TR sources and 1 EL source, so majority language is TR
     expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
     expect(find.text('Read in'), findsOneWidget);
@@ -161,19 +172,17 @@ void main() {
       findsOneWidget,
     );
 
-    // Tap the story title to open OverviewStoryView (detail page)
+    // Tapping the story title itself should NOT navigate anywhere
     await tester.tap(
       find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
     );
     await tester.pumpAndSettle();
+    expect(find.byType(OverviewStoryView), findsNothing);
+    expect(find.byType(FeedItemView), findsNothing);
 
-    expect(find.byType(OverviewStoryView), findsOneWidget);
-    expect(
-      find.text('Οι εφημερίδες και των δύο κοινοτήτων αναφέρουν πρόοδο.'),
-      findsOneWidget,
-    );
-
-    // Tap newspaper logo inside OverviewStoryView to open FeedItemView
+    // Reset Read In and tap newspaper logo inside OverviewStoryCard to open FeedItemView
+    Constants.setOverviewTranslateLanguage(null);
+    await tester.pump();
     await tester.tap(find.text('Yenidüzen').first);
     await tester.pumpAndSettle();
 
@@ -182,7 +191,7 @@ void main() {
   });
 
   testWidgets(
-      'FeedItemView renders TranslateIconButton, ShareIconButton, flag-only SourceAndTranslationBadges, and hiding newspapers filters them out',
+      'FeedItemView renders TranslateIconButton in AppBar, ShareIconButton at bottom with author before newspaper name, and hiding newspapers filters them out',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -217,6 +226,8 @@ void main() {
       '<p>Detay metni</p>',
       null,
       'https://www.yeniduzen.com/haber-1',
+      author: 'Serhat İncirli',
+      isColumnist: true,
     )..feed = trFeed;
 
     await tester.pumpWidget(
@@ -230,8 +241,7 @@ void main() {
     expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
     expect(find.text('Read in'), findsOneWidget);
-    expect(find.text('Share'), findsOneWidget);
-    expect(find.byType(SourceAndTranslationBadges), findsOneWidget);
+    expect(find.textContaining('Serhat İncirli • Yenidüzen'), findsOneWidget);
   });
 
   testWidgets(

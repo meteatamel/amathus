@@ -45,11 +45,14 @@ namespace Amathus.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(
             [FromQuery] bool refresh = false,
-            [FromQuery] string edition = null)
+            [FromQuery] string edition = null,
+            [FromQuery] bool columnists = false)
         {
+            var overviewId = columnists ? "latest_columnists" : "latest";
+
             if (!refresh)
             {
-                var existing = await _feedStore.ReadOverviewAsync();
+                var existing = await _feedStore.ReadOverviewAsync(overviewId);
                 if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                 {
                     var copy = existing.Copy();
@@ -63,7 +66,7 @@ namespace Amathus.Web.Controllers
             {
                 if (!refresh)
                 {
-                    var existing = await _feedStore.ReadOverviewAsync();
+                    var existing = await _feedStore.ReadOverviewAsync(overviewId);
                     if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                     {
                         var copy = existing.Copy();
@@ -78,8 +81,9 @@ namespace Amathus.Web.Controllers
                     return NotFound();
                 }
 
-                _logger.LogInformation("Generating daily overview on demand...");
-                var overview = await _overviewAnalyzer.AnalyzeAsync(feeds);
+                _logger.LogInformation($"Generating daily overview (columnists={columnists}) on demand...");
+                var overview = await _overviewAnalyzer.AnalyzeAsync(feeds, columnists);
+                overview.Id = overviewId;
                 PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
                 await _feedStore.SaveOverviewAsync(overview);
                 return Ok(overview);
@@ -115,7 +119,7 @@ namespace Amathus.Web.Controllers
             }
 
             Response.Headers["Cache-Control"] = "public, max-age=86400";
-            return File(audioBytes, "audio/mpeg");
+            return File(audioBytes, "audio/mpeg", enableRangeProcessing: true);
         }
     }
 }

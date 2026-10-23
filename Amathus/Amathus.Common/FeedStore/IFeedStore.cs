@@ -28,6 +28,6 @@ namespace Amathus.Common.FeedStore
 
         Task SaveOverviewAsync(NewsOverview overview);
 
-        Task<NewsOverview> ReadOverviewAsync();
+        Task<NewsOverview> ReadOverviewAsync(string id = "latest");
     }
 }

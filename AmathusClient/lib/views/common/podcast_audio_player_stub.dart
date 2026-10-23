@@ -42,7 +42,9 @@ class PodcastAudioPlayer {
     _simulatedTimer?.cancel();
   }
 
-  Future<void> resume() async {
+  bool get hasActiveAudio => _simulatedTimer != null || _isPaused;
+
+  Future<bool> resume() async {
     _isPaused = false;
     _simulatedTimer?.cancel();
     _simulatedTimer = Timer(const Duration(seconds: 3), () {
@@ -50,6 +52,7 @@ class PodcastAudioPlayer {
         onEnded?.call();
       }
     });
+    return true;
   }
 
   void setPlaybackRate(double rate) {}

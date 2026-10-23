@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 class TopStoriesPodcastCard extends StatefulWidget {
   final NewsOverview overview;
   final String defaultLanguage;
+  final bool isColumnists;
   final void Function(OverviewStory story)? onOpenStory;
 
   const TopStoriesPodcastCard({
     super.key,
     required this.overview,
     required this.defaultLanguage,
+    this.isColumnists = false,
     this.onOpenStory,
   });
 
@@ -20,8 +22,12 @@ class TopStoriesPodcastCard extends StatefulWidget {
   State<TopStoriesPodcastCard> createState() => _TopStoriesPodcastCardState();
 }
 
-class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
+class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
+    with AutomaticKeepAliveClientMixin {
   final PodcastAudioPlayer _player = PodcastAudioPlayer();
+
+  @override
+  bool get wantKeepAlive => true;
 
   String? _selectedLanguage;
   int _currentTurnIndex = 0;
@@ -29,6 +35,8 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
   double? _draggingOverallFraction;
   bool _isPlaying = false;
   bool _isPaused = false;
+  bool _needsReloadOnResume = false;
+  int _playSessionId = 0;
   double _playbackRate = 1.0;
 
   @override
@@ -137,15 +145,23 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
       _currentTurnIndex = 0;
     }
 
+    final sessionId = ++_playSessionId;
+    _needsReloadOnResume = false;
+
     final currentTurn = turns[_currentTurnIndex];
     final lang = _effectiveLanguage;
     final url = _buildAudioUrl(currentTurn, lang);
 
     if (withIntroJingle) {
-      // Prefetch Turn 0 while the 2.2s news intro jingle plays so speech starts with zero delay
+      // Prefetch Turn 0 while the 2.0s news intro jingle plays so speech starts with zero delay
       _player.prefetchUrl(url);
       await _player.playIntroJingle(playbackRate: _playbackRate);
-      if (!mounted || !_isPlaying || _isPaused) return;
+      if (!mounted ||
+          !_isPlaying ||
+          _isPaused ||
+          sessionId != _playSessionId) {
+        return;
+      }
     }
 
     await _player.playUrl(
@@ -157,11 +173,13 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
       initialSeekFraction: initialSeekFraction,
     );
 
+    if (!mounted || !_isPlaying || sessionId != _playSessionId) return;
+
     // Prefetch the next turn slightly after current turn starts so we never open concurrent WebSockets
     if (_currentTurnIndex + 1 < turns.length) {
       final nextTurn = turns[_currentTurnIndex + 1];
       Future.delayed(const Duration(milliseconds: 900), () {
-        if (!mounted || !_isPlaying) return;
+        if (!mounted || !_isPlaying || sessionId != _playSessionId) return;
         _player.prefetchUrl(_buildAudioUrl(nextTurn, _effectiveLanguage));
       });
     }
@@ -172,6 +190,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
     if (turns.isEmpty) return;
 
     if (_isPlaying && !_isPaused) {
+      _playSessionId++;
       _player.pause();
       setState(() {
         _isPaused = true;
@@ -180,7 +199,15 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
       setState(() {
         _isPaused = false;
       });
-      _player.resume();
+      if (_needsReloadOnResume || !_player.hasActiveAudio) {
+        _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
+      } else {
+        _player.resume().then((resumed) {
+          if (!resumed && mounted && _isPlaying && !_isPaused) {
+            _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
+          }
+        });
+      }
     } else {
       final startingFromBeginning =
           _currentTurnIndex == 0 && _withinTurnFraction < 0.05;
@@ -212,11 +239,23 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
     });
 
     if (_isPlaying && !_isPaused) {
-      if (sameTurn) {
+      if (sameTurn && _player.hasActiveAudio) {
         _player.seekWithinTurn(targetWithinTurn);
       } else {
         _playCurrentTurn(initialSeekFraction: targetWithinTurn);
       }
+    } else if (_isPlaying && _isPaused) {
+      if (sameTurn && _player.hasActiveAudio) {
+        _player.seekWithinTurn(targetWithinTurn);
+      } else {
+        _needsReloadOnResume = true;
+        _player.stop();
+      }
+    } else {
+      // Not playing yet: prefetch the target turn so clicking Play starts immediately
+      _needsReloadOnResume = true;
+      final turn = turns[targetTurn];
+      _player.prefetchUrl(_buildAudioUrl(turn, _effectiveLanguage));
     }
   }
 
@@ -237,6 +276,9 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
     });
     if (_isPlaying && !_isPaused) {
       _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
+    } else if (_isPlaying && _isPaused) {
+      _needsReloadOnResume = true;
+      _player.stop();
     }
   }
 
@@ -253,6 +295,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final turns = _turns;
     if (turns.isEmpty) {
       return const SizedBox.shrink();
@@ -282,81 +325,63 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFBBF24).withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Icon(
-                        _editionIcon(edition),
-                        size: 20,
-                        color: const Color(0xFFFBBF24),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            Constants.podcastEditionTitleFor(edition, lang),
-                            style: const TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            Constants.podcastSubtitleFor(edition, lang),
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.84),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                // Language Selector in Greek, Turkish, English order
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.16),
-                    ),
-                  ),
+                Expanded(
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      for (final entry in const [
-                        ('el', 'Ελληνικά'),
-                        ('tr', 'Türkçe'),
-                        ('en', 'English'),
-                      ])
-                        _PodcastLanguagePill(
-                          langCode: entry.$1,
-                          label: entry.$2,
-                          selected: lang == entry.$1,
-                          onTap: () => _selectLanguage(entry.$1),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFBBF24).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(11),
                         ),
+                        child: Icon(
+                          _editionIcon(edition),
+                          size: 20,
+                          color: const Color(0xFFFBBF24),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              Constants.podcastEditionTitleFor(
+                                edition,
+                                lang,
+                                isColumnists: widget.isColumnists,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1.25,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              Constants.podcastSubtitleFor(edition, lang),
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.84),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
+                ),
+                const SizedBox(width: 10),
+                _PodcastLanguageDropdown(
+                  selectedLanguage: lang,
+                  onSelected: _selectLanguage,
                 ),
               ],
             ),
@@ -446,44 +471,97 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard> {
   }
 }
 
-class _PodcastLanguagePill extends StatelessWidget {
-  final String langCode;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+class _PodcastLanguageDropdown extends StatelessWidget {
+  final String selectedLanguage;
+  final ValueChanged<String> onSelected;
 
-  const _PodcastLanguagePill({
-    required this.langCode,
-    required this.label,
-    required this.selected,
-    required this.onTap,
+  const _PodcastLanguageDropdown({
+    required this.selectedLanguage,
+    required this.onSelected,
   });
+
+  static const List<(String, String)> _languages = [
+    ('el', 'Ελληνικά'),
+    ('tr', 'Türkçe'),
+    ('en', 'English'),
+  ];
+
+  String _labelFor(String code) {
+    for (final entry in _languages) {
+      if (entry.$1 == code) return entry.$2;
+    }
+    return 'English';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
+    return PopupMenuButton<String>(
+      tooltip: Constants.READ_IN_BUTTON,
+      position: PopupMenuPosition.under,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final entry in _languages)
+          PopupMenuItem<String>(
+            value: entry.$1,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FlagIcon(languageCode: entry.$1, width: 20, height: 14),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    entry.$2,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: selectedLanguage == entry.$1
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                if (selectedLanguage == entry.$1) ...[
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: Color(0xFF1D4ED8),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.28),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FlagIcon(languageCode: langCode, width: 16, height: 11),
-            const SizedBox(width: 5),
+            FlagIcon(languageCode: selectedLanguage, width: 18, height: 13),
+            const SizedBox(width: 6),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected
-                    ? const Color(0xFF0F2942)
-                    : Colors.white.withValues(alpha: 0.90),
+              _labelFor(selectedLanguage),
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
+            ),
+            const SizedBox(width: 3),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ],
         ),

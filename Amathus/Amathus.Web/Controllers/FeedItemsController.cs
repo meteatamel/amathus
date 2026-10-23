@@ -136,6 +136,19 @@ namespace Amathus.Web.Controllers
                 TextUtil.ContainsBannedWords(item.Summary) ||
                 TextUtil.ContainsBannedWords(item.Detail))).ToList();
 
+            if (columnists != true)
+            {
+                // Prioritize news related to Cyprus (3), Greece (2), Turkey (1), and World (0) in that order
+                feed.Items = feed.Items
+                    .OrderByDescending(item =>
+                    {
+                        var tier = TextUtil.GetGeoRelevanceTier(item.Title, item.Summary, item.Detail);
+                        return tier >= 3 ? 3 : tier;
+                    })
+                    .ThenByDescending(item => item.PublishDate)
+                    .ToList();
+            }
+
             return feed;
         }
     }

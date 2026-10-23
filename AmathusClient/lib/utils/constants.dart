@@ -22,6 +22,7 @@ const String FEED_ITEMS_RECENT_KEY = "feed_items_recent_v1.json";
 const String FEED_ITEMS_COLUMNISTS_KEY = "feed_items_columnists_v1.json";
 const String FEED_ITEMS_BY_ID_PREFIX = "feed_items_by_id_v1_";
 const String OVERVIEW_STORAGE_KEY = "news_overview_v1.json";
+const String COLUMNISTS_OVERVIEW_STORAGE_KEY = "columnists_overview_v1.json";
 const String LANGUAGE_PREF_KEY = "app_language";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
 const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
@@ -47,6 +48,13 @@ final ValueNotifier<String?> selectedColumnistNotifier =
 // Active translation language for Top Stories (null = original majority language per story)
 final ValueNotifier<String?> overviewTranslateLanguageNotifier =
     ValueNotifier<String?>(null);
+
+// Active sub-mode inside News tab ('top' = Top Stories, 'latest' = Latest News)
+final ValueNotifier<String> newsViewModeNotifier = ValueNotifier<String>('top');
+
+// Active sub-mode inside Columnists tab ('top' = Top Columns, 'latest' = Latest Columns)
+final ValueNotifier<String> columnistsViewModeNotifier =
+    ValueNotifier<String>('top');
 
 // Hidden newspaper feed IDs (lowercase)
 final ValueNotifier<Set<String>> hiddenFeedsNotifier =
@@ -299,10 +307,26 @@ String get SOURCE_LANGUAGE_SUBTITLE => _trElEn(
     );
 
 // drawer & navigation
+String get NEWS => _trElEn("Haberler", "Ειδήσεις", "News");
 String get OVERVIEW => _trElEn(
       "Öne Çıkan Haberler",
       "Κυριότερες Ειδήσεις",
       "Top Stories",
+    );
+String get TOP_COLUMNS => _trElEn(
+      "Öne Çıkan Köşe Yazıları",
+      "Κυριότερα Άρθρα Γνώμης",
+      "Top Columns",
+    );
+String get LATEST_COLUMNS => _trElEn(
+      "Son Köşe Yazıları",
+      "Τελευταία Άρθρα Γνώμης",
+      "Latest Columns",
+    );
+String get HAVE_FEEDBACK => _trElEn(
+      "Geri bildirim?",
+      "Σχόλια;",
+      "Have feedback?",
     );
 String get TOP_STORIES_TITLE => OVERVIEW;
 String get COVERED_BY => _trElEn(
@@ -321,33 +345,18 @@ String get OVERVIEW_EMPTY => _trElEn(
       "Today's overview is not available yet.",
     );
 
-String podcastEditionTitleFor(String edition, String lang) {
-  final normEdition = edition.trim().toLowerCase();
+String podcastEditionTitleFor(
+  String edition,
+  String lang, {
+  bool isColumnists = false,
+}) {
   switch (lang.trim().toLowerCase()) {
     case 'el':
-      if (normEdition == 'morning') {
-        return 'Δικοινοτικές Ειδήσεις Κύπρου - Πρωινές Κύριες Ειδήσεις';
-      }
-      if (normEdition == 'midday') {
-        return 'Δικοινοτικές Ειδήσεις Κύπρου - Μεσημεριανές Κύριες Ειδήσεις';
-      }
-      return 'Δικοινοτικές Ειδήσεις Κύπρου - Βραδινές Κύριες Ειδήσεις';
+      return 'Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις';
     case 'tr':
-      if (normEdition == 'morning') {
-        return 'Kıbrıs İki Toplumlu Haberler - Sabah Öne Çıkan Haberler';
-      }
-      if (normEdition == 'midday') {
-        return 'Kıbrıs İki Toplumlu Haberler - Öğle Öne Çıkan Haberler';
-      }
-      return 'Kıbrıs İki Toplumlu Haberler - Akşam Öne Çıkan Haberler';
+      return 'Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler';
     default:
-      if (normEdition == 'morning') {
-        return 'Cyprus Bicommunal News - Morning Top Stories';
-      }
-      if (normEdition == 'midday') {
-        return 'Cyprus Bicommunal News - Mid-Day Top Stories';
-      }
-      return 'Cyprus Bicommunal News - Evening Top Stories';
+      return 'Cyprus Bicommunal News - Top Stories';
   }
 }
 
@@ -364,7 +373,7 @@ String podcastEditionShortLabelFor(String edition, String lang) {
       return 'Akşam';
     default:
       if (normEdition == 'morning') return 'Morning';
-      if (normEdition == 'midday') return 'Mid-Day';
+      if (normEdition == 'midday') return 'Midday';
       return 'Evening';
   }
 }
@@ -382,7 +391,7 @@ String podcastSubtitleFor(String edition, String lang) {
       return '5 dakikalık akşam haber özeti';
     default:
       if (normEdition == 'morning') return '5-min morning news update';
-      if (normEdition == 'midday') return '5-min mid-day news update';
+      if (normEdition == 'midday') return '5-min midday news update';
       return '5-min evening news update';
   }
 }
@@ -470,7 +479,11 @@ String get COLUMNIST_BADGE_FALLBACK =>
 String get NEWSPAPERS => _trElEn("Gazeteler", "Εφημερίδες", "Newspapers");
 String get ALL_NEWS => NEWSPAPERS;
 String get SETTINGS => _trElEn("Ayarlar", "Ρυθμίσεις", "Settings");
-String get CONTACT => _trElEn("İletişim", "Επικοινωνία", "Contact");
+String get CONTACT => _trElEn(
+      "İletişim & Geri Bildirim",
+      "Επικοινωνία & Σχόλια",
+      "Contact & Feedback",
+    );
 
 // settings_view
 String get LANGUAGE_TITLE =>
@@ -529,9 +542,9 @@ String get CONTACT_INFO => _trElEn(
       "Contact Information",
     );
 String get SEND_MESSAGE => _trElEn(
-      "Bize Mesaj Gönderin",
-      "Στείλτε μας Μήνυμα",
-      "Send a Message",
+      "Geri bildiriminiz mi var? Bize mesaj gönderin",
+      "Έχετε σχόλια; Στείλτε μας μήνυμα",
+      "Have feedback? Send us a message",
     );
 String get FIRST_LAST_NAME =>
     _trElEn("İsim Soyisim", "Ονοματεπώνυμο", "Full Name");

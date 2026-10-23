@@ -44,9 +44,11 @@ class FeedItemListTileWide extends StatelessWidget {
                 ? translated.summary.trim()
                 : rawSummary;
         final rawAuthor = (item.author ?? '').trim();
-        final badgeText = rawAuthor.isNotEmpty
-            ? rawAuthor
-            : (item.isColumnist ? Constants.COLUMNIST_BADGE_FALLBACK : '');
+        final bottomLabel = <String>[
+          if (rawAuthor.isNotEmpty) rawAuthor,
+          if (sourceTitle.isNotEmpty) sourceTitle,
+          time,
+        ].join(' • ');
 
         return Card(
           elevation: 0,
@@ -78,69 +80,6 @@ class FeedItemListTileWide extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (badgeText.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(8),
-                                  onTap: rawAuthor.isNotEmpty
-                                      ? () {
-                                          if (Constants.selectedColumnistNotifier
-                                                  .value ==
-                                              rawAuthor) {
-                                            Constants.setSelectedColumnist(
-                                              null,
-                                            );
-                                          } else {
-                                            Constants.setSelectedColumnist(
-                                              rawAuthor,
-                                            );
-                                          }
-                                        }
-                                      : null,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF0F2942,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF0F2942,
-                                        ).withValues(alpha: 0.18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.edit_note_rounded,
-                                          size: 15,
-                                          color: Color(0xFF0F2942),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            badgeText,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0F2942),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                             Text(
                               displayTitle,
                               maxLines: 2,
@@ -208,9 +147,7 @@ class FeedItemListTileWide extends StatelessWidget {
                       ],
                       Expanded(
                         child: Text(
-                          sourceTitle.isNotEmpty
-                              ? '$sourceTitle • $time'
-                              : time,
+                          bottomLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

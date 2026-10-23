@@ -21,7 +21,7 @@ namespace Amathus.Common.FeedStore
     public class InMemoryFeedStore : IFeedStore
     {
         private readonly Dictionary<string, Feed> _feeds;
-        private NewsOverview _overview;
+        private readonly Dictionary<string, NewsOverview> _overviews = new();
     
         public InMemoryFeedStore()
         {
@@ -57,13 +57,19 @@ namespace Amathus.Common.FeedStore
 
         public Task SaveOverviewAsync(NewsOverview overview)
         {
-            _overview = overview?.Copy();
+            if (overview != null)
+            {
+                var id = string.IsNullOrWhiteSpace(overview.Id) ? "latest" : overview.Id;
+                _overviews[id] = overview.Copy();
+            }
             return Task.CompletedTask;
         }
 
-        public Task<NewsOverview> ReadOverviewAsync()
+        public Task<NewsOverview> ReadOverviewAsync(string id = "latest")
         {
-            return Task.FromResult(_overview?.Copy());
+            var docId = string.IsNullOrWhiteSpace(id) ? "latest" : id;
+            var overview = _overviews.ContainsKey(docId) ? _overviews[docId].Copy() : null;
+            return Task.FromResult(overview);
         }
     }
 }

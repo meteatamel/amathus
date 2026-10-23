@@ -462,6 +462,8 @@ class OverviewStorySource {
       article.detail,
       article.imageUrl,
       article.url,
+      author: article.author,
+      isColumnist: article.isColumnist,
     );
     item.feed = toFeed();
     return item;
