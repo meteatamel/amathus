@@ -10,6 +10,7 @@ import 'package:amathus/views/common/feeditem_list_tile_wide.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
@@ -325,10 +326,16 @@ class _ColumnistsViewState extends State<ColumnistsView> {
               constraints: const BoxConstraints(maxWidth: 860),
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                itemCount: visibleStories.length,
+                itemCount: visibleStories.length + 1,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final (story, sources) = visibleStories[index];
+                  if (index == 0) {
+                    return PageIntroBanner(
+                      text: Constants.TOP_COLUMNS_BANNER,
+                      icon: Icons.edit_note_rounded,
+                    );
+                  }
+                  final (story, sources) = visibleStories[index - 1];
                   final item = _buildTopColumnFeedItem(
                     story,
                     sources.first,

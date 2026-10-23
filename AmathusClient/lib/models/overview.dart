@@ -296,18 +296,32 @@ class PodcastDialogueTurn {
           'And that wraps up our Cyprus Top Stories briefing. You can tap any story card below to read the full articles.',
     ));
 
+    final normEdition = edition.trim().toLowerCase();
+    final closingEl = normEdition == 'morning'
+        ? 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Μεσημεριανή μας έκδοση!'
+        : (normEdition == 'midday'
+            ? 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Βραδινή μας έκδοση!'
+            : 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας αύριο στην Πρωινή μας έκδοση!');
+    final closingTr = normEdition == 'morning'
+        ? 'Bizi dinlediğiniz için teşekkürler. Öğle bültenimizde yeniden görüşmek üzere, hoşça kalın!'
+        : (normEdition == 'midday'
+            ? 'Bizi dinlediğiniz için teşekkürler. Akşam bültenimizde yeniden görüşmek üzere, hoşça kalın!'
+            : 'Bizi dinlediğiniz için teşekkürler. Yarın Sabah bültenimizde yeniden görüşmek üzere, hoşça kalın!');
+    final closingEn = normEdition == 'morning'
+        ? 'Thanks for listening, and join us again for our Mid-Day edition!'
+        : (normEdition == 'midday'
+            ? 'Thanks for listening, and join us again for our Evening edition!'
+            : 'Thanks for listening, and join us again tomorrow for our Morning edition!');
+
     turns.add(PodcastDialogueTurn(
       index: idx++,
       speaker: 'B',
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
-      textEl:
-          'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στην επόμενη έκδοση!',
-      textTr:
-          'Bizi dinlediğiniz için teşekkürler. Bir sonraki bültende görüşmek üzere, hoşça kalın!',
-      textEn:
-          'Thanks for listening, and we\'ll see you in our next edition!',
+      textEl: closingEl,
+      textTr: closingTr,
+      textEn: closingEn,
     ));
 
     return turns;

@@ -171,7 +171,12 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostAEl(string edition, List<OverviewStory> stories)
         {
-            const string title = "Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις";
+            var title = edition switch
+            {
+                "morning" => "Δικοινοτικές Ειδήσεις Κύπρου - Πρωί",
+                "midday" => "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημέρι",
+                _ => "Δικοινοτικές Ειδήσεις Κύπρου - Βράδυ"
+            };
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEl ?? s.TitleEn)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
@@ -182,7 +187,12 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostATr(string edition, List<OverviewStory> stories)
         {
-            const string title = "Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler";
+            var title = edition switch
+            {
+                "morning" => "Kıbrıs İki Toplumlu Haberler - Sabah",
+                "midday" => "Kıbrıs İki Toplumlu Haberler - Öğle",
+                _ => "Kıbrıs İki Toplumlu Haberler - Akşam"
+            };
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleTr ?? s.TitleEn)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
@@ -193,7 +203,12 @@ namespace Amathus.Common.Overview
 
         private static string BuildOpeningHostAEn(string edition, List<OverviewStory> stories)
         {
-            const string title = "Cyprus Bicommunal News - Top Stories";
+            var title = edition switch
+            {
+                "morning" => "Cyprus Bicommunal News - Morning",
+                "midday" => "Cyprus Bicommunal News - Mid-Day",
+                _ => "Cyprus Bicommunal News - Evening"
+            };
             var firstBatch = stories.Take(3)
                 .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEn ?? s.TitleTr)))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
@@ -444,35 +459,32 @@ namespace Amathus.Common.Overview
 
         private static string BuildClosingHostBEl(string edition)
         {
-            var wish = edition switch
+            return edition switch
             {
-                "morning" => "Καλή συνέχεια στην ημέρα σας!",
-                "midday" => "Καλό απόγευμα σε όλους!",
-                _ => "Καλό σας βράδυ!"
+                "morning" => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Μεσημεριανή μας έκδοση. Καλή συνέχεια στην ημέρα σας!",
+                "midday" => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Βραδινή μας έκδοση. Καλό απόγευμα σε όλους!",
+                _ => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας αύριο στην Πρωινή μας έκδοση. Καλό σας βράδυ!"
             };
-            return $"Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στην επόμενη έκδοση. {wish}";
         }
 
         private static string BuildClosingHostBTr(string edition)
         {
-            var wish = edition switch
+            return edition switch
             {
-                "morning" => "Herkese güzel bir gün diliyoruz, hoşça kalın!",
-                "midday" => "Bir sonraki bültende görüşmek üzere, iyi günler!",
-                _ => "Bir sonraki bültende buluşmak dileğiyle, iyi akşamlar!"
+                "morning" => "Bizi dinlediğiniz için teşekkürler. Öğle bültenimizde yeniden görüşmek üzere, herkese güzel bir gün diliyoruz!",
+                "midday" => "Bizi dinlediğiniz için teşekkürler. Akşam bültenimizde yeniden görüşmek üzere, iyi günler!",
+                _ => "Bizi dinlediğiniz için teşekkürler. Yarın Sabah bültenimizde yeniden buluşmak dileğiyle, iyi akşamlar!"
             };
-            return $"Bizi dinlediğiniz için teşekkürler. {wish}";
         }
 
         private static string BuildClosingHostBEn(string edition)
         {
-            var wish = edition switch
+            return edition switch
             {
-                "morning" => "Have a wonderful morning, and see you in our Mid-Day edition!",
-                "midday" => "Enjoy the rest of your afternoon, and join us again this evening!",
-                _ => "Have a great evening, and we'll see you tomorrow morning!"
+                "morning" => "Thanks for listening — have a wonderful morning, and join us again for our Mid-Day edition!",
+                "midday" => "Thanks for listening — enjoy the rest of your afternoon, and join us again for our Evening edition!",
+                _ => "Thanks for listening — have a great evening, and join us again tomorrow for our Morning edition!"
             };
-            return $"Thanks for listening — {wish}";
         }
 
         private static (string FirstPart, string SecondPart) SplitNarrative(string rawNarrative, string headline)

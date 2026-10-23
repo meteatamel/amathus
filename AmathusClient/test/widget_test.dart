@@ -147,8 +147,21 @@ void main() {
     );
     await tester.pump();
 
-    // Podcast title is always Cyprus Bicommunal News - Top Stories in English
-    expect(find.text('Cyprus Bicommunal News - Top Stories'), findsOneWidget);
+    // Podcast title & subtitle and Top Stories banner
+    expect(
+      find.textContaining('Cyprus Bicommunal News - '),
+      findsOneWidget,
+    );
+    expect(
+      find.text('5 minute top news update every morning, mid-day and evening'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Top stories across Turkish, Greek, and English newspapers in Cyprus, summarized by AI.',
+      ),
+      findsOneWidget,
+    );
 
     // Default translate is null: story has 2 TR sources and 1 EL source, so majority language is TR
     expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);

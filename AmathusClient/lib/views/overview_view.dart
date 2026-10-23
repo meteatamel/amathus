@@ -295,16 +295,22 @@ class _OverviewViewState extends State<OverviewView> {
               constraints: const BoxConstraints(maxWidth: 860),
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                itemCount: visibleStories.length + 1,
+                itemCount: visibleStories.length + 2,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   if (index == 0) {
+                    return PageIntroBanner(
+                      text: Constants.TOP_STORIES_BANNER,
+                      icon: Icons.auto_awesome_rounded,
+                    );
+                  }
+                  if (index == 1) {
                     return TopStoriesPodcastCard(
                       overview: overview,
                       defaultLanguage: bannerLang,
                     );
                   }
-                  final (story, sources) = visibleStories[index - 1];
+                  final (story, sources) = visibleStories[index - 2];
                   return OverviewStoryCard(
                     story: story,
                     sources: sources,

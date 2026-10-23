@@ -481,9 +481,34 @@ namespace Amathus.Common.Overview
 
         private static string BuildGeminiPrompt(List<CandidateArticle> candidates, int totalFeeds, bool columnistsOnly = false)
         {
-            const string editionEn = "Cyprus Bicommunal News - Top Stories";
-            const string editionTr = "Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler";
-            const string editionEl = "Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις";
+            var edition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
+            var (editionEn, editionTr, editionEl, nextEditionEn, nextEditionTr, nextEditionEl) = edition switch
+            {
+                "morning" => (
+                    "Cyprus Bicommunal News - Morning",
+                    "Kıbrıs İki Toplumlu Haberler - Sabah",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Πρωί",
+                    "Mid-Day",
+                    "Öğle",
+                    "Μεσημεριανή"
+                ),
+                "midday" => (
+                    "Cyprus Bicommunal News - Mid-Day",
+                    "Kıbrıs İki Toplumlu Haberler - Öğle",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημέρι",
+                    "Evening",
+                    "Akşam",
+                    "Βραδινή"
+                ),
+                _ => (
+                    "Cyprus Bicommunal News - Evening",
+                    "Kıbrıs İki Toplumlu Haberler - Akşam",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Βράδυ",
+                    "Morning",
+                    "Sabah",
+                    "Πρωινή"
+                )
+            };
 
             var sb = new StringBuilder();
             sb.AppendLine("You are an expert bicommunal Cyprus news editor and broadcast podcast producer fluent in English, Turkish, and Greek.");
@@ -510,10 +535,10 @@ namespace Amathus.Common.Overview
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
             sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
             sb.AppendLine("3. Also generate a ~5-minute two-host broadcast news podcast script (podcastTurns, 18 to 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
-            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\") and give the first half of a quick headline rundown before discussing the topics in detail.");
+            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\"), explicitly mentioning that this is the Morning, Mid-Day, or Evening edition, and give the first half of a quick headline rundown before discussing the topics in detail.");
             sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline rundown and transition into examining the top topics one by one.");
             sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces the topic and key facts/arguments, and the second speaker adds natural journalistic context, analysis, and cross-community perspective without repeating the first speaker.");
-            sb.AppendLine("- The final 2 turns (\"A\" then \"B\") wrap up the briefing and sign off.");
+            sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST wrap up this edition (\"{editionEn}\") and explicitly invite listeners to join again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
             sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two podcast hosts. Do NOT mention the number of stories/columns, the number of newspapers/news sources, or the number of articles analyzed.");
             sb.AppendLine("Return strictly valid JSON with schema:");
             sb.AppendLine(@"{

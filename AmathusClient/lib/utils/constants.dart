@@ -350,13 +350,32 @@ String podcastEditionTitleFor(
   String lang, {
   bool isColumnists = false,
 }) {
+  final normEdition = edition.trim().toLowerCase();
   switch (lang.trim().toLowerCase()) {
     case 'el':
-      return 'Δικοινοτικές Ειδήσεις Κύπρου - Κυριότερες Ειδήσεις';
+      if (normEdition == 'morning') {
+        return 'Δικοινοτικές Ειδήσεις Κύπρου - Πρωί';
+      }
+      if (normEdition == 'midday') {
+        return 'Δικοινοτικές Ειδήσεις Κύπρου - Μεσημέρι';
+      }
+      return 'Δικοινοτικές Ειδήσεις Κύπρου - Βράδυ';
     case 'tr':
-      return 'Kıbrıs İki Toplumlu Haberler - Öne Çıkan Haberler';
+      if (normEdition == 'morning') {
+        return 'Kıbrıs İki Toplumlu Haberler - Sabah';
+      }
+      if (normEdition == 'midday') {
+        return 'Kıbrıs İki Toplumlu Haberler - Öğle';
+      }
+      return 'Kıbrıs İki Toplumlu Haberler - Akşam';
     default:
-      return 'Cyprus Bicommunal News - Top Stories';
+      if (normEdition == 'morning') {
+        return 'Cyprus Bicommunal News - Morning';
+      }
+      if (normEdition == 'midday') {
+        return 'Cyprus Bicommunal News - Mid-Day';
+      }
+      return 'Cyprus Bicommunal News - Evening';
   }
 }
 
@@ -373,26 +392,19 @@ String podcastEditionShortLabelFor(String edition, String lang) {
       return 'Akşam';
     default:
       if (normEdition == 'morning') return 'Morning';
-      if (normEdition == 'midday') return 'Midday';
+      if (normEdition == 'midday') return 'Mid-Day';
       return 'Evening';
   }
 }
 
 String podcastSubtitleFor(String edition, String lang) {
-  final normEdition = edition.trim().toLowerCase();
   switch (lang.trim().toLowerCase()) {
     case 'el':
-      if (normEdition == 'morning') return '5λεπτη πρωινή ενημέρωση';
-      if (normEdition == 'midday') return '5λεπτη μεσημεριανή ενημέρωση';
-      return '5λεπτη βραδινή ενημέρωση';
+      return '5λεπτη ενημέρωση με τις κυριότερες ειδήσεις κάθε πρωί, μεσημέρι και βράδυ';
     case 'tr':
-      if (normEdition == 'morning') return '5 dakikalık sabah haber özeti';
-      if (normEdition == 'midday') return '5 dakikalık öğle haber özeti';
-      return '5 dakikalık akşam haber özeti';
+      return 'Her sabah, öğle ve akşam 5 dakikalık öne çıkan haber özeti';
     default:
-      if (normEdition == 'morning') return '5-min morning news update';
-      if (normEdition == 'midday') return '5-min midday news update';
-      return '5-min evening news update';
+      return '5 minute top news update every morning, mid-day and evening';
   }
 }
 
@@ -457,6 +469,11 @@ String sourcesCountLabel(int count) => _trElEn(
     );
 String get RECENT_NEWS =>
     _trElEn("Son Haberler", "Τελευταία Νέα", "Latest News");
+String get TOP_STORIES_BANNER => _trElEn(
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden yapay zeka ile özetlenen öne çıkan haberler.",
+      "Οι κυριότερες ειδήσεις από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου, συνοψισμένες με τεχνητή νοημοσύνη.",
+      "Top stories across Turkish, Greek, and English newspapers in Cyprus, summarized by AI.",
+    );
 String get RECENT_NEWS_BANNER => _trElEn(
       "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden son dakika ve güncel haberler.",
       "Τελευταία νέα από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
@@ -464,6 +481,11 @@ String get RECENT_NEWS_BANNER => _trElEn(
     );
 String get COLUMNISTS =>
     _trElEn("Köşe Yazarları", "Αρθρογράφοι", "Columnists");
+String get TOP_COLUMNS_BANNER => _trElEn(
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden öne çıkan köşe yazıları ve görüşler.",
+      "Τα κυριότερα άρθρα γνώμης και αρθρογραφία από εφημερίδες όλης της Κύπρου.",
+      "Top opinion pieces and columns across Turkish, Greek, and English newspapers in Cyprus.",
+    );
 String get COLUMNISTS_BANNER => _trElEn(
       "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden güncel köşe yazıları ve görüşler.",
       "Πρόσφατα άρθρα γνώμης και αρθρογραφία από εφημερίδες όλης της Κύπρου.",
