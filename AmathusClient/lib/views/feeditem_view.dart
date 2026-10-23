@@ -26,14 +26,30 @@ class _FeedItemViewState extends State<FeedItemView> {
   @override
   void initState() {
     super.initState();
-    final activeLang = TranslateController.activeLanguageNotifier(item).value;
-    if (activeLang != null) {
-      TranslateController.translateItem(
-        item,
-        activeLang,
-        includeDetail: true,
-      );
+    Constants.languageNotifier.addListener(_syncTranslationWithAppLanguage);
+    Constants.showOriginalNotifier.addListener(_syncTranslationWithAppLanguage);
+    _syncTranslationWithAppLanguage();
+  }
+
+  @override
+  void dispose() {
+    Constants.languageNotifier.removeListener(_syncTranslationWithAppLanguage);
+    Constants.showOriginalNotifier
+        .removeListener(_syncTranslationWithAppLanguage);
+    super.dispose();
+  }
+
+  void _syncTranslationWithAppLanguage() {
+    final targetLang = Constants.effectiveTranslateLanguage;
+    if (targetLang == null) {
+      TranslateController.clearTranslation(item);
+      return;
     }
+    TranslateController.translateItem(
+      item,
+      targetLang,
+      includeDetail: true,
+    );
   }
 
   @override

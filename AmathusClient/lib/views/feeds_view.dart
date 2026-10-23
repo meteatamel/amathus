@@ -3,6 +3,7 @@ import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeds_list.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -18,51 +19,64 @@ class _FeedsViewState extends State<FeedsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: SizedBox(
-                width: 42,
-                height: 42,
-                child: Transform.scale(
-                  scale: 1.14,
-                  child: Image.asset(
-                    'assets/launcher/icon.png',
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.languageNotifier,
+      builder: (context, _, __) {
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(
                     width: 42,
                     height: 42,
-                    fit: BoxFit.cover,
+                    child: Transform.scale(
+                      scale: 1.14,
+                      child: Image.asset(
+                        'assets/launcher/icon.png',
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    Constants.NEWSPAPERS,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(
+                  child: AppLanguageButton(lightOnDark: true),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                Constants.NEWSPAPERS,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
-        children: [
-          const SourceLanguageFilterBar(),
-          Expanded(
-            child: FeedsList(
-              loadDataStorageCallback: () => _controller.readAllStored(),
-              loadDataServerCallback: () => _controller.readAll(),
-            ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 2),
+          drawer: const AppDrawer(),
+          body: Column(
+            children: [
+              const SourceLanguageFilterBar(),
+              Expanded(
+                child: FeedsList(
+                  loadDataStorageCallback: () => _controller.readAllStored(),
+                  loadDataServerCallback: () => _controller.readAll(),
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 2),
+        );
+      },
     );
   }
 }

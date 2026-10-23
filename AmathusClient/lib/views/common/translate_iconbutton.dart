@@ -2,6 +2,7 @@ import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/flag_icon.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SourceAndTranslationBadges extends StatelessWidget {
@@ -19,7 +20,7 @@ class SourceAndTranslationBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translatedLang = activeTranslationLang;
-    if (translatedLang == null) {
+    if (translatedLang == null || translatedLang == sourceLang) {
       return const SizedBox.shrink();
     }
     final flagWidth = compact ? 18.0 : 20.0;
@@ -51,6 +52,196 @@ class SourceAndTranslationBadges extends StatelessWidget {
   }
 }
 
+class AppLanguageButton extends StatelessWidget {
+  final bool lightOnDark;
+  final ValueListenable<bool>? loadingListenable;
+  final Future<void> Function(String selected)? onSelectedOverride;
+
+  const AppLanguageButton({
+    super.key,
+    this.lightOnDark = false,
+    this.loadingListenable,
+    this.onSelectedOverride,
+  });
+
+  static const List<(String, String)> _languages = [
+    ('el', 'Ελληνικά'),
+    ('tr', 'Türkçe'),
+    ('en', 'English'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.showOriginalNotifier,
+        Constants.overviewTranslateLanguageNotifier,
+        if (loadingListenable != null) loadingListenable!,
+      ]),
+      builder: (context, _) {
+        final currentLang = Constants.currentLanguage;
+        final showOriginal = Constants.showOriginalNotifier.value;
+        final isLoading = loadingListenable?.value ?? false;
+
+        return PopupMenuButton<String>(
+          tooltip: Constants.LANGUAGE_TITLE,
+          position: PopupMenuPosition.under,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (selected) async {
+            if (onSelectedOverride != null) {
+              await onSelectedOverride!(selected);
+              return;
+            }
+            if (selected == 'original') {
+              await Constants.setShowOriginal(!showOriginal);
+            } else {
+              await Constants.setLanguage(selected);
+            }
+          },
+          itemBuilder: (context) => [
+            for (final entry in _languages)
+              PopupMenuItem<String>(
+                value: entry.$1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FlagIcon(languageCode: entry.$1, width: 20, height: 14),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        entry.$2,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: (!showOriginal && currentLang == entry.$1)
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    if (!showOriginal && currentLang == entry.$1) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: 'original',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '🔄',
+                    style: TextStyle(fontSize: 15, height: 1.0),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      Constants.SHOW_ORIGINAL,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            showOriginal ? FontWeight.w700 : FontWeight.w500,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  if (showOriginal) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: lightOnDark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : (showOriginal
+                      ? const Color(0xFFF8FAFC)
+                      : const Color(0xFFEFF6FF)),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: lightOnDark
+                    ? Colors.white.withValues(alpha: 0.28)
+                    : (showOriginal
+                        ? const Color(0xFFCBD5E1)
+                        : const Color(0xFF93C5FD)),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading) ...[
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: lightOnDark
+                          ? Colors.white
+                          : const Color(0xFF1D4ED8),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                FlagIcon(
+                  languageCode: currentLang,
+                  width: 18,
+                  height: 13,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  showOriginal
+                      ? '${currentLang.toUpperCase()} • 🔄 ${Constants.SHOW_ORIGINAL_SHORT}'
+                      : Constants.languageLabelFor(currentLang),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: lightOnDark
+                        ? Colors.white
+                        : (showOriginal
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFF1D4ED8)),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: lightOnDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : (showOriginal
+                          ? const Color(0xFF475569)
+                          : const Color(0xFF1D4ED8)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class TranslateIconButton extends StatelessWidget {
   final FeedItem item;
   final bool includeDetail;
@@ -69,190 +260,44 @@ class TranslateIconButton extends StatelessWidget {
       item.feed?.id,
       item.feed?.language,
     );
-    final targets = Constants.targetTranslationLanguagesFor(sourceLang);
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: TranslateController.loadingNotifier(item),
-      builder: (context, isLoading, _) {
-        return ValueListenableBuilder<String?>(
-          valueListenable: TranslateController.activeLanguageNotifier(item),
-          builder: (context, activeLang, _) {
-            return PopupMenuButton<String>(
-              tooltip: Constants.TRANSLATE,
-              position: PopupMenuPosition.under,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onSelected: (selected) async {
-                if (selected == 'original' || selected == sourceLang) {
-                  TranslateController.clearTranslation(item);
-                  return;
-                }
-                final result = await TranslateController.translateItem(
-                  item,
-                  selected,
-                  includeDetail: includeDetail,
-                );
-                if (result == null && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(Constants.TRANSLATE_ERROR),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-              itemBuilder: (context) => [
-                for (final lang in targets)
-                  PopupMenuItem<String>(
-                    value: lang,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FlagIcon(languageCode: lang, width: 20, height: 14),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            Constants.languageLabelFor(lang),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: activeLang == lang
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                        ),
-                        if (activeLang == lang) ...[
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.check_rounded,
-                            size: 18,
-                            color: Color(0xFF1D4ED8),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                if (activeLang != null) ...[
-                  const PopupMenuDivider(),
-                  PopupMenuItem<String>(
-                    value: 'original',
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FlagIcon(
-                          languageCode: sourceLang,
-                          width: 20,
-                          height: 14,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            Constants.languageLabelFor(sourceLang),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: lightOnDark
-                      ? (activeLang == null
-                          ? Colors.white.withValues(alpha: 0.14)
-                          : Colors.white)
-                      : (activeLang == null
-                          ? const Color(0xFFF8FAFC)
-                          : const Color(0xFFEFF6FF)),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: lightOnDark
-                        ? (activeLang == null
-                            ? Colors.white.withValues(alpha: 0.30)
-                            : Colors.white)
-                        : (activeLang == null
-                            ? const Color(0xFFCBD5E1)
-                            : const Color(0xFF93C5FD)),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isLoading)
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: lightOnDark && activeLang == null
-                              ? Colors.white
-                              : const Color(0xFF1D4ED8),
-                        ),
-                      )
-                    else
-                      const Text(
-                        '🌐',
-                        style: TextStyle(fontSize: 14, height: 1.0),
-                      ),
-                    const SizedBox(width: 5),
-                    if (activeLang != null) ...[
-                      FlagIcon(
-                        languageCode: activeLang,
-                        width: 18,
-                        height: 13,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        Constants.languageLabelFor(activeLang),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: lightOnDark
-                              ? const Color(0xFF0F2942)
-                              : const Color(0xFF1D4ED8),
-                        ),
-                      ),
-                    ] else
-                      Text(
-                        Constants.READ_IN_BUTTON,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: lightOnDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: lightOnDark
-                          ? (activeLang == null
-                              ? Colors.white.withValues(alpha: 0.9)
-                              : const Color(0xFF0F2942))
-                          : (activeLang == null
-                              ? const Color(0xFF475569)
-                              : const Color(0xFF1D4ED8)),
-                    ),
-                  ],
-                ),
-              ),
+    return AppLanguageButton(
+      lightOnDark: lightOnDark,
+      loadingListenable: TranslateController.loadingNotifier(item),
+      onSelectedOverride: (selected) async {
+        if (selected == 'original') {
+          final nextOrig = !Constants.showOriginalNotifier.value;
+          await Constants.setShowOriginal(nextOrig);
+          if (nextOrig) {
+            TranslateController.clearTranslation(item);
+          } else {
+            await TranslateController.translateItem(
+              item,
+              Constants.currentLanguage,
+              includeDetail: includeDetail,
             );
-          },
+          }
+          return;
+        }
+        await Constants.setLanguage(selected);
+        if (selected == sourceLang) {
+          TranslateController.clearTranslation(item);
+          return;
+        }
+        final result = await TranslateController.translateItem(
+          item,
+          selected,
+          includeDetail: includeDetail,
         );
+        if (result == null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(Constants.TRANSLATE_ERROR),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       },
     );
   }
@@ -274,198 +319,26 @@ class BulkTranslateIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([
-        controller.activeLanguageNotifier,
-        controller.loadingNotifier,
-        Constants.sourceLanguageNotifier,
-      ]),
-      builder: (context, _) {
-        final activeLang = controller.activeLanguageNotifier.value;
-        final isLoading = controller.loadingNotifier.value;
-        final effectiveSource = fixedSourceLanguage ??
-            Constants.sourceLanguageNotifier.value.toLowerCase();
-        final targets = (effectiveSource == 'tr' ||
-                effectiveSource == 'el' ||
-                effectiveSource == 'en')
-            ? Constants.targetTranslationLanguagesFor(effectiveSource)
-            : const ['el', 'tr', 'en'];
-
-        return PopupMenuButton<String>(
-          tooltip: Constants.TRANSLATE,
-          position: PopupMenuPosition.under,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (selected) async {
-            if (selected == 'original' || selected == effectiveSource) {
-              controller.clearAll();
-              return;
-            }
-            await controller.translateAll(selected, filter: itemFilter);
-          },
-          itemBuilder: (context) => [
-            for (final lang in targets)
-              PopupMenuItem<String>(
-                value: lang,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FlagIcon(languageCode: lang, width: 20, height: 14),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        Constants.languageLabelFor(lang),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: activeLang == lang
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                    if (activeLang == lang) ...[
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.check_rounded,
-                        size: 18,
-                        color: Color(0xFF1D4ED8),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            if (activeLang != null) ...[
-              const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                value: 'original',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (effectiveSource == 'tr' ||
-                        effectiveSource == 'el' ||
-                        effectiveSource == 'en')
-                      FlagIcon(
-                        languageCode: effectiveSource,
-                        width: 20,
-                        height: 14,
-                      )
-                    else
-                      const Text(
-                        '🔄',
-                        style: TextStyle(fontSize: 15, height: 1.0),
-                      ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        (effectiveSource == 'tr' ||
-                                effectiveSource == 'el' ||
-                                effectiveSource == 'en')
-                            ? Constants.languageLabelFor(effectiveSource)
-                            : Constants.SHOW_ORIGINAL,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: lightOnDark
-                  ? (activeLang == null
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : Colors.white)
-                  : (activeLang == null
-                      ? const Color(0xFFF8FAFC)
-                      : const Color(0xFFEFF6FF)),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: lightOnDark
-                    ? (activeLang == null
-                        ? Colors.white.withValues(alpha: 0.30)
-                        : Colors.white)
-                    : (activeLang == null
-                        ? const Color(0xFFCBD5E1)
-                        : const Color(0xFF93C5FD)),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isLoading)
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: lightOnDark && activeLang == null
-                          ? Colors.white
-                          : const Color(0xFF1D4ED8),
-                    ),
-                  )
-                else
-                  const Text(
-                    '🌐',
-                    style: TextStyle(fontSize: 14, height: 1.0),
-                  ),
-                const SizedBox(width: 5),
-                if (activeLang != null) ...[
-                  FlagIcon(
-                    languageCode: activeLang,
-                    width: 18,
-                    height: 13,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    Constants.languageLabelFor(activeLang),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: lightOnDark
-                          ? const Color(0xFF0F2942)
-                          : const Color(0xFF1D4ED8),
-                    ),
-                  ),
-                ] else
-                  Text(
-                    Constants.READ_IN_BUTTON,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: lightOnDark
-                          ? Colors.white
-                          : const Color(0xFF0F172A),
-                    ),
-                  ),
-                const SizedBox(width: 3),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 16,
-                  color: lightOnDark
-                      ? (activeLang == null
-                          ? Colors.white.withValues(alpha: 0.9)
-                          : const Color(0xFF0F2942))
-                      : (activeLang == null
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF1D4ED8)),
-                ),
-              ],
-            ),
-          ),
-        );
+    return AppLanguageButton(
+      lightOnDark: lightOnDark,
+      loadingListenable: controller.loadingNotifier,
+      onSelectedOverride: (selected) async {
+        if (selected == 'original') {
+          final nextOrig = !Constants.showOriginalNotifier.value;
+          await Constants.setShowOriginal(nextOrig);
+          if (nextOrig) {
+            controller.clearAll();
+          } else {
+            await controller.translateAll(
+              Constants.currentLanguage,
+              filter: itemFilter,
+            );
+          }
+          return;
+        }
+        await Constants.setLanguage(selected);
+        await controller.translateAll(selected, filter: itemFilter);
       },
     );
   }
 }
-

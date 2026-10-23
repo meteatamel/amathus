@@ -60,6 +60,8 @@ class _FeedItemsListState extends State<FeedItemsList> {
   @override
   void initState() {
     super.initState();
+    Constants.languageNotifier.addListener(_onFilterChanged);
+    Constants.showOriginalNotifier.addListener(_onFilterChanged);
     Constants.sourceLanguageNotifier.addListener(_onFilterChanged);
     Constants.selectedFeedIdNotifier.addListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.addListener(_onFilterChanged);
@@ -69,6 +71,8 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
   @override
   void dispose() {
+    Constants.languageNotifier.removeListener(_onFilterChanged);
+    Constants.showOriginalNotifier.removeListener(_onFilterChanged);
     Constants.sourceLanguageNotifier.removeListener(_onFilterChanged);
     Constants.selectedFeedIdNotifier.removeListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.removeListener(_onFilterChanged);
@@ -114,20 +118,28 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
     if (added && mounted) {
       current.sort((a, b) => b.publishDate.compareTo(a.publishDate));
-      widget.bulkController?.setItems(current, filter: _matchesFilter);
+      _syncBulkTranslation(current);
       setState(() {
         _items = current;
       });
-      _onFilterChanged();
+    }
+  }
+
+  void _syncBulkTranslation(List<FeedItem>? items) {
+    final bulk = widget.bulkController;
+    if (bulk == null || items == null) return;
+    final targetLang = Constants.effectiveTranslateLanguage;
+    if (targetLang == null) {
+      bulk.setItems(items, filter: _matchesFilter);
+      bulk.clearAll();
+    } else {
+      bulk.activeLanguageNotifier.value = targetLang;
+      bulk.setItems(items, filter: _matchesFilter);
     }
   }
 
   void _onFilterChanged() {
-    final bulk = widget.bulkController;
-    final activeLang = bulk?.activeLanguageNotifier.value;
-    if (bulk != null && activeLang != null && _items != null) {
-      bulk.translateAll(activeLang, filter: _matchesFilter);
-    }
+    _syncBulkTranslation(_items);
   }
 
   Future<void> _loadInitialData() async {
@@ -135,7 +147,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     if (storageCallback != null) {
       final cachedItems = await storageCallback();
       if (cachedItems != null && cachedItems.isNotEmpty) {
-        widget.bulkController?.setItems(cachedItems, filter: _matchesFilter);
+        _syncBulkTranslation(cachedItems);
         if (mounted) {
           setState(() {
             _items = cachedItems;
@@ -159,7 +171,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
     final items = await widget.loadDataCallback();
     if (items != null) {
-      widget.bulkController?.setItems(items, filter: _matchesFilter);
+      _syncBulkTranslation(items);
       if (mounted) {
         setState(() {
           _items = items;
@@ -169,7 +181,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     } else {
       final fallback = _items ?? <FeedItem>[];
       if (_items == null) {
-        widget.bulkController?.setItems(fallback, filter: _matchesFilter);
+        _syncBulkTranslation(fallback);
       }
       if (mounted) {
         setState(() {
@@ -189,6 +201,8 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
     return ListenableBuilder(
       listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.showOriginalNotifier,
         Constants.sourceLanguageNotifier,
         Constants.selectedFeedIdNotifier,
         Constants.hiddenFeedsNotifier,

@@ -8,7 +8,6 @@ import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
-import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
@@ -184,9 +183,13 @@ class _OverviewViewState extends State<OverviewView> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: Constants.newsViewModeNotifier,
-      builder: (context, mode, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.newsViewModeNotifier,
+        Constants.languageNotifier,
+      ]),
+      builder: (context, _) {
+        final mode = Constants.newsViewModeNotifier.value;
         final isTopMode = mode != 'latest';
         return Scaffold(
           appBar: AppBar(
@@ -335,6 +338,7 @@ class _OverviewViewState extends State<OverviewView> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.languageNotifier,
+        Constants.showOriginalNotifier,
         Constants.overviewTranslateLanguageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
@@ -343,7 +347,7 @@ class _OverviewViewState extends State<OverviewView> {
       builder: (context, _) {
         final activeTranslateLang =
             Constants.overviewTranslateLanguageNotifier.value;
-        final bannerLang = activeTranslateLang ?? 'en';
+        final bannerLang = Constants.currentLanguage;
         final visibleStories = <(OverviewStory, List<OverviewStorySource>)>[];
 
         for (final story in overview.stories) {
@@ -409,160 +413,7 @@ class OverviewLanguageSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([
-        Constants.languageNotifier,
-        Constants.overviewTranslateLanguageNotifier,
-      ]),
-      builder: (context, _) {
-        final activeLang = Constants.overviewTranslateLanguageNotifier.value;
-        return PopupMenuButton<String>(
-          tooltip: Constants.TRANSLATE,
-          position: PopupMenuPosition.under,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (lang) {
-            if (lang == 'original' || lang == activeLang) {
-              Constants.setOverviewTranslateLanguage(null);
-            } else {
-              Constants.setOverviewTranslateLanguage(lang);
-            }
-          },
-          itemBuilder: (context) => [
-            for (final entry in const [
-              ('el', 'Ελληνικά'),
-              ('tr', 'Türkçe'),
-              ('en', 'English'),
-            ])
-              PopupMenuItem<String>(
-                value: entry.$1,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FlagIcon(languageCode: entry.$1, width: 20, height: 14),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        entry.$2,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: activeLang == entry.$1
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                    if (activeLang == entry.$1) ...[
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.check_rounded,
-                        size: 18,
-                        color: Color(0xFF1D4ED8),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            if (activeLang != null) ...[
-              const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                value: 'original',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      '🔄',
-                      style: TextStyle(fontSize: 15, height: 1.0),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        Constants.SHOW_ORIGINAL,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: lightOnDark
-                  ? (activeLang == null
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : Colors.white)
-                  : (activeLang == null
-                      ? const Color(0xFFF8FAFC)
-                      : const Color(0xFFEFF6FF)),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: lightOnDark
-                    ? (activeLang == null
-                        ? Colors.white.withValues(alpha: 0.30)
-                        : Colors.white)
-                    : (activeLang == null
-                        ? const Color(0xFFCBD5E1)
-                        : const Color(0xFF93C5FD)),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '🌐',
-                  style: TextStyle(fontSize: 14, height: 1.0),
-                ),
-                const SizedBox(width: 5),
-                if (activeLang != null) ...[
-                  FlagIcon(languageCode: activeLang, width: 18, height: 13),
-                  const SizedBox(width: 5),
-                  Text(
-                    Constants.languageLabelFor(activeLang),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: lightOnDark
-                          ? const Color(0xFF0F2942)
-                          : const Color(0xFF1D4ED8),
-                    ),
-                  ),
-                ] else
-                  Text(
-                    Constants.READ_IN_BUTTON,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: lightOnDark
-                          ? Colors.white
-                          : const Color(0xFF0F172A),
-                    ),
-                  ),
-                const SizedBox(width: 3),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 16,
-                  color: lightOnDark
-                      ? (activeLang == null
-                          ? Colors.white.withValues(alpha: 0.9)
-                          : const Color(0xFF0F2942))
-                      : (activeLang == null
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF1D4ED8)),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    return AppLanguageButton(lightOnDark: lightOnDark);
   }
 }
 
@@ -794,6 +645,14 @@ class OverviewStoryView extends StatelessWidget {
                 ),
               ],
             ),
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(
+                  child: OverviewLanguageSelector(lightOnDark: true),
+                ),
+              ),
+            ],
           ),
           body: Column(
             children: [
@@ -824,8 +683,6 @@ class OverviewStoryView extends StatelessWidget {
                                     : null,
                           ),
                           const Spacer(),
-                          const OverviewLanguageSelector(),
-                          const SizedBox(width: 8),
                           ShareIconButton(item: shareItem, showLabel: true),
                         ],
                       ),

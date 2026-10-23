@@ -5,7 +5,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
-import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
 
 class FeedItemsByIdView extends StatelessWidget {
@@ -38,21 +38,23 @@ class FeedItemsByIdView extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          NewspaperLanguageBar(
-            sourceLanguage: sourceLang,
-            bulkController: _bulkTranslateController,
-          ),
-          Expanded(
-            child: FeedItemsList(
-              loadDataStorageCallback: loadCachedData,
-              loadDataCallback: loadData,
-              bulkController: _bulkTranslateController,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: BulkTranslateIconButton(
+                controller: _bulkTranslateController,
+                fixedSourceLanguage: sourceLang,
+                lightOnDark: true,
+              ),
             ),
           ),
         ],
+      ),
+      body: FeedItemsList(
+        loadDataStorageCallback: loadCachedData,
+        loadDataCallback: loadData,
+        bulkController: _bulkTranslateController,
       ),
     );
   }

@@ -153,34 +153,25 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.allowedNewspaperIdsListenable,
   });
 
-  String _labelFor(String code) {
-    switch (code) {
-      case 'tr':
-        return Constants.SOURCE_FILTER_TR;
-      case 'el':
-        return Constants.SOURCE_FILTER_EL;
-      case 'en':
-        return Constants.SOURCE_FILTER_EN;
-      default:
-        return Constants.SOURCE_FILTER_ALL;
-    }
-  }
-
   Widget _leadingFor(String code) {
     if (code == 'tr' || code == 'el' || code == 'en') {
-      return FlagIcon(languageCode: code, width: 20, height: 14);
+      return FlagIcon(languageCode: code, width: 17, height: 12);
     }
     return const Text(
       '🌍',
-      style: TextStyle(fontSize: 15, height: 1.0),
+      style: TextStyle(fontSize: 13, height: 1.0),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: Constants.sourceLanguageNotifier,
-      builder: (context, selectedLang, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.sourceLanguageNotifier,
+        Constants.languageNotifier,
+      ]),
+      builder: (context, _) {
+        final selectedLang = Constants.sourceLanguageNotifier.value;
         final options = <(String, String)>[
           ('all', Constants.SOURCE_FILTER_ALL),
           ('el', Constants.SOURCE_FILTER_EL),
@@ -200,125 +191,31 @@ class SourceLanguageFilterBar extends StatelessWidget {
             alignment: Alignment.center,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 860),
-              child: Padding(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 8,
+                  vertical: 6,
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (leadingSelector != null) ...[
-                              leadingSelector!,
-                              const SizedBox(width: 8),
-                            ],
-                            Text(
-                              Constants.SOURCES_BAR_LABEL,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blueGrey.shade600,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            PopupMenuButton<String>(
-                              tooltip: Constants.SOURCE_LANGUAGE_TITLE,
-                              position: PopupMenuPosition.under,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              onSelected: (value) {
-                                Constants.setSourceLanguage(value);
-                              },
-                              itemBuilder: (context) => [
-                                for (final option in options)
-                                  PopupMenuItem<String>(
-                                    value: option.$1,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _leadingFor(option.$1),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            option.$2,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight:
-                                                  selectedLang == option.$1
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w500,
-                                              color: const Color(0xFF0F172A),
-                                            ),
-                                          ),
-                                        ),
-                                        if (selectedLang == option.$1) ...[
-                                          const SizedBox(width: 8),
-                                          const Icon(
-                                            Icons.check_rounded,
-                                            size: 18,
-                                            color: Color(0xFF0F2942),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: const Color(0xFFCBD5E1),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _leadingFor(selectedLang),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _labelFor(selectedLang),
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    const Icon(
-                                      Icons.keyboard_arrow_down_rounded,
-                                      size: 16,
-                                      color: Color(0xFF475569),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            if (showNewspaperSelector) ...[
-                              const SizedBox(width: 6),
-                              NewspaperDropdownSelector(
-                                allowedFeedIdsListenable:
-                                    allowedNewspaperIdsListenable,
-                              ),
-                            ],
-                            if (extraSelector != null) ...[
-                              const SizedBox(width: 6),
-                              extraSelector!,
-                            ],
-                          ],
-                        ),
+                    if (leadingSelector != null) ...[
+                      leadingSelector!,
+                      const SizedBox(width: 6),
+                    ],
+                    for (var i = 0; i < options.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 5),
+                      _buildSourceChip(
+                        code: options[i].$1,
+                        label: options[i].$2,
+                        selected: selectedLang == options[i].$1,
                       ),
-                    ),
+                    ],
+                    if (extraSelector != null) ...[
+                      const SizedBox(width: 6),
+                      extraSelector!,
+                    ],
                     if (trailing != null) ...[
                       const SizedBox(width: 6),
                       trailing!,
@@ -336,6 +233,59 @@ class SourceLanguageFilterBar extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSourceChip({
+    required String code,
+    required String label,
+    required bool selected,
+  }) {
+    const activeNavy = Color(0xFF0F2942);
+    return Tooltip(
+      message: Constants.sourceFilterTooltipFor(code),
+      waitDuration: const Duration(milliseconds: 250),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () {
+            if (selected && code != 'all') {
+              Constants.setSourceLanguage('all');
+            } else {
+              Constants.setSourceLanguage(code);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9.5,
+              vertical: 4.5,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? activeNavy : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? activeNavy : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _leadingFor(code),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: selected ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -510,6 +460,7 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([
+        Constants.languageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
         Constants.selectedFeedIdNotifier,
@@ -750,6 +701,7 @@ class ColumnistDropdownSelector extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([
         itemsListenable,
+        Constants.languageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.selectedFeedIdNotifier,
         Constants.hiddenFeedsNotifier,

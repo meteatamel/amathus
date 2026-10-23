@@ -24,6 +24,7 @@ const String FEED_ITEMS_BY_ID_PREFIX = "feed_items_by_id_v1_";
 const String OVERVIEW_STORAGE_KEY = "news_overview_v1.json";
 const String COLUMNISTS_OVERVIEW_STORAGE_KEY = "columnists_overview_v1.json";
 const String LANGUAGE_PREF_KEY = "app_language";
+const String SHOW_ORIGINAL_PREF_KEY = "show_original";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
 const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
 const String INSTALL_BANNER_DISMISSED_PREF_KEY = "install_banner_dismissed_v1";
@@ -31,8 +32,11 @@ const String INSTALL_BANNER_DISMISSED_PREF_KEY = "install_banner_dismissed_v1";
 // contact
 const String APP_EMAIL = "atameldev@gmail.com";
 
-// UI language state ('tr', 'el', or 'en')
+// UI & reading language state ('tr', 'el', or 'en')
 final ValueNotifier<String> languageNotifier = ValueNotifier<String>('en');
+
+// Whether to show headlines/articles in their original source language instead of auto-translating
+final ValueNotifier<bool> showOriginalNotifier = ValueNotifier<bool>(false);
 
 // News source language filter ('all', 'tr', 'el', or 'en')
 final ValueNotifier<String> sourceLanguageNotifier =
@@ -52,7 +56,7 @@ final ValueNotifier<String> selectedTopicNotifier =
 
 // Active translation language for Top Stories (null = original majority language per story)
 final ValueNotifier<String?> overviewTranslateLanguageNotifier =
-    ValueNotifier<String?>(null);
+    ValueNotifier<String?>('en');
 
 // Active sub-mode inside News tab ('top' = Top Stories, 'latest' = Latest News)
 final ValueNotifier<String> newsViewModeNotifier = ValueNotifier<String>('top');
@@ -70,6 +74,8 @@ final ValueNotifier<bool> installBannerDismissedNotifier =
     ValueNotifier<bool>(false);
 
 String get currentLanguage => languageNotifier.value;
+String? get effectiveTranslateLanguage =>
+    showOriginalNotifier.value ? null : languageNotifier.value;
 bool get isEnglish => languageNotifier.value == 'en';
 bool get isGreek => languageNotifier.value == 'el';
 
@@ -91,13 +97,22 @@ Future<void> initLanguage() async {
   final saved = prefs.getString(LANGUAGE_PREF_KEY);
   if (saved == 'en' || saved == 'tr' || saved == 'el') {
     languageNotifier.value = saved!;
+  } else {
+    languageNotifier.value = 'en';
   }
+  final savedShowOrig = prefs.getBool(SHOW_ORIGINAL_PREF_KEY) ?? false;
+  showOriginalNotifier.value = savedShowOrig;
+  overviewTranslateLanguageNotifier.value =
+      savedShowOrig ? null : languageNotifier.value;
+
   final savedSourceLang = prefs.getString(SOURCE_LANGUAGE_PREF_KEY);
   if (savedSourceLang == 'all' ||
       savedSourceLang == 'tr' ||
       savedSourceLang == 'el' ||
       savedSourceLang == 'en') {
     sourceLanguageNotifier.value = savedSourceLang!;
+  } else {
+    sourceLanguageNotifier.value = 'all';
   }
   final savedHidden = prefs.getStringList(HIDDEN_FEEDS_PREF_KEY);
   if (savedHidden != null) {
@@ -117,10 +132,25 @@ Future<void> dismissInstallBanner() async {
 }
 
 Future<void> setLanguage(String lang) async {
+  if (lang == 'original') {
+    await setShowOriginal(true);
+    return;
+  }
   if (lang != 'tr' && lang != 'en' && lang != 'el') return;
   languageNotifier.value = lang;
+  showOriginalNotifier.value = false;
+  overviewTranslateLanguageNotifier.value = lang;
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(LANGUAGE_PREF_KEY, lang);
+  await prefs.setBool(SHOW_ORIGINAL_PREF_KEY, false);
+}
+
+Future<void> setShowOriginal(bool showOriginal) async {
+  showOriginalNotifier.value = showOriginal;
+  overviewTranslateLanguageNotifier.value =
+      showOriginal ? null : languageNotifier.value;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(SHOW_ORIGINAL_PREF_KEY, showOriginal);
 }
 
 Future<void> setSourceLanguage(String lang) async {
@@ -341,8 +371,11 @@ String topicShortLabelFor(String topicCode) {
 
 void setOverviewTranslateLanguage(String? lang) {
   if (lang == null || lang == 'original' || lang.trim().isEmpty) {
+    showOriginalNotifier.value = true;
     overviewTranslateLanguageNotifier.value = null;
   } else if (lang == 'el' || lang == 'tr' || lang == 'en') {
+    languageNotifier.value = lang;
+    showOriginalNotifier.value = false;
     overviewTranslateLanguageNotifier.value = lang;
   }
 }
@@ -461,11 +494,11 @@ List<String> targetTranslationLanguagesFor(String sourceLang) {
 String languageLabelFor(String langCode) {
   switch (langCode.toLowerCase()) {
     case 'tr':
-      return SOURCE_FILTER_TR;
+      return 'Türkçe';
     case 'el':
-      return SOURCE_FILTER_EL;
+      return 'Ελληνικά';
     case 'en':
-      return SOURCE_FILTER_EN;
+      return 'English';
     default:
       return langCode.toUpperCase();
   }
@@ -490,15 +523,48 @@ String get SOURCE_BADGE_LABEL => _trElEn("Kaynak", "Πηγή", "Source");
 String get TRANSLATED_BADGE_LABEL =>
     _trElEn("Çeviri", "Μετάφραση", "Translated");
 String get TRANSLATE_TO_LABEL => READ_IN_LABEL;
-String get SOURCE_FILTER_ALL => _trElEn("Tümü", "Όλα", "All");
+String get SOURCE_FILTER_ALL => _trElEn(
+      "Tüm Kaynaklar",
+      "Όλες οι Πηγές",
+      "All Sources",
+    );
 String get ALL_NEWSPAPERS => _trElEn(
       "Tüm Gazeteler",
       "Όλες οι Εφημερίδες",
       "All Newspapers",
     );
-String get SOURCE_FILTER_TR => "Türkçe";
-String get SOURCE_FILTER_EL => "Ελληνικά";
-String get SOURCE_FILTER_EN => "English";
+String get SOURCE_FILTER_TR => _trElEn("Türkçe", "Τουρκικά", "Turkish");
+String get SOURCE_FILTER_EL => _trElEn("Yunanca", "Ελληνικά", "Greek");
+String get SOURCE_FILTER_EN => _trElEn("İngilizce", "Αγγλικά", "English");
+
+String sourceFilterTooltipFor(String code) {
+  switch (code.trim().toLowerCase()) {
+    case 'el':
+      return _trElEn(
+        "Kıbrıs Rum gazeteleri",
+        "Ελληνοκυπριακές εφημερίδες",
+        "Greek Cypriot newspapers",
+      );
+    case 'tr':
+      return _trElEn(
+        "Kıbrıs Türk gazeteleri",
+        "Τουρκοκυπριακές εφημερίδες",
+        "Turkish Cypriot newspapers",
+      );
+    case 'en':
+      return _trElEn(
+        "Kıbrıs'taki İngilizce gazeteler",
+        "Αγγλόφωνες εφημερίδες στην Κύπρο",
+        "English newspapers in Cyprus",
+      );
+    default:
+      return _trElEn(
+        "Tüm Kıbrıs Rum ve Türk gazeteleri",
+        "Όλες οι ελληνοκυπριακές και τουρκοκυπριακές εφημερίδες",
+        "All Greek and Turkish Cypriot newspapers",
+      );
+  }
+}
 String get SOURCE_LANGUAGE_TITLE => _trElEn(
       "Haber Kaynağı Dili",
       "Γλώσσα Πηγών Ειδήσεων",
@@ -784,9 +850,14 @@ String get REORDER_HINT => _trElEn(
 String get SHARE => _trElEn("Paylaş", "Κοινοποίηση", "Share");
 String get TRANSLATE => READ_IN_BUTTON;
 String get SHOW_ORIGINAL => _trElEn(
-      "Orijinal Kaynak",
-      "Πρωτότυπη Πηγή",
-      "Original Source",
+      "Orijinal Dilde Göster",
+      "Προβολή στο Πρωτότυπο",
+      "Show Original",
+    );
+String get SHOW_ORIGINAL_SHORT => _trElEn(
+      "Orijinal",
+      "Πρωτότυπο",
+      "Original",
     );
 String get TRANSLATING =>
     _trElEn("Çevriliyor...", "Μετάφραση...", "Translating...");

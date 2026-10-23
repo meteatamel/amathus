@@ -1,6 +1,5 @@
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
-import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/podcast_audio_player.dart';
 import 'package:flutter/material.dart';
 
@@ -459,11 +458,6 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    _PodcastLanguageDropdown(
-                      selectedLanguage: lang,
-                      onSelected: _controller.selectLanguage,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -548,105 +542,6 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
           ),
         );
       },
-    );
-  }
-}
-
-class _PodcastLanguageDropdown extends StatelessWidget {
-  final String selectedLanguage;
-  final ValueChanged<String> onSelected;
-
-  const _PodcastLanguageDropdown({
-    required this.selectedLanguage,
-    required this.onSelected,
-  });
-
-  static const List<(String, String)> _languages = [
-    ('el', 'Ελληνικά'),
-    ('tr', 'Türkçe'),
-    ('en', 'English'),
-  ];
-
-  String _labelFor(String code) {
-    for (final entry in _languages) {
-      if (entry.$1 == code) return entry.$2;
-    }
-    return 'English';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      tooltip: Constants.READ_IN_BUTTON,
-      position: PopupMenuPosition.under,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      onSelected: onSelected,
-      itemBuilder: (context) => [
-        for (final entry in _languages)
-          PopupMenuItem<String>(
-            value: entry.$1,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FlagIcon(languageCode: entry.$1, width: 20, height: 14),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    entry.$2,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selectedLanguage == entry.$1
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                ),
-                if (selectedLanguage == entry.$1) ...[
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.check_rounded,
-                    size: 18,
-                    color: Color(0xFF1D4ED8),
-                  ),
-                ],
-              ],
-            ),
-          ),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color(0xFFFCD34D),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FlagIcon(languageCode: selectedLanguage, width: 18, height: 13),
-            const SizedBox(width: 6),
-            Text(
-              _labelFor(selectedLanguage),
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F2942),
-              ),
-            ),
-            const SizedBox(width: 3),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 16,
-              color: Color(0xFF0F2942),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

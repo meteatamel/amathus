@@ -3,8 +3,8 @@ import 'package:amathus/controllers/feeds_storage.dart';
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
-import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 
@@ -13,13 +13,26 @@ class SettingsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(Constants.SETTINGS),
-      ),
-      drawer: const AppDrawer(),
-      body: const _ReorderableFeedList(),
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.languageNotifier,
+      builder: (context, _, __) {
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: Text(Constants.SETTINGS),
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(
+                  child: AppLanguageButton(lightOnDark: true),
+                ),
+              ),
+            ],
+          ),
+          drawer: const AppDrawer(),
+          body: const _ReorderableFeedList(),
+        );
+      },
     );
   }
 }
@@ -61,9 +74,12 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
       return const CenteredProgressIndicator();
     }
 
-    return ValueListenableBuilder<Set<String>>(
-      valueListenable: Constants.hiddenFeedsNotifier,
-      builder: (context, hiddenIds, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.hiddenFeedsNotifier,
+        Constants.languageNotifier,
+      ]),
+      builder: (context, _) {
         final visibleCount =
             items.where((f) => Constants.isFeedVisible(f.id)).length;
 
@@ -79,184 +95,6 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Card(
-                      elevation: 0,
-                      margin: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1,
-                        ),
-                      ),
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  '🌐',
-                                  style: TextStyle(fontSize: 19, height: 1.0),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  Constants.LANGUAGE_TITLE,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              Constants.LANGUAGE_SUBTITLE,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                color: Colors.blueGrey.shade600,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              child: SegmentedButton<String>(
-                                segments: const [
-                                  ButtonSegment<String>(
-                                    value: 'el',
-                                    label: Text('Ελληνικά'),
-                                    icon: FlagIcon(languageCode: 'el'),
-                                  ),
-                                  ButtonSegment<String>(
-                                    value: 'tr',
-                                    label: Text('Türkçe'),
-                                    icon: FlagIcon(languageCode: 'tr'),
-                                  ),
-                                  ButtonSegment<String>(
-                                    value: 'en',
-                                    label: Text('English'),
-                                    icon: FlagIcon(languageCode: 'en'),
-                                  ),
-                                ],
-                                selected: {Constants.currentLanguage},
-                                onSelectionChanged: (selection) {
-                                  if (selection.isNotEmpty) {
-                                    Constants.setLanguage(selection.first);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 0,
-                      margin: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1,
-                        ),
-                      ),
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: ValueListenableBuilder<String>(
-                          valueListenable: Constants.sourceLanguageNotifier,
-                          builder: (context, selectedSourceLang, _) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      '🌍',
-                                      style: TextStyle(
-                                        fontSize: 19,
-                                        height: 1.0,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      Constants.SOURCE_LANGUAGE_TITLE,
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  Constants.SOURCE_LANGUAGE_SUBTITLE,
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    color: Colors.blueGrey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: SegmentedButton<String>(
-                                    segments: [
-                                      ButtonSegment<String>(
-                                        value: 'all',
-                                        label:
-                                            Text(Constants.SOURCE_FILTER_ALL),
-                                        icon: const Text(
-                                          '🌍',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            height: 1.0,
-                                          ),
-                                        ),
-                                      ),
-                                      ButtonSegment<String>(
-                                        value: 'el',
-                                        label: Text(Constants.SOURCE_FILTER_EL),
-                                        icon: const FlagIcon(
-                                          languageCode: 'el',
-                                        ),
-                                      ),
-                                      ButtonSegment<String>(
-                                        value: 'tr',
-                                        label: Text(Constants.SOURCE_FILTER_TR),
-                                        icon: const FlagIcon(
-                                          languageCode: 'tr',
-                                        ),
-                                      ),
-                                      ButtonSegment<String>(
-                                        value: 'en',
-                                        label: Text(Constants.SOURCE_FILTER_EN),
-                                        icon: const FlagIcon(
-                                          languageCode: 'en',
-                                        ),
-                                      ),
-                                    ],
-                                    selected: {selectedSourceLang},
-                                    onSelectionChanged: (selection) {
-                                      if (selection.isNotEmpty) {
-                                        Constants.setSourceLanguage(
-                                          selection.first,
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [

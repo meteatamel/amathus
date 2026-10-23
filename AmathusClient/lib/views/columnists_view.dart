@@ -162,9 +162,13 @@ class _ColumnistsViewState extends State<ColumnistsView> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: Constants.columnistsViewModeNotifier,
-      builder: (context, mode, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.columnistsViewModeNotifier,
+        Constants.languageNotifier,
+      ]),
+      builder: (context, _) {
+        final mode = Constants.columnistsViewModeNotifier.value;
         final isTopMode = mode != 'latest';
         return Scaffold(
           appBar: AppBar(
@@ -302,6 +306,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.languageNotifier,
+        Constants.showOriginalNotifier,
         Constants.overviewTranslateLanguageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
