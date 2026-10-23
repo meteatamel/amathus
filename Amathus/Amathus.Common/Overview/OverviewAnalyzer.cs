@@ -34,7 +34,7 @@ namespace Amathus.Common.Overview
     {
         private static readonly HttpClient Http = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(45)
+            Timeout = TimeSpan.FromSeconds(90)
         };
 
         private static readonly HttpClient TranslateHttp = new HttpClient
@@ -95,6 +95,24 @@ namespace Amathus.Common.Overview
 
             [JsonProperty("stories")]
             public List<GeminiStoryItem> Stories { get; set; }
+
+            [JsonProperty("podcastTurns")]
+            public List<GeminiPodcastTurnItem> PodcastTurns { get; set; }
+        }
+
+        private class GeminiPodcastTurnItem
+        {
+            [JsonProperty("speaker")]
+            public string Speaker { get; set; }
+
+            [JsonProperty("textEn")]
+            public string TextEn { get; set; }
+
+            [JsonProperty("textTr")]
+            public string TextTr { get; set; }
+
+            [JsonProperty("textEl")]
+            public string TextEl { get; set; }
         }
 
         private class GeminiStoryItem
@@ -329,7 +347,39 @@ namespace Amathus.Common.Overview
                 return null;
             }
 
-            return new NewsOverview
+            var currentEdition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
+            var podcastTurns = new List<PodcastDialogueTurn>();
+            if (parsed.PodcastTurns != null && parsed.PodcastTurns.Count >= 6)
+            {
+                int idx = 0;
+                foreach (var pt in parsed.PodcastTurns)
+                {
+                    if (string.IsNullOrWhiteSpace(pt?.TextEn) &&
+                        string.IsNullOrWhiteSpace(pt?.TextTr) &&
+                        string.IsNullOrWhiteSpace(pt?.TextEl))
+                    {
+                        continue;
+                    }
+
+                    var spk = string.Equals(pt.Speaker?.Trim(), "B", StringComparison.OrdinalIgnoreCase)
+                        ? "B"
+                        : (idx % 2 == 0 ? "A" : "B");
+
+                    podcastTurns.Add(new PodcastDialogueTurn
+                    {
+                        Index = idx++,
+                        Speaker = spk,
+                        SpeakerNameEl = string.Empty,
+                        SpeakerNameTr = string.Empty,
+                        SpeakerNameEn = string.Empty,
+                        TextEn = NullIfEmpty(pt.TextEn) ?? string.Empty,
+                        TextTr = NullIfEmpty(pt.TextTr) ?? NullIfEmpty(pt.TextEn) ?? string.Empty,
+                        TextEl = NullIfEmpty(pt.TextEl) ?? NullIfEmpty(pt.TextEn) ?? string.Empty
+                    });
+                }
+            }
+
+            var overview = new NewsOverview
             {
                 Id = "latest",
                 GeneratedAt = DateTime.UtcNow,
@@ -338,8 +388,13 @@ namespace Amathus.Common.Overview
                 SummaryEn = NullIfEmpty(parsed.SummaryEn) ?? "Key stories synthesized across Turkish, Greek, and English newspapers in Cyprus.",
                 SummaryTr = NullIfEmpty(parsed.SummaryTr) ?? "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden derlenen öne çıkan haberler.",
                 SummaryEl = NullIfEmpty(parsed.SummaryEl) ?? "Οι σημαντικότερες ειδήσεις από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
-                Stories = stories
+                Edition = currentEdition,
+                Stories = stories,
+                PodcastTurns = podcastTurns
             };
+
+            PodcastScriptBuilder.EnsurePodcastPopulated(overview, currentEdition);
+            return overview;
         }
 
         private async Task<string> CallGeminiEndpointAsync(string url, string bearerToken, string prompt)
@@ -385,16 +440,42 @@ namespace Amathus.Common.Overview
 
         private static string BuildGeminiPrompt(List<CandidateArticle> candidates, int totalFeeds)
         {
+            var edition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
+            var (editionEn, editionTr, editionEl) = edition switch
+            {
+                "morning" => (
+                    "Cyprus Bicommunal News - Morning Top Stories",
+                    "Kıbrıs İki Toplumlu Haberler - Sabah Öne Çıkan Haberler",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Πρωινές Κύριες Ειδήσεις"
+                ),
+                "midday" => (
+                    "Cyprus Bicommunal News - Mid-Day Top Stories",
+                    "Kıbrıs İki Toplumlu Haberler - Öğle Öne Çıkan Haberler",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημεριανές Κύριες Ειδήσεις"
+                ),
+                _ => (
+                    "Cyprus Bicommunal News - Evening Top Stories",
+                    "Kıbrıs İki Toplumlu Haberler - Akşam Öne Çıkan Haberler",
+                    "Δικοινοτικές Ειδήσεις Κύπρου - Βραδινές Κύριες Ειδήσεις"
+                )
+            };
+
             var sb = new StringBuilder();
-            sb.AppendLine("You are an expert bicommunal Cyprus news editor fluent in English, Turkish, and Greek.");
-            sb.AppendLine($"Below are {candidates.Count} recent news articles from {totalFeeds} Turkish, Greek, and English newspapers across Cyprus.");
-            sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (the number of stories can vary naturally depending on the day's news, typically between 8 and 18 stories).");
+            sb.AppendLine("You are an expert bicommunal Cyprus news editor and broadcast podcast producer fluent in English, Turkish, and Greek.");
+            sb.AppendLine($"Below are {candidates.Count} recent news articles from Turkish, Greek, and English newspapers across Cyprus.");
+            sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (typically between 10 and 16 stories).");
             sb.AppendLine("Prioritize stories covered by multiple newspapers (especially across different language communities in Cyprus) and major island-wide developments, ensuring a balanced selection across Turkish, Greek, and English sources.");
-            sb.AppendLine("For each top story:");
+            sb.AppendLine("1. For each top story:");
             sb.AppendLine("- Write a clear, journalistic headline in English (titleEn), Turkish (titleTr), and Greek (titleEl).");
             sb.AppendLine("- Write a rich 2-4 sentence narrative synthesis in English (narrativeEn), Turkish (narrativeTr), and Greek (narrativeEl) explaining what happened and how the newspapers cover it.");
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles from the list below that cover or relate to this story (include at least 1 and up to 6 matching articles from different newspapers).");
-            sb.AppendLine("Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl).");
+            sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl).");
+            sb.AppendLine("3. Also generate a ~5-minute two-host broadcast news podcast script (podcastTurns, 18 to 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
+            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\") and give the first half of a quick headline rundown before discussing the stories in detail.");
+            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline rundown and transition into examining the top stories one by one.");
+            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per story across the top 8 stories): the first speaker introduces the story and key facts, and the second speaker adds natural journalistic context, analysis, and cross-community perspective without repeating the first speaker.");
+            sb.AppendLine("- The final 2 turns (\"A\" then \"B\") wrap up the briefing and sign off.");
+            sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two hosts. Do NOT mention the number of stories, the number of newspapers/news sources, or the number of articles analyzed.");
             sb.AppendLine("Return strictly valid JSON with schema:");
             sb.AppendLine(@"{
   ""summaryEn"": ""..."",
@@ -409,6 +490,14 @@ namespace Amathus.Common.Overview
       ""narrativeTr"": ""..."",
       ""narrativeEl"": ""..."",
       ""articleIndices"": [0, 5, 12]
+    }
+  ],
+  ""podcastTurns"": [
+    {
+      ""speaker"": ""A"",
+      ""textEn"": ""..."",
+      ""textTr"": ""..."",
+      ""textEl"": ""...""
     }
   ]
 }");

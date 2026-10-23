@@ -54,7 +54,10 @@ namespace Amathus.Common.Overview
 
             var targetEdition = ResolveEdition(DateTime.UtcNow, requestedEdition);
             overview.Edition = targetEdition;
-            overview.PodcastTurns = BuildTurns(overview, targetEdition);
+            if (overview.PodcastTurns == null || overview.PodcastTurns.Count < 6)
+            {
+                overview.PodcastTurns = BuildTurns(overview, targetEdition);
+            }
         }
 
         public static List<PodcastDialogueTurn> BuildTurns(NewsOverview overview, string edition = null)
