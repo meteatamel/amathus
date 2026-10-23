@@ -9,6 +9,7 @@ import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeditem_list_tile_wide.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
+import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
@@ -219,6 +220,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           drawer: const AppDrawer(),
           body: Column(
             children: [
+              const PwaInstallBanner(),
               SourceLanguageFilterBar(
                 showNewspaperSelector: !isTopMode,
                 allowedNewspaperIdsListenable:

@@ -1,4 +1,5 @@
 import 'package:amathus/views/columnists_view.dart';
+import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
@@ -127,6 +128,27 @@ class AppDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const ContactView()),
+                    );
+                  },
+                ),
+                ListenableBuilder(
+                  listenable: Listenable.merge([
+                    PwaInstallController.instance,
+                    Constants.languageNotifier,
+                  ]),
+                  builder: (context, _) {
+                    if (!PwaInstallController.instance.canShowInstallOption) {
+                      return const SizedBox.shrink();
+                    }
+                    return _buildDrawerItem(
+                      context,
+                      emoji: '📲',
+                      title: Constants.INSTALL_APP_TITLE,
+                      onTap: () {
+                        final navContext = Navigator.of(context).context;
+                        Navigator.pop(context);
+                        PwaInstallController.instance.triggerInstall(navContext);
+                      },
                     );
                   },
                 ),

@@ -10,6 +10,7 @@ import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
+import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/top_stories_podcast_card.dart';
@@ -241,6 +242,7 @@ class _OverviewViewState extends State<OverviewView> {
           drawer: const AppDrawer(),
           body: Column(
             children: [
+              const PwaInstallBanner(),
               SourceLanguageFilterBar(
                 showNewspaperSelector: !isTopMode,
               ),

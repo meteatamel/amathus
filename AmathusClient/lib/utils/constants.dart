@@ -26,6 +26,7 @@ const String COLUMNISTS_OVERVIEW_STORAGE_KEY = "columnists_overview_v1.json";
 const String LANGUAGE_PREF_KEY = "app_language";
 const String SOURCE_LANGUAGE_PREF_KEY = "source_language";
 const String HIDDEN_FEEDS_PREF_KEY = "hidden_feeds";
+const String INSTALL_BANNER_DISMISSED_PREF_KEY = "install_banner_dismissed_v1";
 
 // contact
 const String APP_EMAIL = "atameldev@gmail.com";
@@ -64,6 +65,10 @@ final ValueNotifier<String> columnistsViewModeNotifier =
 final ValueNotifier<Set<String>> hiddenFeedsNotifier =
     ValueNotifier<Set<String>>(<String>{});
 
+// Whether the user dismissed the PWA install banner
+final ValueNotifier<bool> installBannerDismissedNotifier =
+    ValueNotifier<bool>(false);
+
 String get currentLanguage => languageNotifier.value;
 bool get isEnglish => languageNotifier.value == 'en';
 bool get isGreek => languageNotifier.value == 'el';
@@ -101,6 +106,14 @@ Future<void> initLanguage() async {
   } else {
     hiddenFeedsNotifier.value = <String>{};
   }
+  installBannerDismissedNotifier.value =
+      prefs.getBool(INSTALL_BANNER_DISMISSED_PREF_KEY) ?? false;
+}
+
+Future<void> dismissInstallBanner() async {
+  installBannerDismissedNotifier.value = true;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(INSTALL_BANNER_DISMISSED_PREF_KEY, true);
 }
 
 Future<void> setLanguage(String lang) async {
@@ -696,6 +709,56 @@ String get CONTACT => _trElEn(
       "İletişim & Geri Bildirim",
       "Επικοινωνία & Σχόλια",
       "Contact & Feedback",
+    );
+String get INSTALL_APP_TITLE => _trElEn(
+      "Uygulamayı Yükle",
+      "Εγκατάσταση Εφαρμογής",
+      "Install App",
+    );
+String get INSTALL_APP_BANNER_TITLE => _trElEn(
+      "Kıbrıs İki Toplumlu Haberler'i Yükleyin",
+      "Εγκαταστήστε τις Δικοινοτικές Ειδήσεις Κύπρου",
+      "Install Cyprus Bicommunal News",
+    );
+String get INSTALL_APP_BANNER_SUBTITLE => _trElEn(
+      "Tek dokunuşla hızlı ve tam ekran erişim için ana ekranınıza ekleyin",
+      "Προσθέστε στην αρχική οθόνη για γρήγορη πρόσβαση σε πλήρη οθόνη",
+      "Add to your home screen or desktop for quick, full-screen access",
+    );
+String get INSTALL_APP_BUTTON => _trElEn(
+      "Yükle",
+      "Εγκατάσταση",
+      "Install",
+    );
+String get INSTALL_IOS_STEP_1 => _trElEn(
+      "Tarayıcı araç çubuğundaki Paylaş (⬆️) düğmesine dokunun.",
+      "Πατήστε το κουμπί Κοινοποίηση (⬆️) στη γραμμή εργαλείων του Safari.",
+      "Tap the Share (⬆️) button in your browser toolbar.",
+    );
+String get INSTALL_IOS_STEP_2 => _trElEn(
+      "Aşağı kaydırıp \"Ana Ekrana Ekle\" (➕) seçeneğine dokunun.",
+      "Κυλίστε προς τα κάτω και επιλέξτε «Προσθήκη στην οθόνη Αφετηρίας» (➕).",
+      "Scroll down and tap \"Add to Home Screen\" (➕).",
+    );
+String get INSTALL_IOS_STEP_3 => _trElEn(
+      "Sağ üst köşedeki \"Ekle\" düğmesine dokunun.",
+      "Πατήστε «Προσθήκη» στην επάνω δεξιά γωνία.",
+      "Tap \"Add\" in the top-right corner.",
+    );
+String get INSTALL_BROWSER_STEP_1 => _trElEn(
+      "Adres çubuğundaki Yükle simgesine (📲) veya tarayıcı menüsüne (⋮) tıklayın.",
+      "Κάντε κλικ στο εικονίδιο εγκατάστασης (📲) στη γραμμή διευθύνσεων ή στο μενού (⋮).",
+      "Click the Install icon (📲) in the address bar or open the browser menu (⋮).",
+    );
+String get INSTALL_BROWSER_STEP_2 => _trElEn(
+      "\"Uygulamayı Yükle\" veya \"Ana Ekrana / Dock'a Ekle\" seçeneğini seçin.",
+      "Επιλέξτε «Εγκατάσταση εφαρμογής» ή «Προσθήκη στην αρχική οθόνη / Dock».",
+      "Select \"Install App\" or \"Add to Home Screen / Dock\".",
+    );
+String get GOT_IT_BUTTON => _trElEn(
+      "Anladım",
+      "Εντάξει",
+      "Got it",
     );
 
 // settings_view

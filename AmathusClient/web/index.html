@@ -21,11 +21,85 @@
 </head>
 <body>
   <script>
+    window._deferredPwaPrompt = null;
+    window._isPwaInstalled = false;
+
+    function detectPlatformHint() {
+      const ua = (window.navigator && window.navigator.userAgent) || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+        (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+      if (isIOS) return 'ios';
+      const isSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
+      if (isSafari) return 'safari';
+      return 'browser';
+    }
+
+    function detectIsStandalone() {
+      if (window._isPwaInstalled) return true;
+      const mq = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      const iosStandalone = window.navigator && window.navigator.standalone === true;
+      return Boolean(mq || iosStandalone);
+    }
+
+    function syncPwaDataset() {
+      const root = document.documentElement;
+      if (!root) return;
+      root.dataset.pwaStandalone = detectIsStandalone() ? 'true' : 'false';
+      root.dataset.pwaHasPrompt = window._deferredPwaPrompt ? 'true' : 'false';
+      root.dataset.pwaPlatform = detectPlatformHint();
+    }
+
+    syncPwaDataset();
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window._deferredPwaPrompt = e;
+      syncPwaDataset();
+      window.dispatchEvent(new Event('pwa-install-change'));
+    });
+
+    window.addEventListener('appinstalled', function() {
+      window._deferredPwaPrompt = null;
+      window._isPwaInstalled = true;
+      syncPwaDataset();
+      window.dispatchEvent(new Event('pwa-install-change'));
+    });
+
+    window.addEventListener('amathus-trigger-pwa-install', async function() {
+      const root = document.documentElement;
+      const promptEvent = window._deferredPwaPrompt;
+      if (!promptEvent) {
+        if (root) root.dataset.pwaLastOutcome = 'unavailable';
+        window.dispatchEvent(new Event('amathus-pwa-prompt-done'));
+        return;
+      }
+      try {
+        promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          window._deferredPwaPrompt = null;
+          window._isPwaInstalled = true;
+          syncPwaDataset();
+          if (root) root.dataset.pwaLastOutcome = 'accepted';
+        } else {
+          if (root) root.dataset.pwaLastOutcome = 'dismissed';
+        }
+      } catch (_) {
+        if (root) root.dataset.pwaLastOutcome = 'unavailable';
+      }
+      window.dispatchEvent(new Event('pwa-install-change'));
+      window.dispatchEvent(new Event('amathus-pwa-prompt-done'));
+    });
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for (let registration of registrations) {
-          registration.unregister();
+          const scriptUrl = (registration.active && registration.active.scriptURL) || '';
+          if (!scriptUrl.endsWith('pwa_sw.js')) {
+            registration.unregister();
+          }
         }
+        navigator.serviceWorker.register('pwa_sw.js').catch(function() {});
       });
     }
     if ('caches' in window) {
