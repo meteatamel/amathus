@@ -45,7 +45,7 @@ void main() {
     expect(find.text('Öne Çıkan Haberler'), findsOneWidget);
     expect(find.text('Son Haberler'), findsOneWidget);
     expect(find.text('Köşe Yazarları'), findsOneWidget);
-    expect(find.text('Tümü'), findsWidgets);
+    expect(find.text('Tüm Konular'), findsWidgets);
 
     // Switch to Greek
     await Constants.setLanguage('el');
@@ -56,7 +56,7 @@ void main() {
     expect(find.text('Κυριότερες Ειδήσεις'), findsOneWidget);
     expect(find.text('Τελευταία Νέα'), findsOneWidget);
     expect(find.text('Αρθρογράφοι'), findsOneWidget);
-    expect(find.text('Όλα'), findsWidgets);
+    expect(find.text('Όλα τα Θέματα'), findsWidgets);
 
     // Switch to English
     await Constants.setLanguage('en');
@@ -67,7 +67,7 @@ void main() {
     expect(find.text('Top Stories'), findsOneWidget);
     expect(find.text('Latest News'), findsOneWidget);
     expect(find.text('Columnists'), findsOneWidget);
-    expect(find.text('All'), findsWidgets);
+    expect(find.text('All Topics'), findsWidgets);
   });
 
   testWidgets(
@@ -196,6 +196,7 @@ void main() {
 
     // Default language is 'en', so story is auto-translated to English
     expect(find.text('New Crossing Point Discussions Advance'), findsOneWidget);
+    expect(find.text('Read from:'), findsWidgets);
     expect(find.text('English'), findsWidgets);
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.byType(Slider), findsOneWidget);
@@ -303,8 +304,17 @@ void main() {
     expect(find.byType(AppLanguageButton), findsOneWidget);
     expect(find.byType(ShareIconButton), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
-    expect(find.text('English'), findsOneWidget);
+    expect(find.text('Read original article'), findsOneWidget);
     expect(find.textContaining('Serhat İncirli • Yenidüzen'), findsOneWidget);
+
+    // Closed AppLanguageButton shows flag only (not 'English' text until dropdown opened)
+    expect(find.text('English'), findsNothing);
+    await tester.tap(find.byType(AppLanguageButton));
+    await tester.pumpAndSettle();
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('Türkçe'), findsOneWidget);
+    expect(find.text('Ελληνικά'), findsOneWidget);
+    expect(find.text('Show Original'), findsNothing);
   });
 
   testWidgets(

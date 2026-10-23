@@ -6,11 +6,13 @@ import 'package:share_plus/share_plus.dart';
 class ShareIconButton extends StatelessWidget {
   final FeedItem item;
   final bool showLabel;
+  final bool compact;
 
   const ShareIconButton({
     super.key,
     required this.item,
     this.showLabel = false,
+    this.compact = false,
   });
 
   @override
@@ -58,10 +60,14 @@ class ShareIconButton extends StatelessWidget {
 
     return IconButton(
       tooltip: Constants.SHARE,
-      icon: const Icon(
+      visualDensity: compact ? VisualDensity.compact : null,
+      padding: compact ? const EdgeInsets.all(4) : null,
+      constraints:
+          compact ? const BoxConstraints(minWidth: 30, minHeight: 30) : null,
+      icon: Icon(
         Icons.share_outlined,
-        size: 20,
-        color: Color(0xFF2563EB),
+        size: compact ? 18 : 20,
+        color: const Color(0xFF2563EB),
       ),
       onPressed: () async =>
           await _socialShare(context, item.title, item.url ?? ''),

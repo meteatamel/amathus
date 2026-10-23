@@ -63,10 +63,46 @@ class FeedItemListTile extends StatelessWidget {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 10, 8),
+              padding: const EdgeInsets.fromLTRB(14, 10, 10, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  ValueListenableBuilder<bool>(
+                    valueListenable:
+                        TranslateController.loadingNotifier(item),
+                    builder: (context, isLoading, _) {
+                      if (isLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF0F2942),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      if (activeLang == null || activeLang == sourceLang) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: SourceAndTranslationBadges(
+                            sourceLang: sourceLang,
+                            activeTranslationLang: activeLang,
+                            compact: true,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -167,37 +203,7 @@ class FeedItemListTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      ValueListenableBuilder<bool>(
-                        valueListenable:
-                            TranslateController.loadingNotifier(item),
-                        builder: (context, isLoading, _) {
-                          if (isLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF0F2942),
-                                ),
-                              ),
-                            );
-                          }
-                          if (activeLang == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: SourceAndTranslationBadges(
-                              sourceLang: sourceLang,
-                              activeTranslationLang: activeLang,
-                              compact: true,
-                            ),
-                          );
-                        },
-                      ),
-                      ShareIconButton(item: item),
+                      ShareIconButton(item: item, compact: true),
                     ],
                   ),
                 ],

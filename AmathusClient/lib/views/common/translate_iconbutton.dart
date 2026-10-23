@@ -75,13 +75,11 @@ class AppLanguageButton extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.languageNotifier,
-        Constants.showOriginalNotifier,
         Constants.overviewTranslateLanguageNotifier,
         if (loadingListenable != null) loadingListenable!,
       ]),
       builder: (context, _) {
         final currentLang = Constants.currentLanguage;
-        final showOriginal = Constants.showOriginalNotifier.value;
         final isLoading = loadingListenable?.value ?? false;
 
         return PopupMenuButton<String>(
@@ -95,11 +93,7 @@ class AppLanguageButton extends StatelessWidget {
               await onSelectedOverride!(selected);
               return;
             }
-            if (selected == 'original') {
-              await Constants.setShowOriginal(!showOriginal);
-            } else {
-              await Constants.setLanguage(selected);
-            }
+            await Constants.setLanguage(selected);
           },
           itemBuilder: (context) => [
             for (final entry in _languages)
@@ -115,14 +109,14 @@ class AppLanguageButton extends StatelessWidget {
                         entry.$2,
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: (!showOriginal && currentLang == entry.$1)
+                          fontWeight: currentLang == entry.$1
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: const Color(0xFF0F172A),
                         ),
                       ),
                     ),
-                    if (!showOriginal && currentLang == entry.$1) ...[
+                    if (currentLang == entry.$1) ...[
                       const SizedBox(width: 8),
                       const Icon(
                         Icons.check_rounded,
@@ -133,58 +127,21 @@ class AppLanguageButton extends StatelessWidget {
                   ],
                 ),
               ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: 'original',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    '🔄',
-                    style: TextStyle(fontSize: 15, height: 1.0),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      Constants.SHOW_ORIGINAL,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight:
-                            showOriginal ? FontWeight.w700 : FontWeight.w500,
-                        color: const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ),
-                  if (showOriginal) ...[
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.check_rounded,
-                      size: 18,
-                      color: Color(0xFF1D4ED8),
-                    ),
-                  ],
-                ],
-              ),
-            ),
           ],
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 10,
+              horizontal: 9,
               vertical: 6,
             ),
             decoration: BoxDecoration(
               color: lightOnDark
                   ? Colors.white.withValues(alpha: 0.14)
-                  : (showOriginal
-                      ? const Color(0xFFF8FAFC)
-                      : const Color(0xFFEFF6FF)),
+                  : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: lightOnDark
                     ? Colors.white.withValues(alpha: 0.28)
-                    : (showOriginal
-                        ? const Color(0xFFCBD5E1)
-                        : const Color(0xFF93C5FD)),
+                    : const Color(0xFF93C5FD),
               ),
             ),
             child: Row(
@@ -196,32 +153,16 @@ class AppLanguageButton extends StatelessWidget {
                     height: 14,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: lightOnDark
-                          ? Colors.white
-                          : const Color(0xFF1D4ED8),
+                      color:
+                          lightOnDark ? Colors.white : const Color(0xFF1D4ED8),
                     ),
                   ),
                   const SizedBox(width: 6),
                 ],
                 FlagIcon(
                   languageCode: currentLang,
-                  width: 18,
-                  height: 13,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  showOriginal
-                      ? '${currentLang.toUpperCase()} • 🔄 ${Constants.SHOW_ORIGINAL_SHORT}'
-                      : Constants.languageLabelFor(currentLang),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: lightOnDark
-                        ? Colors.white
-                        : (showOriginal
-                            ? const Color(0xFF0F172A)
-                            : const Color(0xFF1D4ED8)),
-                  ),
+                  width: 22,
+                  height: 15,
                 ),
                 const SizedBox(width: 3),
                 Icon(
@@ -229,9 +170,7 @@ class AppLanguageButton extends StatelessWidget {
                   size: 16,
                   color: lightOnDark
                       ? Colors.white.withValues(alpha: 0.9)
-                      : (showOriginal
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF1D4ED8)),
+                      : const Color(0xFF1D4ED8),
                 ),
               ],
             ),
@@ -265,20 +204,6 @@ class TranslateIconButton extends StatelessWidget {
       lightOnDark: lightOnDark,
       loadingListenable: TranslateController.loadingNotifier(item),
       onSelectedOverride: (selected) async {
-        if (selected == 'original') {
-          final nextOrig = !Constants.showOriginalNotifier.value;
-          await Constants.setShowOriginal(nextOrig);
-          if (nextOrig) {
-            TranslateController.clearTranslation(item);
-          } else {
-            await TranslateController.translateItem(
-              item,
-              Constants.currentLanguage,
-              includeDetail: includeDetail,
-            );
-          }
-          return;
-        }
         await Constants.setLanguage(selected);
         if (selected == sourceLang) {
           TranslateController.clearTranslation(item);
@@ -323,19 +248,6 @@ class BulkTranslateIconButton extends StatelessWidget {
       lightOnDark: lightOnDark,
       loadingListenable: controller.loadingNotifier,
       onSelectedOverride: (selected) async {
-        if (selected == 'original') {
-          final nextOrig = !Constants.showOriginalNotifier.value;
-          await Constants.setShowOriginal(nextOrig);
-          if (nextOrig) {
-            controller.clearAll();
-          } else {
-            await controller.translateAll(
-              Constants.currentLanguage,
-              filter: itemFilter,
-            );
-          }
-          return;
-        }
         await Constants.setLanguage(selected);
         await controller.translateAll(selected, filter: itemFilter);
       },

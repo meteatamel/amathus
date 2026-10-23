@@ -463,7 +463,7 @@ class OverviewStoryCard extends StatelessWidget {
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -528,7 +528,7 @@ class OverviewStoryCard extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -537,6 +537,17 @@ class OverviewStoryCard extends StatelessWidget {
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 2),
+                        child: Text(
+                          Constants.READ_FROM_LABEL,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.blueGrey.shade700,
+                          ),
+                        ),
+                      ),
                       for (final source in sources)
                         _NewspaperStoryChip(source: source),
                       Padding(
@@ -553,17 +564,7 @@ class OverviewStoryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (activeTranslateLanguage != null &&
-                    activeTranslateLanguage != sourceLang)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: SourceAndTranslationBadges(
-                      sourceLang: sourceLang,
-                      activeTranslationLang: activeTranslateLanguage,
-                      compact: true,
-                    ),
-                  ),
-                ShareIconButton(item: shareItem),
+                ShareIconButton(item: shareItem, compact: true),
               ],
             ),
           ],
@@ -679,13 +680,6 @@ class OverviewStoryView extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          SourceAndTranslationBadges(
-                            sourceLang: sourceLang,
-                            activeTranslationLang:
-                                activeTranslateLang != sourceLang
-                                    ? activeTranslateLang
-                                    : null,
-                          ),
                           const Spacer(),
                           ShareIconButton(item: shareItem, showLabel: true),
                         ],

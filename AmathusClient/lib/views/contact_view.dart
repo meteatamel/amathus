@@ -1,5 +1,6 @@
-import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:amathus/views/common/drawer.dart';
+import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
@@ -12,13 +13,26 @@ class ContactView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(Constants.CONTACT),
-        centerTitle: true,
-      ),
-      drawer: const AppDrawer(),
-      body: const ContactForm(),
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.languageNotifier,
+      builder: (context, _, __) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(Constants.CONTACT),
+            centerTitle: true,
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(
+                  child: AppLanguageButton(lightOnDark: true),
+                ),
+              ),
+            ],
+          ),
+          drawer: const AppDrawer(),
+          body: const ContactForm(),
+        );
+      },
     );
   }
 }
@@ -51,6 +65,52 @@ class _ContactFormState extends State<ContactForm> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        '🕊️',
+                        style: TextStyle(fontSize: 20, height: 1.0),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          Constants.ABOUT_TITLE,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    Constants.ABOUT_BODY,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.55,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.94),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
             Card(
               elevation: 0,
               margin: EdgeInsets.zero,

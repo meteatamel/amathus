@@ -121,7 +121,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  emoji: '✉️',
+                  emoji: '🕊️',
                   title: Constants.CONTACT,
                   onTap: () {
                     Navigator.pop(context);
@@ -153,6 +153,54 @@ class AppDrawer extends StatelessWidget {
                   },
                 ),
               ],
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ContactView()),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Text(
+                          '🕊️',
+                          style: TextStyle(fontSize: 16, height: 1.0),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          Constants.ABOUT_BODY,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],

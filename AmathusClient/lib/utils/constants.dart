@@ -100,10 +100,8 @@ Future<void> initLanguage() async {
   } else {
     languageNotifier.value = 'en';
   }
-  final savedShowOrig = prefs.getBool(SHOW_ORIGINAL_PREF_KEY) ?? false;
-  showOriginalNotifier.value = savedShowOrig;
-  overviewTranslateLanguageNotifier.value =
-      savedShowOrig ? null : languageNotifier.value;
+  showOriginalNotifier.value = false;
+  overviewTranslateLanguageNotifier.value = languageNotifier.value;
 
   final savedSourceLang = prefs.getString(SOURCE_LANGUAGE_PREF_KEY);
   if (savedSourceLang == 'all' ||
@@ -365,7 +363,7 @@ String topicShortLabelFor(String topicCode) {
     case 'world':
       return _trElEn("Dünya", "Κόσμος", "World");
     default:
-      return _trElEn("Tümü", "Όλα", "All");
+      return _trElEn("Tüm Konular", "Όλα τα Θέματα", "All Topics");
   }
 }
 
@@ -603,6 +601,11 @@ String get HAVE_FEEDBACK => _trElEn(
       "Have feedback?",
     );
 String get TOP_STORIES_TITLE => OVERVIEW;
+String get READ_FROM_LABEL => _trElEn(
+      "Kaynağından oku:",
+      "Διαβάστε από:",
+      "Read from:",
+    );
 String get COVERED_BY => _trElEn(
       "Haberi Yapan Gazeteler",
       "Κάλυψη από Εφημερίδες",
@@ -776,9 +779,19 @@ String get NEWSPAPERS => _trElEn("Gazeteler", "Εφημερίδες", "Newspaper
 String get ALL_NEWS => NEWSPAPERS;
 String get SETTINGS => _trElEn("Ayarlar", "Ρυθμίσεις", "Settings");
 String get CONTACT => _trElEn(
-      "İletişim & Geri Bildirim",
-      "Επικοινωνία & Σχόλια",
-      "Contact & Feedback",
+      "Hakkında & İletişim",
+      "Σχετικά & Επικοινωνία",
+      "About & Contact",
+    );
+String get ABOUT_TITLE => _trElEn(
+      "Bu Uygulamayı Neden Yaptım?",
+      "Γιατί Δημιούργησα Αυτή την Εφαρμογή",
+      "Why I Built This App",
+    );
+String get ABOUT_BODY => _trElEn(
+      "Kıbrıslılar arasında birlik ve uyuma inanan bir Kıbrıslı olan Mete Atamel tarafından; insanları her iki toplumun gazetelerini okumaya teşvik ederek Kıbrıs genelinde daha iyi bir anlayışa katkıda bulunmak ümidiyle geliştirilmiştir.",
+      "Δημιουργήθηκε από τον Mete Atamel, έναν Κύπριο που πιστεύει στην ενότητα και την αρμονία μεταξύ των Κυπρίων και ελπίζει να συμβάλει στην καλύτερη αλληλοκατανόηση σε όλη την Κύπρο, ενθαρρύνοντας τους ανθρώπους να διαβάζουν εφημερίδες και από τις δύο κοινότητες.",
+      "Built by Mete Atamel, a Cypriot who believes in unity and harmony among Cypriots and hopes to contribute to better understanding across Cyprus by encouraging people to read newspapers across the divide.",
     );
 String get INSTALL_APP_TITLE => _trElEn(
       "Uygulamayı Yükle",
@@ -871,9 +884,9 @@ String get TRANSLATE_ERROR => _trElEn(
       "Translation failed",
     );
 String get MORE => _trElEn(
-      "Haberi Kaynağında Oku",
-      "Διαβάστε το πλήρες άρθρο",
-      "Read Full Article",
+      "Orijinal makaleyi oku",
+      "Διαβάστε το πρωτότυπο άρθρο",
+      "Read original article",
     );
 String get LOADING_NEWS => _trElEn(
       "Haberler yükleniyor...",

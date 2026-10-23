@@ -46,7 +46,7 @@ class FeedItemListTileWide extends StatelessWidget {
                 : rawSummary;
         final rawAuthor = (item.author ?? '').trim();
         final bottomLabel = <String>[
-          if (rawAuthor.isNotEmpty) rawAuthor,
+          if (!item.isColumnist && rawAuthor.isNotEmpty) rawAuthor,
           if (sourceTitle.isNotEmpty) sourceTitle,
           time,
         ].join(' • ');
@@ -70,10 +70,56 @@ class FeedItemListTileWide extends StatelessWidget {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: item.isColumnist
+                              ? ColumnistBadgePill(author: rawAuthor)
+                              : TopicBadgePill(
+                                  topicCode: item.effectiveTopic,
+                                ),
+                        ),
+                      ),
+                      ValueListenableBuilder<bool>(
+                        valueListenable:
+                            TranslateController.loadingNotifier(item),
+                        builder: (context, isLoading, _) {
+                          if (isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF0F2942),
+                                ),
+                              ),
+                            );
+                          }
+                          if (activeLang == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: SourceAndTranslationBadges(
+                              sourceLang: sourceLang,
+                              activeTranslationLang: activeLang,
+                              compact: true,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -81,13 +127,6 @@ class FeedItemListTileWide extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (!item.isColumnist)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: TopicBadgePill(
-                                  topicCode: item.effectiveTopic,
-                                ),
-                              ),
                             Text(
                               displayTitle,
                               maxLines: 2,
@@ -165,37 +204,7 @@ class FeedItemListTileWide extends StatelessWidget {
                           ),
                         ),
                       ),
-                      ValueListenableBuilder<bool>(
-                        valueListenable:
-                            TranslateController.loadingNotifier(item),
-                        builder: (context, isLoading, _) {
-                          if (isLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF0F2942),
-                                ),
-                              ),
-                            );
-                          }
-                          if (activeLang == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: SourceAndTranslationBadges(
-                              sourceLang: sourceLang,
-                              activeTranslationLang: activeLang,
-                              compact: true,
-                            ),
-                          );
-                        },
-                      ),
-                      ShareIconButton(item: item),
+                      ShareIconButton(item: item, compact: true),
                     ],
                   ),
                 ],

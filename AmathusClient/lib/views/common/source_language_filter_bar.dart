@@ -890,7 +890,7 @@ String topicEmojiFor(String topicCode) {
     case 'world':
       return '🌍';
     default:
-      return '🔥';
+      return '🏷️';
   }
 }
 
@@ -1000,7 +1000,7 @@ class TopicFilterChipBar extends StatelessWidget {
                             topicCode: visibleCodes[i],
                             selected: selected == visibleCodes[i],
                             count: counts != null ? counts[visibleCodes[i]] : null,
-                            showLabel: showLabels,
+                            showLabel: showLabels || visibleCodes[i] == 'all',
                             onTap: () {
                               final code = visibleCodes[i];
                               if (selected == code && code != 'all') {
@@ -1179,6 +1179,59 @@ class TopicBadgePill extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class ColumnistBadgePill extends StatelessWidget {
+  final String author;
+
+  const ColumnistBadgePill({
+    super.key,
+    required this.author,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = author.trim();
+    final label =
+        trimmed.isNotEmpty ? trimmed : Constants.COLUMNIST_BADGE_FALLBACK;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFFDE68A),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '✍️',
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

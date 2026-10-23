@@ -2,6 +2,7 @@ import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
+import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
@@ -147,10 +148,47 @@ class _FeedItemViewState extends State<FeedItemView> {
                     ),
                     color: Colors.white,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: item.isColumnist
+                                      ? ColumnistBadgePill(author: rawAuthor)
+                                      : TopicBadgePill(
+                                          topicCode: item.effectiveTopic,
+                                        ),
+                                ),
+                              ),
+                              if (isLoading)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 8),
+                                  child: SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF0F2942),
+                                    ),
+                                  ),
+                                )
+                              else if (activeLang != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: SourceAndTranslationBadges(
+                                    sourceLang: sourceLang,
+                                    activeTranslationLang: activeLang,
+                                    compact: true,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
                           Text(
                             displayTitle,
                             style: const TextStyle(
@@ -163,9 +201,7 @@ class _FeedItemViewState extends State<FeedItemView> {
                           _buildItemImage(),
                           const SizedBox(height: 16),
                           _buildItemDetail(translated),
-                          const SizedBox(height: 20),
-                          _buildMoreButton(context),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
                           const Divider(height: 1, color: Color(0xFFE2E8F0)),
                           const SizedBox(height: 8),
                           Row(
@@ -191,30 +227,11 @@ class _FeedItemViewState extends State<FeedItemView> {
                                   ),
                                 ),
                               ),
-                              if (isLoading)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Color(0xFF0F2942),
-                                    ),
-                                  ),
-                                )
-                              else if (activeLang != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 4),
-                                  child: SourceAndTranslationBadges(
-                                    sourceLang: sourceLang,
-                                    activeTranslationLang: activeLang,
-                                    compact: true,
-                                  ),
-                                ),
                               ShareIconButton(item: item),
                             ],
                           ),
+                          const SizedBox(height: 12),
+                          _buildMoreButton(context),
                         ],
                       ),
                     ),
