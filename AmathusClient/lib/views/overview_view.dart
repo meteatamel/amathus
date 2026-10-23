@@ -175,16 +175,16 @@ class _OverviewViewState extends State<OverviewView> {
                 ),
               ),
             ],
+            bottom: AppBarModeTabs(
+              modeNotifier: Constants.newsViewModeNotifier,
+              topLabel: Constants.OVERVIEW,
+              latestLabel: Constants.RECENT_NEWS,
+            ),
           ),
           drawer: const AppDrawer(),
           body: Column(
             children: [
               SourceLanguageFilterBar(
-                leadingSelector: ViewModeDropdownSelector(
-                  modeNotifier: Constants.newsViewModeNotifier,
-                  topLabel: Constants.OVERVIEW,
-                  latestLabel: Constants.RECENT_NEWS,
-                ),
                 showNewspaperSelector: !isTopMode,
               ),
               if (isTopMode && _isRefreshing)

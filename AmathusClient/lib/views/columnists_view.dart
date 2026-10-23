@@ -202,16 +202,16 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                 ),
               ),
             ],
+            bottom: AppBarModeTabs(
+              modeNotifier: Constants.columnistsViewModeNotifier,
+              topLabel: Constants.TOP_COLUMNS,
+              latestLabel: Constants.LATEST_COLUMNS,
+            ),
           ),
           drawer: const AppDrawer(),
           body: Column(
             children: [
               SourceLanguageFilterBar(
-                leadingSelector: ViewModeDropdownSelector(
-                  modeNotifier: Constants.columnistsViewModeNotifier,
-                  topLabel: Constants.TOP_COLUMNS,
-                  latestLabel: Constants.LATEST_COLUMNS,
-                ),
                 showNewspaperSelector: !isTopMode,
                 allowedNewspaperIdsListenable:
                     !isTopMode ? _columnistFeedIdsNotifier : null,

@@ -6,9 +6,130 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
-import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
+  final ValueNotifier<String> modeNotifier;
+  final String topLabel;
+  final String latestLabel;
+
+  const AppBarModeTabs({
+    super.key,
+    required this.modeNotifier,
+    required this.topLabel,
+    required this.latestLabel,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(42);
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: modeNotifier,
+      builder: (context, mode, _) {
+        final isTop = mode != 'latest';
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.14),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _AppBarModeTabButton(
+                      icon: Icons.auto_awesome_rounded,
+                      label: topLabel,
+                      selected: isTop,
+                      onTap: () => modeNotifier.value = 'top',
+                    ),
+                  ),
+                  Expanded(
+                    child: _AppBarModeTabButton(
+                      icon: Icons.schedule_rounded,
+                      label: latestLabel,
+                      selected: !isTop,
+                      onTap: () => modeNotifier.value = 'latest',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AppBarModeTabButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _AppBarModeTabButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const activeColor = Color(0xFFFBBF24);
+    final inactiveColor = Colors.white.withValues(alpha: 0.74);
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 41,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: selected ? activeColor : Colors.transparent,
+              width: 3,
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? activeColor : inactiveColor,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                  color: selected ? activeColor : inactiveColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class SourceLanguageFilterBar extends StatelessWidget {
   final Widget? leadingSelector;
@@ -18,7 +139,6 @@ class SourceLanguageFilterBar extends StatelessWidget {
   final bool showNewspaperSelector;
   final Widget? extraSelector;
   final ValueListenable<Set<String>?>? allowedNewspaperIdsListenable;
-  final bool showFeedbackLink;
 
   const SourceLanguageFilterBar({
     super.key,
@@ -29,7 +149,6 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.showNewspaperSelector = false,
     this.extraSelector,
     this.allowedNewspaperIdsListenable,
-    this.showFeedbackLink = true,
   });
 
   String _labelFor(String code) {
@@ -95,8 +214,17 @@ class SourceLanguageFilterBar extends StatelessWidget {
                           children: [
                             if (leadingSelector != null) ...[
                               leadingSelector!,
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                             ],
+                            Text(
+                              Constants.SOURCES_BAR_LABEL,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey.shade600,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
                             PopupMenuButton<String>(
                               tooltip: Constants.SOURCE_LANGUAGE_TITLE,
                               position: PopupMenuPosition.under,
@@ -199,9 +327,6 @@ class SourceLanguageFilterBar extends StatelessWidget {
                         controller: bulkController!,
                         itemFilter: itemFilter,
                       ),
-                    ] else if (showFeedbackLink) ...[
-                      const SizedBox(width: 6),
-                      const _FeedbackLinkButton(),
                     ],
                   ],
                 ),
@@ -210,50 +335,6 @@ class SourceLanguageFilterBar extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _FeedbackLinkButton extends StatelessWidget {
-  const _FeedbackLinkButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ContactView()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFCBD5E1)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.chat_bubble_outline_rounded,
-              size: 14,
-              color: Color(0xFF0F2942),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              Constants.HAVE_FEEDBACK,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F2942),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
