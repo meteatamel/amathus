@@ -9,6 +9,7 @@ import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
+import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -195,7 +196,7 @@ class _OverviewViewState extends State<OverviewView> {
       builder: (context, _) {
         final activeTranslateLang =
             Constants.overviewTranslateLanguageNotifier.value;
-        final bannerLang = activeTranslateLang ?? Constants.currentLanguage;
+        final bannerLang = activeTranslateLang ?? 'en';
         final visibleStories = <(OverviewStory, List<OverviewStorySource>)>[];
 
         for (final story in overview.stories) {
@@ -226,9 +227,17 @@ class _OverviewViewState extends State<OverviewView> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return _OverviewHeaderBanner(
+                    return TopStoriesPodcastCard(
                       overview: overview,
-                      language: bannerLang,
+                      defaultLanguage: bannerLang,
+                      onOpenStory: (story) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OverviewStoryView(story: story),
+                          ),
+                        );
+                      },
                     );
                   }
                   final (story, sources) = visibleStories[index - 1];
@@ -415,58 +424,6 @@ class _OverviewLanguageSelector extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _OverviewHeaderBanner extends StatelessWidget {
-  final NewsOverview overview;
-  final String language;
-
-  const _OverviewHeaderBanner({
-    required this.overview,
-    required this.language,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final summary = overview.summaryFor(language);
-    if (summary.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.auto_awesome_rounded,
-            size: 20,
-            color: Color(0xFFFBBF24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              summary,
-              style: TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-                height: 1.45,
-                color: Colors.white.withValues(alpha: 0.94),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

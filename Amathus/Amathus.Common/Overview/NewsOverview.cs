@@ -45,13 +45,56 @@ namespace Amathus.Common.Overview
         public string SummaryEl { get; set; }
 
         [FirestoreProperty]
+        public string Edition { get; set; }
+
+        [FirestoreProperty]
         public List<OverviewStory> Stories { get; set; } = new List<OverviewStory>();
+
+        [FirestoreProperty]
+        public List<PodcastDialogueTurn> PodcastTurns { get; set; } = new List<PodcastDialogueTurn>();
 
         public NewsOverview Copy()
         {
             var copy = (NewsOverview)MemberwiseClone();
             copy.Stories = Stories?.Select(s => s.Copy()).ToList() ?? new List<OverviewStory>();
+            copy.PodcastTurns = PodcastTurns?.Select(t => t.Copy()).ToList() ?? new List<PodcastDialogueTurn>();
             return copy;
+        }
+    }
+
+    [FirestoreData]
+    public class PodcastDialogueTurn
+    {
+        [FirestoreProperty]
+        public int Index { get; set; }
+
+        [FirestoreProperty]
+        public string Speaker { get; set; }
+
+        [FirestoreProperty]
+        public string StoryId { get; set; }
+
+        [FirestoreProperty]
+        public string SpeakerNameEl { get; set; }
+
+        [FirestoreProperty]
+        public string SpeakerNameTr { get; set; }
+
+        [FirestoreProperty]
+        public string SpeakerNameEn { get; set; }
+
+        [FirestoreProperty]
+        public string TextEl { get; set; }
+
+        [FirestoreProperty]
+        public string TextTr { get; set; }
+
+        [FirestoreProperty]
+        public string TextEn { get; set; }
+
+        public PodcastDialogueTurn Copy()
+        {
+            return (PodcastDialogueTurn)MemberwiseClone();
         }
     }
 

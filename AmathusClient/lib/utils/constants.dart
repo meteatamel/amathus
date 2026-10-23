@@ -12,6 +12,7 @@ const String URL_MAIN = String.fromEnvironment(
 const String URL_FEEDS = "$URL_MAIN/feeds";
 const String URL_FEED_ITEMS = "$URL_MAIN/feeditems";
 const String URL_OVERVIEW = "$URL_MAIN/overview";
+const String URL_PODCAST_AUDIO = "$URL_MAIN/overview/podcast/audio";
 const String URL_TRANSLATE = "$URL_MAIN/translate";
 const String URL_TWITTER = "https://twitter.com/meteatamel";
 
@@ -319,6 +320,127 @@ String get OVERVIEW_EMPTY => _trElEn(
       "Η επισκόπηση δεν είναι ακόμη διαθέσιμη.",
       "Today's overview is not available yet.",
     );
+
+String podcastEditionTitleFor(String edition, String lang) {
+  final normEdition = edition.trim().toLowerCase();
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      if (normEdition == 'morning') {
+        return 'Δικοινοτικές Ειδήσεις Κύπρου - Πρωινές Κύριες Ειδήσεις';
+      }
+      if (normEdition == 'midday') {
+        return 'Δικοινοτικές Ειδήσεις Κύπρου - Μεσημεριανές Κύριες Ειδήσεις';
+      }
+      return 'Δικοινοτικές Ειδήσεις Κύπρου - Βραδινές Κύριες Ειδήσεις';
+    case 'tr':
+      if (normEdition == 'morning') {
+        return 'Kıbrıs İki Toplumlu Haberler - Sabah Öne Çıkan Haberler';
+      }
+      if (normEdition == 'midday') {
+        return 'Kıbrıs İki Toplumlu Haberler - Öğle Öne Çıkan Haberler';
+      }
+      return 'Kıbrıs İki Toplumlu Haberler - Akşam Öne Çıkan Haberler';
+    default:
+      if (normEdition == 'morning') {
+        return 'Cyprus Bicommunal News - Morning Top Stories';
+      }
+      if (normEdition == 'midday') {
+        return 'Cyprus Bicommunal News - Mid-Day Top Stories';
+      }
+      return 'Cyprus Bicommunal News - Evening Top Stories';
+  }
+}
+
+String podcastEditionShortLabelFor(String edition, String lang) {
+  final normEdition = edition.trim().toLowerCase();
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      if (normEdition == 'morning') return 'Πρωί';
+      if (normEdition == 'midday') return 'Μεσημέρι';
+      return 'Βράδυ';
+    case 'tr':
+      if (normEdition == 'morning') return 'Sabah';
+      if (normEdition == 'midday') return 'Öğle';
+      return 'Akşam';
+    default:
+      if (normEdition == 'morning') return 'Morning';
+      if (normEdition == 'midday') return 'Mid-Day';
+      return 'Evening';
+  }
+}
+
+String podcastSubtitleFor(String edition, String lang) {
+  final normEdition = edition.trim().toLowerCase();
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      if (normEdition == 'morning') return '5λεπτη πρωινή ενημέρωση';
+      if (normEdition == 'midday') return '5λεπτη μεσημεριανή ενημέρωση';
+      return '5λεπτη βραδινή ενημέρωση';
+    case 'tr':
+      if (normEdition == 'morning') return '5 dakikalık sabah haber özeti';
+      if (normEdition == 'midday') return '5 dakikalık öğle haber özeti';
+      return '5 dakikalık akşam haber özeti';
+    default:
+      if (normEdition == 'morning') return '5-min morning news update';
+      if (normEdition == 'midday') return '5-min mid-day news update';
+      return '5-min evening news update';
+  }
+}
+
+String podcastListenButtonFor(String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return 'Ακούστε (5 λεπτά)';
+    case 'tr':
+      return 'Dinle (5 dk)';
+    default:
+      return 'Listen (5 min)';
+  }
+}
+
+String podcastPauseButtonFor(String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return 'Παύση';
+    case 'tr':
+      return 'Duraklat';
+    default:
+      return 'Pause';
+  }
+}
+
+String podcastResumeButtonFor(String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return 'Συνέχεια';
+    case 'tr':
+      return 'Devam Et';
+    default:
+      return 'Resume';
+  }
+}
+
+String podcastScriptToggleFor(bool expanded, String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return expanded ? 'Απόκρυψη Διαλόγου' : 'Προβολή Διαλόγου';
+    case 'tr':
+      return expanded ? 'Diyaloğu Gizle' : 'Diyaloğu Göster';
+    default:
+      return expanded ? 'Hide Transcript' : 'Show Transcript';
+  }
+}
+
+String podcastOpenStoryLabelFor(String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return 'Άνοιγμα Είδησης';
+    case 'tr':
+      return 'Haberi Aç';
+    default:
+      return 'Open Story';
+  }
+}
 String sourcesCountLabel(int count) => _trElEn(
       "$count gazete",
       "$count ${count == 1 ? 'εφημερίδα' : 'εφημερίδες'}",

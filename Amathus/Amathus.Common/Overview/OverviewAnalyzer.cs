@@ -153,6 +153,7 @@ namespace Amathus.Common.Overview
                 var geminiOverview = await TryAnalyzeWithGeminiAsync(candidates, validFeeds.Count, totalArticles);
                 if (geminiOverview != null && geminiOverview.Stories != null && geminiOverview.Stories.Count > 0)
                 {
+                    PodcastScriptBuilder.EnsurePodcastPopulated(geminiOverview);
                     _logger?.LogInformation($"Successfully generated news overview via Gemini with {geminiOverview.Stories.Count} top stories.");
                     return geminiOverview;
                 }
@@ -164,6 +165,7 @@ namespace Amathus.Common.Overview
 
             // 2. Automatic Fallback: Cross-language clustering + synthesis + translation
             var fallbackOverview = await AnalyzeWithClusteringFallbackAsync(candidates, validFeeds.Count, totalArticles);
+            PodcastScriptBuilder.EnsurePodcastPopulated(fallbackOverview);
             _logger?.LogInformation($"Generated news overview via fallback analyzer with {fallbackOverview.Stories.Count} top stories.");
             return fallbackOverview;
         }

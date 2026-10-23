@@ -43,14 +43,18 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] bool refresh = false)
+        public async Task<IActionResult> Get(
+            [FromQuery] bool refresh = false,
+            [FromQuery] string edition = null)
         {
             if (!refresh)
             {
                 var existing = await _feedStore.ReadOverviewAsync();
                 if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                 {
-                    return Ok(existing);
+                    var copy = existing.Copy();
+                    PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                    return Ok(copy);
                 }
             }
 
@@ -62,7 +66,9 @@ namespace Amathus.Web.Controllers
                     var existing = await _feedStore.ReadOverviewAsync();
                     if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                     {
-                        return Ok(existing);
+                        var copy = existing.Copy();
+                        PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                        return Ok(copy);
                     }
                 }
 
@@ -74,6 +80,7 @@ namespace Amathus.Web.Controllers
 
                 _logger.LogInformation("Generating daily overview on demand...");
                 var overview = await _overviewAnalyzer.AnalyzeAsync(feeds);
+                PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
                 await _feedStore.SaveOverviewAsync(overview);
                 return Ok(overview);
             }
@@ -81,6 +88,34 @@ namespace Amathus.Web.Controllers
             {
                 GenerationLock.Release();
             }
+        }
+
+        [HttpGet("podcast/audio")]
+        [Produces("audio/mpeg")]
+        public async Task<IActionResult> GetPodcastAudio(
+            [FromQuery] string lang = "en",
+            [FromQuery] string speaker = "A",
+            [FromQuery] string text = "",
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return BadRequest("Text parameter is required.");
+            }
+
+            var audioBytes = await PodcastTtsService.SynthesizeMp3Async(
+                text,
+                lang,
+                speaker,
+                cancellationToken);
+
+            if (audioBytes == null || audioBytes.Length == 0)
+            {
+                return StatusCode(502, "Failed to synthesize podcast audio.");
+            }
+
+            Response.Headers["Cache-Control"] = "public, max-age=86400";
+            return File(audioBytes, "audio/mpeg");
         }
     }
 }

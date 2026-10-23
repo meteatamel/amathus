@@ -141,26 +141,25 @@ void main() {
 
     // Default translate is null: story has 2 TR sources and 1 EL source, so majority language is TR
     expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
-    expect(find.text('English daily summary across Cyprus.'), findsOneWidget);
-    expect(find.text('Translate'), findsOneWidget);
+    expect(find.text('Read in'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.byType(Slider), findsOneWidget);
     expect(find.text('Yenidüzen'), findsWidgets);
     expect(find.text('Diyalog'), findsWidgets);
     expect(find.text('Philenews'), findsWidgets);
 
-    // Translate to English and verify English title & summary display
+    // Translate to English and verify English title display
     Constants.setOverviewTranslateLanguage('en');
     await tester.pump();
     expect(find.text('New Crossing Point Discussions Advance'), findsOneWidget);
-    expect(find.text('English daily summary across Cyprus.'), findsOneWidget);
 
-    // Translate to Greek and verify Greek title & summary display
+    // Translate to Greek and verify Greek title display
     Constants.setOverviewTranslateLanguage('el');
     await tester.pump();
     expect(
       find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
       findsOneWidget,
     );
-    expect(find.text('Ελληνική ημερήσια σύνοψη στην Κύπρο.'), findsOneWidget);
 
     // Tap the story title to open OverviewStoryView (detail page)
     await tester.tap(
@@ -230,7 +229,7 @@ void main() {
     expect(find.byType(ShareIconButton), findsOneWidget);
     expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
-    expect(find.text('Translate'), findsOneWidget);
+    expect(find.text('Read in'), findsOneWidget);
     expect(find.text('Share'), findsOneWidget);
     expect(find.byType(SourceAndTranslationBadges), findsOneWidget);
   });
