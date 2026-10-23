@@ -13,6 +13,8 @@
         "Title": "Bağımsız Gazete",
         "Language": "tr",
         "Url": "https://www.bagimsiz.com/rss",
+        "ColumnistUrl": "https://www.bagimsiz.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.bagimsiz.com/yazarlar",
         "LogoUrl": "https://bagimsizcom.teimg.com/bagimsiz-com/uploads/2026/01/bagimsizlogo2026-1.png"
       },
       {
@@ -27,6 +29,7 @@
         "Title": "Cyprus Mail",
         "Language": "en",
         "Url": "https://cyprus-mail.com/feed/",
+        "ColumnistUrl": "https://cyprus-mail.com/category/opinion/feed/",
         "LogoUrl": "https://cyprus-mail.com/apple-touch-icon-180x180.png"
       },
       {
@@ -62,6 +65,7 @@
         "Title": "Financial Mirror",
         "Language": "en",
         "Url": "https://www.financialmirror.com/feed/",
+        "ColumnistUrl": "https://www.financialmirror.com/category/comment/feed/",
         "LogoUrl": "https://www.financialmirror.com/wp-content/uploads/2019/11/logo.png"
       },
       {
@@ -69,6 +73,7 @@
         "Title": "Gazedda Kıbrıs",
         "Language": "tr",
         "Url": "https://gazeddakibris.com/feed/",
+        "ColumnistUrl": "https://gazeddakibris.com/category/yazarlar/feed/",
         "LogoUrl": "https://gazeddakibris.com/wp-content/uploads/2020/03/Gazedda_slider.png"
       },
       {
@@ -83,6 +88,8 @@
         "Title": "Gündem Kıbrıs",
         "Language": "tr",
         "Url": "https://www.gundemkibris.com/rss",
+        "ColumnistUrl": "https://www.gundemkibris.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.gundemkibris.com/yazarlar",
         "LogoUrl": "https://gundemkibriscom.teimg.com/gundemkibris-com/images/banner/analogo.png"
       },
       {
@@ -104,6 +111,8 @@
         "Title": "Halkın Sesi",
         "Language": "tr",
         "Url": "https://www.halkinsesikibris.com/rss",
+        "ColumnistUrl": "https://www.halkinsesikibris.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.halkinsesikibris.com/yazarlar",
         "LogoUrl": "https://halkinsesikibriscom.teimg.com/halkinsesikibris-com/images/banner/HALKIN_SESI_CMYK_1_1.jpg"
       },
       {
@@ -118,6 +127,7 @@
         "Title": "Kıbrıs Gazetesi",
         "Language": "tr",
         "Url": "https://kibrisgazetesi.com/feed/",
+        "ColumnistUrl": "https://kibrisgazetesi.com/yazar/feed/",
         "LogoUrl": "https://kibrisgazetesi.com/wp-content/uploads/2023/09/site-logo.png"
       },
       {
@@ -125,6 +135,8 @@
         "Title": "Kıbrıs Genç TV",
         "Language": "tr",
         "Url": "https://www.kibrisgenctv.com/rss",
+        "ColumnistUrl": "https://www.kibrisgenctv.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.kibrisgenctv.com/yazarlar",
         "LogoUrl": "https://kibrisgenctvcom.teimg.com/kibrisgenctv-com/uploads/2023/11/logo-190x90-01.png"
       },
       {
@@ -132,6 +144,8 @@
         "Title": "Kıbrıs Gerçek",
         "Language": "tr",
         "Url": "https://www.kibrisgercek.com/rss",
+        "ColumnistUrl": "https://www.kibrisgercek.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.kibrisgercek.com/yazarlar",
         "LogoUrl": "https://kibrisgercekcom.teimg.com/kibrisgercek-com/uploads/2026/03/gercek-yeni-logo-beyaz.png"
       },
       {
@@ -153,6 +167,8 @@
         "Title": "Kıbrıs Time",
         "Language": "tr",
         "Url": "https://www.kibristime.com/rss",
+        "ColumnistUrl": "https://www.kibristime.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.kibristime.com/yazarlar",
         "LogoUrl": "https://kibristimecom.teimg.com/kibristime-com/images/banner/ktimepng_1.png"
       },
       {
@@ -181,6 +197,7 @@
         "Title": "Philenews",
         "Language": "el",
         "Url": "https://www.philenews.com/feed/",
+        "ColumnistUrl": "https://www.philenews.com/apopsis/feed/",
         "LogoUrl": "https://www.philenews.com/wp-content/themes/philenews/assets/images/favicons/transparent/apple-icon-152x152.png"
       },
       {
@@ -202,6 +219,7 @@
         "Title": "Sigmalive",
         "Language": "el",
         "Url": "https://www.sigmalive.com/rss",
+        "ColumnistUrl": "https://www.sigmalive.com/rss/opinions",
         "LogoUrl": "https://www.sigmalive.com/images/sigmalive_logo_new.webp"
       },
       {
@@ -223,6 +241,8 @@
         "Title": "Vatan Gazetesi",
         "Language": "tr",
         "Url": "https://www.arti392.com/rss",
+        "ColumnistUrl": "https://www.arti392.com/rss/makaleler",
+        "ColumnistAuthorsUrl": "https://www.arti392.com/yazarlar",
         "LogoUrl": "https://arti392com.teimg.com/arti392-com/images/banner/arti392_1.png"
       },
       {

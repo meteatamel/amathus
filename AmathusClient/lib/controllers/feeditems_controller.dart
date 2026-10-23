@@ -9,10 +9,12 @@ class FeedItemsController {
   final FeedItemsStorage _storage = FeedItemsStorage();
 
   static List<Feed>? _cachedRecentFeeds;
+  static List<Feed>? _cachedColumnistFeeds;
   static final Map<String, Feed> _cachedFeedsById = {};
 
   static void clearCache() {
     _cachedRecentFeeds = null;
+    _cachedColumnistFeeds = null;
     _cachedFeedsById.clear();
   }
 
@@ -83,8 +85,9 @@ class FeedItemsController {
 
   Future<List<Feed>?> readRecent({int limit = 200}) async {
     try {
-      final response =
-          await http.get(Uri.parse("${Constants.URL_FEED_ITEMS}?limit=$limit"));
+      final response = await http.get(
+        Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=false&limit=$limit"),
+      );
       if (response.statusCode == 200) {
         final decoded =
             json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
@@ -105,5 +108,43 @@ class FeedItemsController {
     }
 
     return await readRecentStored();
+  }
+
+  Future<List<Feed>?> readColumnistsStored() async {
+    if (_cachedColumnistFeeds != null && _cachedColumnistFeeds!.isNotEmpty) {
+      return _cachedColumnistFeeds;
+    }
+
+    final stored = await _storage.readColumnists();
+    if (stored != null && stored.isNotEmpty) {
+      _cachedColumnistFeeds = stored;
+      return stored;
+    }
+
+    return _cachedColumnistFeeds;
+  }
+
+  Future<List<Feed>?> readColumnists({int limit = 200}) async {
+    try {
+      final response = await http.get(
+        Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=true&limit=$limit"),
+      );
+      if (response.statusCode == 200) {
+        final decoded =
+            json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+        final feeds = decoded
+            .map((i) => Feed.fromJson(i as Map<String, dynamic>))
+            .toList();
+        if (feeds.isNotEmpty) {
+          _cachedColumnistFeeds = feeds;
+          await _storage.writeColumnists(feeds);
+          return feeds;
+        }
+      }
+    } catch (e) {
+      // Ignore network error and fall back to cached columnist feeds
+    }
+
+    return await readColumnistsStored();
   }
 }

@@ -61,5 +61,9 @@ namespace Amathus.Common.Sources
         public Uri LogoUrl { get; set; }
 
         public Uri Url { get; set; }
+
+        public Uri ColumnistUrl { get; set; }
+
+        public Uri ColumnistAuthorsUrl { get; set; }
     }
 }

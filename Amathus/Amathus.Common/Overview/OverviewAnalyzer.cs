@@ -178,6 +178,7 @@ namespace Amathus.Common.Overview
                 var lang = string.IsNullOrWhiteSpace(feed.Language) ? "tr" : feed.Language.Trim().ToLowerInvariant();
                 var filtered = feed.Items
                     .Where(item => item != null &&
+                                   !item.IsColumnist &&
                                    !string.IsNullOrWhiteSpace(item.Title) &&
                                    !(string.IsNullOrEmpty(item.Summary) && item.ImageUrl == null) &&
                                    !TextUtil.ContainsBannedWords(item.Title) &&

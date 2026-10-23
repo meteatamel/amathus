@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Amathus.Common.Feeds;
 using Amathus.Common.Util;
@@ -22,6 +24,15 @@ namespace Amathus.Common.Converter
 {
     public class DefaultFeedItemConverter : IFeedItemConverter
     {
+        private static readonly HashSet<string> ColumnistCategoryNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Yazarlar",
+            "Köşe Yazıları",
+            "Opinions",
+            "Opinion",
+            "Comment"
+        };
+
         public virtual FeedItem Convert(SyndicationItem item)
         {
             var articleLink = item.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
@@ -29,18 +40,129 @@ namespace Amathus.Common.Converter
                 ?? item.Links.FirstOrDefault()?.Uri;
 
             var imageUrl = GetEnclosureOrMediaImage(item);
+            var title = TextUtil.HtmlDecode(item.Title?.Text ?? string.Empty);
+            var summary = TextUtil.HtmlDecode(item.Summary?.Text ?? string.Empty);
+            var detail = GetExtension(item, "encoded");
+
+            ExtractColumnistMetadata(item, title, out var isColumnist, out var author, out var overrideImageUrl);
+
+            if (overrideImageUrl != null &&
+                (imageUrl == null || imageUrl.AbsoluteUri.IndexOf("no_headline", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                imageUrl = overrideImageUrl;
+            }
+
+            if (isColumnist && string.IsNullOrWhiteSpace(summary) && !string.IsNullOrWhiteSpace(detail))
+            {
+                summary = BuildSummaryExcerpt(detail);
+            }
 
             var feedItem = new FeedItem
             {
-                Title = TextUtil.HtmlDecode(item.Title?.Text ?? string.Empty),
+                Title = title,
                 PublishDate = item.PublishDate.UtcDateTime == default ? DateTime.UtcNow : item.PublishDate.UtcDateTime,
-                Summary = TextUtil.HtmlDecode(item.Summary?.Text ?? string.Empty),
-                Detail = GetExtension(item, "encoded"),
+                Summary = summary,
+                Detail = detail,
                 Url = articleLink,
-                ImageUrl = TextUtil.EnsureHttps(imageUrl)
+                ImageUrl = TextUtil.EnsureHttps(imageUrl),
+                Author = string.IsNullOrWhiteSpace(author) ? null : author.Trim(),
+                IsColumnist = isColumnist
             };
 
             return feedItem;
+        }
+
+        private void ExtractColumnistMetadata(
+            SyndicationItem item,
+            string decodedTitle,
+            out bool isColumnist,
+            out string author,
+            out Uri overrideImageUrl)
+        {
+            isColumnist = false;
+            author = null;
+            overrideImageUrl = null;
+
+            var regularCategories = new List<string>();
+            if (item.Categories != null)
+            {
+                foreach (var cat in item.Categories)
+                {
+                    var name = cat?.Name?.Trim();
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        continue;
+                    }
+                    if (string.Equals(name, "amathus:columnist", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isColumnist = true;
+                    }
+                    else if (name.StartsWith("amathus:author:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        author = name.Substring("amathus:author:".Length).Trim();
+                    }
+                    else if (name.StartsWith("amathus:image:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var imgStr = name.Substring("amathus:image:".Length).Trim();
+                        overrideImageUrl = TextUtil.GetImg(imgStr);
+                    }
+                    else
+                    {
+                        regularCategories.Add(TextUtil.HtmlDecode(name).Trim());
+                    }
+                }
+            }
+
+            var person = item.Authors.FirstOrDefault();
+            var authorPersonName = !string.IsNullOrWhiteSpace(person?.Name) ? person.Name : person?.Email;
+            var dcCreator = TextUtil.HtmlDecode(GetExtension(item, "creator") ?? authorPersonName ?? string.Empty).Trim();
+
+            if (!isColumnist)
+            {
+                if (regularCategories.Any(c => ColumnistCategoryNames.Contains(c)))
+                {
+                    isColumnist = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(dcCreator) &&
+                         dcCreator.IndexOf("Konuk Yazar", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isColumnist = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(decodedTitle) && regularCategories.Count > 0)
+                {
+                    // Yeniçağ tags columnists with their name in <category> and appends " – <Author>" to the title
+                    var matchedAuthorCat = regularCategories.FirstOrDefault(cat =>
+                        !string.Equals(cat, "YKP", StringComparison.OrdinalIgnoreCase) &&
+                        (decodedTitle.EndsWith("– " + cat, StringComparison.OrdinalIgnoreCase) ||
+                         decodedTitle.EndsWith("- " + cat, StringComparison.OrdinalIgnoreCase)));
+                    if (!string.IsNullOrWhiteSpace(matchedAuthorCat))
+                    {
+                        isColumnist = true;
+                        author = matchedAuthorCat;
+                    }
+                }
+            }
+
+            if (isColumnist && string.IsNullOrWhiteSpace(author) && !string.IsNullOrWhiteSpace(dcCreator))
+            {
+                if (!string.Equals(dcCreator, "YKP", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(dcCreator, "fm", StringComparison.OrdinalIgnoreCase))
+                {
+                    author = dcCreator;
+                }
+            }
+        }
+
+        protected static string BuildSummaryExcerpt(string html)
+        {
+            var plain = Regex.Replace(html ?? string.Empty, "<[^>]+>", " ");
+            plain = TextUtil.HtmlDecode(plain);
+            plain = Regex.Replace(plain, @"\s+", " ").Trim();
+            if (plain.Length > 260)
+            {
+                return plain.Substring(0, 260).TrimEnd() + "…";
+            }
+            return plain;
         }
 
         protected Uri GetEnclosureOrMediaImage(SyndicationItem item)

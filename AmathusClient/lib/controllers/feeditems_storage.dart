@@ -34,6 +34,35 @@ class FeedItemsStorage {
     }
   }
 
+  Future<List<Feed>?> readColumnists() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final feedsJson = prefs.getString(Constants.FEED_ITEMS_COLUMNISTS_KEY);
+      if (feedsJson == null || feedsJson.isEmpty) {
+        return null;
+      }
+      final decoded = json.decode(feedsJson) as List<dynamic>;
+      return decoded
+          .map((i) => Feed.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> writeColumnists(List<Feed> feeds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final feedsJson = json.encode(feeds.map((f) => f.toJson()).toList());
+      return await prefs.setString(
+        Constants.FEED_ITEMS_COLUMNISTS_KEY,
+        feedsJson,
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<Feed?> readById(String feedId) async {
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -18,6 +18,7 @@ const String URL_TWITTER = "https://twitter.com/meteatamel";
 // files / storage keys
 const String FEEDS_FILE = "feeds_v3.json";
 const String FEED_ITEMS_RECENT_KEY = "feed_items_recent_v1.json";
+const String FEED_ITEMS_COLUMNISTS_KEY = "feed_items_columnists_v1.json";
 const String FEED_ITEMS_BY_ID_PREFIX = "feed_items_by_id_v1_";
 const String OVERVIEW_STORAGE_KEY = "news_overview_v1.json";
 const String LANGUAGE_PREF_KEY = "app_language";
@@ -36,6 +37,10 @@ final ValueNotifier<String> sourceLanguageNotifier =
 
 // Selected newspaper feed ID filter (null = all newspapers)
 final ValueNotifier<String?> selectedFeedIdNotifier =
+    ValueNotifier<String?>(null);
+
+// Selected columnist author filter (null = all columnists)
+final ValueNotifier<String?> selectedColumnistNotifier =
     ValueNotifier<String?>(null);
 
 // Active translation language for Top Stories (null = original majority language per story)
@@ -110,6 +115,14 @@ void setSelectedFeedId(String? feedId) {
     selectedFeedIdNotifier.value = null;
   } else {
     selectedFeedIdNotifier.value = feedId.trim().toLowerCase();
+  }
+}
+
+void setSelectedColumnist(String? author) {
+  if (author == null || author.trim().isEmpty || author == 'all') {
+    selectedColumnistNotifier.value = null;
+  } else {
+    selectedColumnistNotifier.value = author.trim();
   }
 }
 
@@ -318,6 +331,20 @@ String get RECENT_NEWS_BANNER => _trElEn(
       "Τελευταία νέα από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
       "Latest news across Turkish, Greek, and English newspapers in Cyprus.",
     );
+String get COLUMNISTS =>
+    _trElEn("Köşe Yazarları", "Αρθρογράφοι", "Columnists");
+String get COLUMNISTS_BANNER => _trElEn(
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden güncel köşe yazıları ve görüşler.",
+      "Πρόσφατα άρθρα γνώμης και αρθρογραφία από εφημερίδες όλης της Κύπρου.",
+      "Latest opinion pieces and columns across Turkish, Greek, and English newspapers in Cyprus.",
+    );
+String get ALL_COLUMNISTS => _trElEn(
+      "Tüm Yazarlar",
+      "Όλοι οι Αρθρογράφοι",
+      "All Columnists",
+    );
+String get COLUMNIST_BADGE_FALLBACK =>
+    _trElEn("Köşe Yazısı", "Άποψη", "Opinion");
 String get NEWSPAPERS => _trElEn("Gazeteler", "Εφημερίδες", "Newspapers");
 String get ALL_NEWS => NEWSPAPERS;
 String get SETTINGS => _trElEn("Ayarlar", "Ρυθμίσεις", "Settings");

@@ -37,7 +37,10 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? limit = null, [FromQuery] string language = null)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? limit = null,
+            [FromQuery] string language = null,
+            [FromQuery] bool? columnists = null)
         {
             if (limit != null && limit < 1)
             {
@@ -56,7 +59,7 @@ namespace Amathus.Web.Controllers
                 feeds = feeds.Where(f => string.Equals(f.Language ?? "tr", lang, System.StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            feeds = FilterAndOrderFeeds(feeds);
+            feeds = FilterAndOrderFeeds(feeds, columnists);
 
             if (limit == null)
             {
@@ -69,7 +72,7 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null)
+        public async Task<IActionResult> GetById(string id, [FromQuery] int? limit = null, [FromQuery] bool? columnists = null)
         {
             if (limit != null && limit < 1)
             {
@@ -84,7 +87,7 @@ namespace Amathus.Web.Controllers
                 return NotFound();
             }
 
-            feed = FilterFeedItems(feed);
+            feed = FilterFeedItems(feed, columnists);
 
             if (limit != null)
             {
@@ -94,9 +97,9 @@ namespace Amathus.Web.Controllers
             return Ok(feed);
         }
 
-        private List<Feed> FilterAndOrderFeeds(List<Feed> feeds)
+        private List<Feed> FilterAndOrderFeeds(List<Feed> feeds, bool? columnists = null)
         {
-            feeds = feeds.Select(feed => FilterFeedItems(feed)).ToList();
+            feeds = feeds.Select(feed => FilterFeedItems(feed, columnists)).ToList();
 
             var orderedFeeds = feeds
                 .OrderByDescending(feed => feed.AverageItemPictures)
@@ -105,8 +108,23 @@ namespace Amathus.Web.Controllers
             return orderedFeeds;
         }
 
-        private Feed FilterFeedItems(Feed feed)
+        private Feed FilterFeedItems(Feed feed, bool? columnists = null)
         {
+            if (feed.Items == null)
+            {
+                feed.Items = new List<FeedItem>();
+                return feed;
+            }
+
+            if (columnists == true)
+            {
+                feed.Items = feed.Items.Where(item => item.IsColumnist).ToList();
+            }
+            else if (columnists == false)
+            {
+                feed.Items = feed.Items.Where(item => !item.IsColumnist).ToList();
+            }
+
             // Remove all feed items with empty/null summary and image
             feed.Items = feed.Items.Where(item => !(
                 string.IsNullOrEmpty(item.Summary) &&

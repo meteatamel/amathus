@@ -6,6 +6,7 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/flag_icon.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SourceLanguageFilterBar extends StatelessWidget {
@@ -13,6 +14,8 @@ class SourceLanguageFilterBar extends StatelessWidget {
   final bool Function(FeedItem)? itemFilter;
   final Widget? trailing;
   final bool showNewspaperSelector;
+  final Widget? extraSelector;
+  final ValueListenable<Set<String>?>? allowedNewspaperIdsListenable;
 
   const SourceLanguageFilterBar({
     super.key,
@@ -20,6 +23,8 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.itemFilter,
     this.trailing,
     this.showNewspaperSelector = false,
+    this.extraSelector,
+    this.allowedNewspaperIdsListenable,
   });
 
   String _labelFor(String code) {
@@ -163,7 +168,14 @@ class SourceLanguageFilterBar extends StatelessWidget {
                             ),
                             if (showNewspaperSelector) ...[
                               const SizedBox(width: 6),
-                              const NewspaperDropdownSelector(),
+                              NewspaperDropdownSelector(
+                                allowedFeedIdsListenable:
+                                    allowedNewspaperIdsListenable,
+                              ),
+                            ],
+                            if (extraSelector != null) ...[
+                              const SizedBox(width: 6),
+                              extraSelector!,
                             ],
                           ],
                         ),
@@ -191,7 +203,12 @@ class SourceLanguageFilterBar extends StatelessWidget {
 }
 
 class NewspaperDropdownSelector extends StatefulWidget {
-  const NewspaperDropdownSelector({super.key});
+  final ValueListenable<Set<String>?>? allowedFeedIdsListenable;
+
+  const NewspaperDropdownSelector({
+    super.key,
+    this.allowedFeedIdsListenable,
+  });
 
   @override
   State<NewspaperDropdownSelector> createState() =>
@@ -230,13 +247,21 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
         Constants.selectedFeedIdNotifier,
+        if (widget.allowedFeedIdsListenable != null)
+          widget.allowedFeedIdsListenable!,
       ]),
       builder: (context, _) {
-        final visibleFeeds = _feeds
-            .where(
-              (f) => Constants.matchesSourceLanguageOnly(f.id, f.language),
-            )
-            .toList();
+        final allowedIds = widget.allowedFeedIdsListenable?.value;
+        final visibleFeeds = _feeds.where((f) {
+          if (!Constants.matchesSourceLanguageOnly(f.id, f.language)) {
+            return false;
+          }
+          if (allowedIds != null &&
+              !allowedIds.contains(f.id.trim().toLowerCase())) {
+            return false;
+          }
+          return true;
+        }).toList();
 
         final selectedId = Constants.selectedFeedIdNotifier.value;
         Feed? selectedFeed;
@@ -443,6 +468,194 @@ class NewspaperLanguageBar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class ColumnistDropdownSelector extends StatelessWidget {
+  final ValueListenable<List<FeedItem>> itemsListenable;
+
+  const ColumnistDropdownSelector({
+    super.key,
+    required this.itemsListenable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        itemsListenable,
+        Constants.sourceLanguageNotifier,
+        Constants.selectedFeedIdNotifier,
+        Constants.hiddenFeedsNotifier,
+        Constants.selectedColumnistNotifier,
+      ]),
+      builder: (context, _) {
+        final allItems = itemsListenable.value;
+        final authorToFeed = <String, Feed?>{};
+        for (final item in allItems) {
+          final matchesNewspaperAndLang = item.feed == null ||
+              Constants.matchesSourceLanguage(
+                item.feed?.id,
+                item.feed?.language,
+              );
+          if (!matchesNewspaperAndLang) continue;
+          final author = (item.author ?? '').trim();
+          if (author.isEmpty) continue;
+          authorToFeed.putIfAbsent(author, () => item.feed);
+        }
+
+        final authors = authorToFeed.keys.toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+        final selectedAuthor = Constants.selectedColumnistNotifier.value;
+        final activeAuthor =
+            (selectedAuthor != null && authorToFeed.containsKey(selectedAuthor))
+                ? selectedAuthor
+                : null;
+
+        return PopupMenuButton<String>(
+          tooltip: Constants.COLUMNISTS,
+          position: PopupMenuPosition.under,
+          constraints: const BoxConstraints(maxHeight: 420, minWidth: 230),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            if (value == 'all') {
+              Constants.setSelectedColumnist(null);
+            } else {
+              Constants.setSelectedColumnist(value);
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              value: 'all',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.edit_note_rounded,
+                    size: 18,
+                    color: Color(0xFF0F2942),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      Constants.ALL_COLUMNISTS,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: activeAuthor == null
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  if (activeAuthor == null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Color(0xFF0F2942),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (authors.isNotEmpty) const PopupMenuDivider(),
+            for (final author in authors)
+              PopupMenuItem<String>(
+                value: author,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (authorToFeed[author] != null &&
+                        Constants.resolveImageUrl(
+                          authorToFeed[author]!.imageUrl,
+                        ).isNotEmpty) ...[
+                      FeedImage(
+                        item: authorToFeed[author],
+                        width: 44,
+                        height: 20,
+                        compact: true,
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: Text(
+                        author,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: activeAuthor == author
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    if (activeAuthor == author) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: Color(0xFF0F2942),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: activeAuthor == null
+                  ? const Color(0xFFF8FAFC)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: activeAuthor == null
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFF0F2942),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.edit_note_rounded,
+                  size: 16,
+                  color: Color(0xFF475569),
+                ),
+                const SizedBox(width: 4),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 105),
+                  child: Text(
+                    activeAuthor ?? Constants.COLUMNISTS,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: Color(0xFF475569),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

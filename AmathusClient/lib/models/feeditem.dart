@@ -23,6 +23,12 @@ class FeedItem {
   @JsonKey(name: 'Url')
   final String? url;
 
+  @JsonKey(name: 'Author')
+  final String? author;
+
+  @JsonKey(name: 'IsColumnist')
+  final bool isColumnist;
+
   @JsonKey(includeFromJson: false, includeToJson: false)
   Feed? feed;
 
@@ -32,8 +38,10 @@ class FeedItem {
     this.summary,
     this.detail,
     this.imageUrl,
-    this.url,
-  );
+    this.url, {
+    this.author,
+    this.isColumnist = false,
+  });
 
   factory FeedItem.fromJson(Map<String, dynamic> json) =>
       _$FeedItemFromJson(json);

@@ -18,8 +18,11 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Amathus.Common.Sources;
+using Amathus.Common.Util;
 using Microsoft.Extensions.Logging;
 
 namespace Amathus.Common.Reader
@@ -87,6 +90,12 @@ namespace Amathus.Common.Reader
                 _logger?.LogDebug($"Reading feed: {source.Id}");
                 var feed = LoadFeed(source.Url);
                 feed.Id = source.Id;
+
+                if (source.ColumnistUrl != null)
+                {
+                    MergeColumnistFeed(source, feed);
+                }
+
                 return feed;
             }
             catch (Exception ex)
@@ -94,6 +103,175 @@ namespace Amathus.Common.Reader
                 _logger?.LogError($"Reading failed for feed: {source.Id} - {ex.Message}", ex);
                 return null;
             }
+        }
+
+        private void MergeColumnistFeed(Source source, SyndicationFeed mainFeed)
+        {
+            try
+            {
+                var colFeed = LoadFeed(source.ColumnistUrl);
+                if (colFeed?.Items == null)
+                {
+                    return;
+                }
+
+                var authorBySlug = FetchAuthorDirectory(source.ColumnistAuthorsUrl);
+                var colItems = new List<SyndicationItem>();
+                var colLinks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var item in colFeed.Items)
+                {
+                    item.Categories.Add(new SyndicationCategory("amathus:columnist"));
+
+                    var itemLink = item.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
+                        ?? item.Links.FirstOrDefault(l => l.RelationshipType != "enclosure")?.Uri
+                        ?? item.Links.FirstOrDefault()?.Uri;
+
+                    var authorName = ExtractCreator(item);
+                    string authorImage = null;
+
+                    if (itemLink != null && authorBySlug.Count > 0)
+                    {
+                        var slug = itemLink.AbsolutePath.Trim('/');
+                        if (authorBySlug.TryGetValue(slug, out var info))
+                        {
+                            if (string.IsNullOrWhiteSpace(authorName))
+                            {
+                                authorName = info.Author;
+                            }
+                            authorImage = info.ImageUrl;
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(authorName) && source.Id == Source.CyprusMail)
+                    {
+                        var titleText = item.Title?.Text ?? string.Empty;
+                        if (titleText.StartsWith("Our View:", StringComparison.OrdinalIgnoreCase) ||
+                            item.Categories.Any(c => string.Equals(c.Name, "Our View", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            authorName = "Our View";
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(authorName) &&
+                        !string.Equals(authorName.Trim(), "fm", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(authorName.Trim(), "YKP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        item.Categories.Add(new SyndicationCategory($"amathus:author:{TextUtil.HtmlDecode(authorName.Trim())}"));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(authorImage) && Uri.TryCreate(authorImage, UriKind.Absolute, out var authorImgUri))
+                    {
+                        item.Categories.Add(new SyndicationCategory($"amathus:image:{authorImgUri.AbsoluteUri}"));
+                        var existingEnclosure = item.Links.FirstOrDefault(l => l.RelationshipType == "enclosure");
+                        if (existingEnclosure == null ||
+                            existingEnclosure.Uri == null ||
+                            existingEnclosure.Uri.AbsoluteUri.IndexOf("no_headline", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            if (existingEnclosure != null)
+                            {
+                                item.Links.Remove(existingEnclosure);
+                            }
+                            item.Links.Add(SyndicationLink.CreateMediaEnclosureLink(authorImgUri, "image/jpeg", 0));
+                        }
+                    }
+
+                    if (itemLink != null)
+                    {
+                        colLinks.Add(itemLink.AbsoluteUri);
+                    }
+                    colItems.Add(item);
+                }
+
+                var merged = new List<SyndicationItem>(colItems);
+                if (mainFeed.Items != null)
+                {
+                    foreach (var mainItem in mainFeed.Items)
+                    {
+                        var link = mainItem.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
+                            ?? mainItem.Links.FirstOrDefault(l => l.RelationshipType != "enclosure")?.Uri
+                            ?? mainItem.Links.FirstOrDefault()?.Uri;
+                        if (link != null && colLinks.Contains(link.AbsoluteUri))
+                        {
+                            continue;
+                        }
+                        merged.Add(mainItem);
+                    }
+                }
+
+                mainFeed.Items = merged;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning($"Reading columnist feed failed for {source.Id}: {ex.Message}");
+            }
+        }
+
+        private static string ExtractCreator(SyndicationItem item)
+        {
+            foreach (SyndicationElementExtension ext in item.ElementExtensions)
+            {
+                try
+                {
+                    var el = ext.GetObject<XElement>();
+                    if (el.Name.LocalName == "creator" && !string.IsNullOrWhiteSpace(el.Value))
+                    {
+                        return el.Value.Trim();
+                    }
+                }
+                catch
+                {
+                    // Ignore malformed extension
+                }
+            }
+
+            var person = item.Authors.FirstOrDefault();
+            var name = !string.IsNullOrWhiteSpace(person?.Name) ? person.Name : person?.Email;
+            return name?.Trim();
+        }
+
+        private Dictionary<string, (string Author, string ImageUrl)> FetchAuthorDirectory(Uri authorsUrl)
+        {
+            var map = new Dictionary<string, (string Author, string ImageUrl)>(StringComparer.OrdinalIgnoreCase);
+            if (authorsUrl == null)
+            {
+                return map;
+            }
+
+            try
+            {
+                using var response = HttpClient.GetAsync(authorsUrl).GetAwaiter().GetResult();
+                if (!response.IsSuccessStatusCode)
+                {
+                    return map;
+                }
+                var html = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var matches = Regex.Matches(
+                    html,
+                    @"card-header[^>]*>.*?<a\s+href=""([^""]+)""[^>]*>.*?card-body[^>]*>.*?<a\s+href=""[^""]+""\s+title=""([^""]+)""[^>]*>\s*<img\s+src=""([^""]+)""",
+                    RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+                foreach (Match m in matches)
+                {
+                    var href = m.Groups[1].Value.Trim();
+                    var author = TextUtil.HtmlDecode(m.Groups[2].Value.Trim());
+                    var img = m.Groups[3].Value.Trim();
+                    if (Uri.TryCreate(authorsUrl, href, out var articleUri))
+                    {
+                        var slug = articleUri.AbsolutePath.Trim('/');
+                        if (!string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(author))
+                        {
+                            map[slug] = (author, img);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning($"Failed to fetch author directory from {authorsUrl}: {ex.Message}");
+            }
+
+            return map;
         }
 
         private SyndicationFeed LoadFeed(Uri sourceUrl)

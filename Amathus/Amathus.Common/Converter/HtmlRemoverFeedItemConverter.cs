@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ namespace Amathus.Common.Converter
         {
             var feedItem = base.Convert(item);
             feedItem.Summary = TextUtil.RemoveHtmlTabAndNewLine(feedItem.Summary);
+            if (string.IsNullOrWhiteSpace(feedItem.Summary) && !string.IsNullOrWhiteSpace(feedItem.Detail))
+            {
+                feedItem.Summary = BuildSummaryExcerpt(feedItem.Detail);
+            }
             return feedItem;
         }
     }

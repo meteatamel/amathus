@@ -1,4 +1,4 @@
-﻿// Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,10 +28,16 @@ namespace Amathus.Common.Picker
 
         public List<Feed> Pick(int limit)
         {
-            var numberOfItemsPerSource = limit / _feeds.Count;
-            var remainingItems = limit % _feeds.Count;
-            
-            foreach (var feed in _feeds)
+            var feedsWithItems = _feeds.Where(feed => feed.Items != null && feed.Items.Count != 0).ToList();
+            if (feedsWithItems.Count == 0)
+            {
+                return feedsWithItems;
+            }
+
+            var numberOfItemsPerSource = limit / feedsWithItems.Count;
+            var remainingItems = limit % feedsWithItems.Count;
+
+            foreach (var feed in feedsWithItems)
             {
                 if (remainingItems > 0)
                 {
@@ -44,8 +50,7 @@ namespace Amathus.Common.Picker
                 }
             }
 
-            var feedsWithItems = _feeds.Where(feed => feed.Items != null && feed.Items.Count != 0).ToList();
-            return feedsWithItems;
+            return feedsWithItems.Where(feed => feed.Items != null && feed.Items.Count != 0).ToList();
         }
     }
 }

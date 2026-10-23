@@ -1,3 +1,4 @@
+import 'package:amathus/views/columnists_view.dart';
 import 'package:amathus/views/feeditems_recent_view.dart';
 import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class AppBottomNavigationBar extends StatelessWidget {
         height: 64,
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFF0F2942).withValues(alpha: 0.12),
-        selectedIndex: selectedIndex.clamp(0, 1),
+        selectedIndex: selectedIndex.clamp(0, 2),
         onDestinationSelected: (index) {
           if (index == selectedIndex) return;
           switch (index) {
@@ -46,6 +47,17 @@ class AppBottomNavigationBar extends StatelessWidget {
                 ),
               );
               break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const ColumnistsView(),
+                  transitionDuration: const Duration(milliseconds: 180),
+                  transitionsBuilder: (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
+                ),
+              );
+              break;
           }
         },
         destinations: [
@@ -64,6 +76,14 @@ class AppBottomNavigationBar extends StatelessWidget {
               color: Color(0xFF0F2942),
             ),
             label: Constants.RECENT_NEWS,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.edit_note_outlined),
+            selectedIcon: const Icon(
+              Icons.edit_note_rounded,
+              color: Color(0xFF0F2942),
+            ),
+            label: Constants.COLUMNISTS,
           ),
         ],
       ),

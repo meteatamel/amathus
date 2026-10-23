@@ -16,6 +16,10 @@ class FeedItemsList extends StatefulWidget {
   final bool wideTile;
   final BulkTranslateController? bulkController;
   final String? bannerText;
+  final IconData bannerIcon;
+  final bool Function(FeedItem)? customFilter;
+  final Listenable? extraListenable;
+  final bool columnistsOnly;
 
   const FeedItemsList({
     super.key,
@@ -24,6 +28,10 @@ class FeedItemsList extends StatefulWidget {
     this.wideTile = false,
     this.bulkController,
     this.bannerText,
+    this.bannerIcon = Icons.bolt_rounded,
+    this.customFilter,
+    this.extraListenable,
+    this.columnistsOnly = false,
   });
 
   @override
@@ -37,11 +45,16 @@ class _FeedItemsListState extends State<FeedItemsList> {
   bool _isRefreshing = false;
 
   bool _matchesFilter(FeedItem item) {
-    return item.feed == null ||
+    final baseMatch = item.feed == null ||
         Constants.matchesSourceLanguage(
           item.feed?.id,
           item.feed?.language,
         );
+    if (!baseMatch) return false;
+    if (widget.customFilter != null && !widget.customFilter!(item)) {
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -50,6 +63,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     Constants.sourceLanguageNotifier.addListener(_onFilterChanged);
     Constants.selectedFeedIdNotifier.addListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.addListener(_onFilterChanged);
+    widget.extraListenable?.addListener(_onFilterChanged);
     _loadInitialData();
   }
 
@@ -58,6 +72,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     Constants.sourceLanguageNotifier.removeListener(_onFilterChanged);
     Constants.selectedFeedIdNotifier.removeListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.removeListener(_onFilterChanged);
+    widget.extraListenable?.removeListener(_onFilterChanged);
     super.dispose();
   }
 
@@ -83,6 +98,12 @@ class _FeedItemsListState extends State<FeedItemsList> {
 
     var added = false;
     for (final item in feed.items!) {
+      if (widget.columnistsOnly && !item.isColumnist) {
+        continue;
+      }
+      if (!widget.columnistsOnly && item.isColumnist) {
+        continue;
+      }
       item.feed ??= feed;
       final key = '${feed.id}:${item.url ?? item.title}';
       if (existingUrls.add(key)) {
@@ -171,6 +192,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
         Constants.sourceLanguageNotifier,
         Constants.selectedFeedIdNotifier,
         Constants.hiddenFeedsNotifier,
+        if (widget.extraListenable != null) widget.extraListenable!,
       ]),
       builder: (context, _) {
         final filteredItems = items.where(_matchesFilter).toList();
@@ -216,10 +238,10 @@ class _FeedItemsListState extends State<FeedItemsList> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.bolt_rounded,
+                            Icon(
+                              widget.bannerIcon,
                               size: 20,
-                              color: Color(0xFFFBBF24),
+                              color: const Color(0xFFFBBF24),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

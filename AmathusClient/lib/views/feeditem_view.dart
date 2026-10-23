@@ -117,6 +117,53 @@ class _FeedItemViewState extends State<FeedItemView> {
                                     height: 1.32,
                                   ),
                                 ),
+                                if ((item.author ?? '').trim().isNotEmpty ||
+                                    item.isColumnist) ...[
+                                  const SizedBox(height: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF0F2942,
+                                      ).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF0F2942,
+                                        ).withValues(alpha: 0.18),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.edit_note_rounded,
+                                          size: 16,
+                                          color: Color(0xFF0F2942),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            (item.author ?? '')
+                                                    .trim()
+                                                    .isNotEmpty
+                                                ? item.author!.trim()
+                                                : Constants
+                                                    .COLUMNIST_BADGE_FALLBACK,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF0F2942),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 _buildItemImage(),
                                 const SizedBox(height: 16),
                                 _buildItemDetail(translated),

@@ -91,7 +91,11 @@ class FeedItemsRecentView extends StatelessWidget {
     final feedItems = <FeedItem>[];
     for (final feed in feeds) {
       if (feed.items != null) {
-        feedItems.addAll(feed.items!);
+        for (final item in feed.items!) {
+          if (!item.isColumnist) {
+            feedItems.add(item);
+          }
+        }
       }
     }
     feedItems.sort((a, b) => b.publishDate.compareTo(a.publishDate));

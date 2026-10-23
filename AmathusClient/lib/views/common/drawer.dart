@@ -1,3 +1,4 @@
+import 'package:amathus/views/columnists_view.dart';
 import 'package:amathus/views/contact_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
@@ -96,6 +97,17 @@ class AppDrawer extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => FeedItemsRecentView(),
+                    ),
+                  ),
+                ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.edit_note_rounded,
+                  title: Constants.COLUMNISTS,
+                  onTap: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ColumnistsView(),
                     ),
                   ),
                 ),
