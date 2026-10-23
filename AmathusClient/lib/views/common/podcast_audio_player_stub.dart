@@ -8,9 +8,20 @@ class PodcastAudioPlayer {
   Timer? _simulatedTimer;
   bool _isPaused = false;
 
-  Future<void> playIntroJingle({double playbackRate = 1.0}) async {}
+  Future<void> playIntroJingle({
+    double playbackRate = 1.0,
+    String style = 'warm_podcast',
+  }) async {}
 
-  Future<void> playOutroJingle({double playbackRate = 1.0}) async {}
+  Future<void> playOutroJingle({
+    double playbackRate = 1.0,
+    String style = 'warm_podcast',
+  }) async {}
+
+  Future<void> playStoryChime({
+    double playbackRate = 1.0,
+    String style = 'soft_marimba',
+  }) async {}
 
   Future<void> playUrl(
     String url, {

@@ -404,6 +404,7 @@ namespace Amathus.Common.Overview
             var podcastTurns = new List<PodcastDialogueTurn>();
             if (parsed.PodcastTurns != null && parsed.PodcastTurns.Count >= 6)
             {
+                var topPodcastStories = stories.Take(8).ToList();
                 int idx = 0;
                 foreach (var pt in parsed.PodcastTurns)
                 {
@@ -429,6 +430,22 @@ namespace Amathus.Common.Overview
                         TextTr = NullIfEmpty(pt.TextTr) ?? NullIfEmpty(pt.TextEn) ?? string.Empty,
                         TextEl = NullIfEmpty(pt.TextEl) ?? NullIfEmpty(pt.TextEn) ?? string.Empty
                     });
+                }
+
+                for (int i = 0; i < podcastTurns.Count; i++)
+                {
+                    if (i < 2 || i >= podcastTurns.Count - 2)
+                    {
+                        podcastTurns[i].StoryId = null;
+                    }
+                    else
+                    {
+                        int storyIdx = (i - 2) / 2;
+                        if (storyIdx >= 0 && storyIdx < topPodcastStories.Count)
+                        {
+                            podcastTurns[i].StoryId = topPodcastStories[storyIdx].Id;
+                        }
+                    }
                 }
             }
 
@@ -547,11 +564,12 @@ namespace Amathus.Common.Overview
             sb.AppendLine("- Provide topic: one of \"politics\", \"society\", \"economy\", \"sports\", \"culture\", or \"world\".");
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
             sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
-            sb.AppendLine("3. Also generate a ~5-minute two-host broadcast news podcast script (podcastTurns, 18 to 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
-            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\"), explicitly mentioning that this is the Morning, Mid-Day, or Evening edition, and give the first half of a quick headline rundown before discussing the topics in detail.");
-            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline rundown and transition into examining the top topics one by one.");
-            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces the topic and key facts/arguments, and the second speaker adds natural journalistic context, analysis, and cross-community perspective without repeating the first speaker.");
-            sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST wrap up this edition (\"{editionEn}\") and explicitly invite listeners to join again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
+            sb.AppendLine("3. Also generate a ~5-minute two-host casual, conversational daily podcast script (podcastTurns, 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
+            sb.AppendLine("- TONE & STYLE: Warm, casual, friendly, and engaging — like two smart, approachable co-hosts chatting over coffee (similar to NotebookLM Audio Overviews or Morning Brew Daily). Avoid stiff newsreader clichés; use natural spoken phrasing, contractions, and conversational transitions in English, Turkish, and Greek.");
+            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST warmly welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\"), explicitly mentioning that this is the Morning, Mid-Day, or Evening edition, and casually share the first half of a quick headline preview.");
+            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline preview and casually transition into unpacking the top stories one by one.");
+            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces the story in a natural, conversational way, and the second speaker reacts naturally and adds context, why it matters, and cross-community perspective without repeating the first speaker.");
+            sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST warmly wrap up this edition (\"{editionEn}\") and invite listeners to hang out again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
             sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two podcast hosts. Do NOT mention the number of stories/columns, the number of newspapers/news sources, or the number of articles analyzed.");
             sb.AppendLine("Return strictly valid JSON with schema:");
             sb.AppendLine(@"{

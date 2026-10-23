@@ -15,5 +15,6 @@ gcloud services enable \
   pubsub.googleapis.com \
   storage.googleapis.com \
   translate.googleapis.com \
+  texttospeech.googleapis.com \
   aiplatform.googleapis.com \
   --quiet

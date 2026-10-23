@@ -54,9 +54,32 @@ namespace Amathus.Common.Overview
 
             var targetEdition = ResolveEdition(DateTime.UtcNow, requestedEdition);
             overview.Edition = targetEdition;
-            if (overview.PodcastTurns == null || overview.PodcastTurns.Count < 6)
+            if (overview.PodcastTurns == null ||
+                overview.PodcastTurns.Count < 6 ||
+                (overview.PodcastTurns.Count > 2 && string.IsNullOrWhiteSpace(overview.PodcastTurns[2]?.StoryId)))
             {
                 overview.PodcastTurns = BuildTurns(overview, targetEdition);
+                return;
+            }
+
+            // Ensure StoryId is populated on story turns (turns 2 .. N-3)
+            var topStories = overview.Stories.Take(8).ToList();
+            for (int i = 0; i < overview.PodcastTurns.Count; i++)
+            {
+                var turn = overview.PodcastTurns[i];
+                if (turn == null) continue;
+                if (i < 2 || i >= overview.PodcastTurns.Count - 2)
+                {
+                    turn.StoryId = null;
+                }
+                else
+                {
+                    int storyIdx = (i - 2) / 2;
+                    if (storyIdx >= 0 && storyIdx < topStories.Count)
+                    {
+                        turn.StoryId = topStories[storyIdx].Id;
+                    }
+                }
             }
         }
 
@@ -94,7 +117,7 @@ namespace Amathus.Common.Overview
             {
                 Index = turnIndex++,
                 Speaker = "B",
-                StoryId = stories[0].Id,
+                StoryId = null,
                 SpeakerNameEl = string.Empty,
                 SpeakerNameTr = string.Empty,
                 SpeakerNameEn = string.Empty,
@@ -182,7 +205,7 @@ namespace Amathus.Common.Overview
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
             var rundown = string.Join(" ", firstBatch);
-            return $"Καλωσορίσατε στις {title}. Πριν περάσουμε στις λεπτομέρειες, ας δούμε συνοπτικά τους βασικούς τίτλους της επικαιρότητας: {rundown}";
+            return $"Γεια σας φίλοι μας και καλωσορίσατε στις {title}! Πάρτε τον καφέ σας κι ελάτε να δούμε μαζί τι συζητιέται σήμερα σε όλο το νησί. Ξεκινάμε με μια γρήγορη ματιά στους πρώτους τίτλους: {rundown}";
         }
 
         private static string BuildOpeningHostATr(string edition, List<OverviewStory> stories)
@@ -198,7 +221,7 @@ namespace Amathus.Common.Overview
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
             var rundown = string.Join(" ", firstBatch);
-            return $"{title} bültenine hoş geldiniz. Detaylara geçmeden önce günün öne çıkan başlıklarına hızlıca göz atalım: {rundown}";
+            return $"Herkese merhaba! {title} bültenimize hoş geldiniz. Kahvenizi alın, gelin bugün adanın iki yakasında neler konuşuluyor hızlıca bir bakalım: {rundown}";
         }
 
         private static string BuildOpeningHostAEn(string edition, List<OverviewStory> stories)
@@ -214,7 +237,7 @@ namespace Amathus.Common.Overview
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
             var rundown = string.Join(" ", firstBatch);
-            return $"Welcome to {title}. Before we dive into the details, here is a quick rundown of our top headlines: {rundown}";
+            return $"Hey everyone, welcome back to {title}! Grab a coffee and settle in — here is a quick look at what is everyone talking about across the island right now: {rundown}";
         }
 
         private static string BuildOpeningHostBEl(List<OverviewStory> stories)
@@ -226,9 +249,9 @@ namespace Amathus.Common.Overview
             if (secondBatch.Count > 0)
             {
                 var rundown = string.Join(" ", secondBatch);
-                return $"Επίσης στους σημερινούς τίτλους: {rundown} Ας περάσουμε τώρα αναλυτικά σε κάθε είδηση, ξεκινώντας από το πρώτο μας θέμα.";
+                return $"Και δεν είναι μόνο αυτά! Στην επικαιρότητα ξεχωρίζουν επίσης: {rundown} Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.";
             }
-            return "Ας περάσουμε τώρα αναλυτικά σε κάθε είδηση, ξεκινώντας από το πρώτο μας θέμα.";
+            return "Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.";
         }
 
         private static string BuildOpeningHostBTr(List<OverviewStory> stories)
@@ -240,9 +263,9 @@ namespace Amathus.Common.Overview
             if (secondBatch.Count > 0)
             {
                 var rundown = string.Join(" ", secondBatch);
-                return $"Gündemdeki diğer önemli başlıklarda ise: {rundown} Şimdi gelin bu gelişmelerin ayrıntılarına tek tek bakalım.";
+                return $"Aynen öyle, gündem bugün oldukça hareketli! Öne çıkan diğer başlıklarda ise şunlar var: {rundown} Hadi gelin ilk haberimizle sohbete başlayalım.";
             }
-            return "Şimdi gelin bu gelişmelerin ayrıntılarına tek tek bakalım.";
+            return "Hadi gelin ilk haberimizle sohbete başlayalım.";
         }
 
         private static string BuildOpeningHostBEn(List<OverviewStory> stories)
@@ -254,23 +277,23 @@ namespace Amathus.Common.Overview
             if (secondBatch.Count > 0)
             {
                 var rundown = string.Join(" ", secondBatch);
-                return $"Also making headlines right now: {rundown} Now let's take a closer look at each story one by one.";
+                return $"Yeah, plenty happening today! Also catching our eye right now: {rundown} Let's jump right in and unpack each story one by one.";
             }
-            return "Now let's take a closer look at each story one by one.";
+            return "Let's jump right in and unpack each story one by one.";
         }
 
         private static string BuildStoryLeadEl(OverviewStory story, int index)
         {
             var transitions = new[]
             {
-                "Ξεκινώντας με το πρώτο θέμα:",
-                "Περνώντας στην επόμενη σημαντική είδηση:",
-                "Ένα άλλο θέμα που απασχολεί έντονα την επικαιρότητα:",
-                "Συνεχίζουμε με την επόμενη εξέλιξη:",
-                "Στρέφουμε τώρα την προσοχή μας σε ένα ακόμη βασικό ζήτημα:",
-                "Προχωρώντας στο επόμενο ρεπορτάζ της ημέρας:",
-                "Σε μια άλλη σημαντική εξέλιξη:",
-                "Και κλείνοντας την ανασκόπηση των ειδήσεων με το τελευταίο μας θέμα:"
+                "Λοιπόν, ας ξεκινήσουμε με το θέμα που βρίσκεται στην πρώτη γραμμή σήμερα:",
+                "Πάμε τώρα στο επόμενο θέμα που συζητιέται πολύ:",
+                "Και περνώντας σε κάτι που επίσης τραβάει τα βλέμματα σήμερα:",
+                "Συνεχίζοντας την κουβέντα μας, ας δούμε κι αυτή την εξέλιξη:",
+                "Ένα άλλο θέμα που απασχολεί έντονα τις εφημερίδες στο νησί είναι το εξής:",
+                "Ας ρίξουμε τώρα μια ματιά στην επόμενη ιστορία της ημέρας:",
+                "Παράλληλα, έχουμε και μια ακόμη ενδιαφέρουσα είδηση:",
+                "Και για το κλείσιμο της σημερινής μας βόλτας στις ειδήσεις:"
             };
 
             var intro = transitions[Math.Min(index, transitions.Length - 1)];
@@ -288,13 +311,13 @@ namespace Amathus.Common.Overview
         {
             var transitions = new[]
             {
-                "Günün ilk önemli gelişmesiyle başlıyoruz:",
-                "Sıradaki öne çıkan başlığımıza geçelim:",
-                "Bugün basında geniş yer bulan bir diğer önemli konu:",
-                "Gündemdeki bir sonraki gelişmeyle devam edelim:",
-                "Ada basınında dikkat çeken bir başka başlık ise şöyle:",
-                "Bültenimizin sıradaki haberine baktığımızda:",
-                "Öne çıkan bir diğer gelişmede:",
+                "İlk olarak bugün herkesin konuştuğu şu gelişmeyle başlayalım:",
+                "Şimdi geçelim gündemde çok konuşulan bir diğer konuya:",
+                "Bu arada gazetelerde dikkat çeken bir başka önemli başlık da şu:",
+                "Sohbetimize sıradaki gelişmeyle devam edelim:",
+                "Ada genelinde merakla takip edilen bir diğer haber ise şöyle:",
+                "Gelin şimdi bugünün bir diğer önemli başlığına bakalım:",
+                "Öte yandan gözden kaçmaması gereken bir gelişme daha var:",
                 "Ve bugünkü haber turumuzun son başlığına gelirken:"
             };
 
@@ -313,14 +336,14 @@ namespace Amathus.Common.Overview
         {
             var transitions = new[]
             {
-                "Leading our briefing today:",
-                "Turning now to our next major story:",
-                "Another headline drawing strong attention today:",
-                "Moving on to the next key development:",
-                "Next up, let's look at another story making waves on the island:",
-                "Continuing with the next story of our briefing:",
-                "In another notable development today:",
-                "And for the final story of this briefing:"
+                "So kicking things off today, let's talk about our top story:",
+                "Now, shifting gears to another big story everyone's talking about:",
+                "Meanwhile, here's another headline catching plenty of attention today:",
+                "Moving along, let's check out what's happening with our next story:",
+                "Another topic making waves across the island's papers today is this one:",
+                "Next up, let's take a look at another development worth watching:",
+                "On another note, here's a story that's also drawing focus today:",
+                "And wrapping up our rundown with one final story:"
             };
 
             var intro = transitions[Math.Min(index, transitions.Length - 1)];
@@ -338,12 +361,12 @@ namespace Amathus.Common.Overview
         {
             var reactions = new[]
             {
-                "Πράγματι.",
-                "Ακριβώς, και έχει ενδιαφέρον πώς εξελίσσεται το ζήτημα.",
-                "Πολύ σωστά.",
-                "Είναι όντως ένα κομβικό θέμα.",
-                "Αξίζει να σταθούμε ιδιαίτερα εδώ.",
-                "Σωστά, και οι λεπτομέρειες έχουν ιδιαίτερη σημασία."
+                "Έτσι ακριβώς, κι αυτό που έχει ιδιαίτερο ενδιαφέρον εδώ είναι το παρασκήνιο.",
+                "Πραγματικά, και αξίζει να δούμε πώς αποτυπώνεται αυτό στον Τύπο.",
+                "Πολύ σωστά, γιατί οι λεπτομέρειες κάνουν τη διαφορά.",
+                "Ακριβώς, πρόκειται για ένα θέμα που αγγίζει πολύ κόσμο.",
+                "Ναι, κι εδώ φαίνεται ξεκάθαρα γιατί το θέμα συζητιέται τόσο έντονα.",
+                "Σωστά, κι αν δούμε τη συνολική εικόνα, έχει μεγάλη σημασία."
             };
             var reaction = reactions[index % reactions.Length];
 
@@ -362,12 +385,12 @@ namespace Amathus.Common.Overview
         {
             var reactions = new[]
             {
-                "Kesinlikle.",
-                "Çok doğru, konunun yansımaları da oldukça dikkat çekici.",
-                "Evet, detaylara baktığımızda tablo daha da netleşiyor.",
-                "Gerçekten önemli bir gelişme.",
-                "Burada altı çizilmesi gereken önemli noktalar var.",
-                "Aynen öyle."
+                "Kesinlikle, işin en dikkat çekici tarafı da zaten burası.",
+                "Çok doğru, üstelik basındaki yansımalarına baktığımızda tablo daha da netleşiyor.",
+                "Tam da öyle, detaylar gerçekten çok önemli.",
+                "Gerçekten de bugün üzerinde en çok durulan konulardan biri bu.",
+                "Evet, burada altı çizilmesi gereken çok önemli bir nokta var.",
+                "Aynen öyle, büyük resme baktığımızda etkisi oldukça geniş."
             };
             var reaction = reactions[index % reactions.Length];
 
@@ -386,12 +409,12 @@ namespace Amathus.Common.Overview
         {
             var reactions = new[]
             {
-                "That's right.",
-                "Indeed, and the wider context around this is important.",
-                "Spot on.",
-                "It really is a key development.",
-                "There's an important angle to highlight here.",
-                "Exactly, and the details behind the story matter."
+                "Yeah, totally — and what really stands out here is the bigger picture.",
+                "Right, and when you look at how the papers are covering it, there's a lot to unpack.",
+                "Spot on, the details behind this one really matter.",
+                "Exactly, it's definitely one of those stories everyone is keeping an eye on.",
+                "For sure, and there's an interesting angle to highlight here too.",
+                "Yeah, that's such a key point."
             };
             var reaction = reactions[index % reactions.Length];
 
@@ -413,9 +436,9 @@ namespace Amathus.Common.Overview
 
             if (langs.Count >= 2)
             {
-                return "Το θέμα συγκεντρώνει διακοινοτικό ενδιαφέρον, αναδεικνύοντας τη σημασία του σε ολόκληρο το νησί.";
+                return "Είναι μάλιστα χαρακτηριστικό ότι το θέμα απασχολεί έντονα και τις δύο κοινότητες σε ολόκληρο το νησί.";
             }
-            return "Οι εξελίξεις παρακολουθούνται στενά, με έμφαση στις επόμενες κινήσεις.";
+            return "Θα έχει σίγουρα μεγάλο ενδιαφέρον να δούμε πώς θα εξελιχθεί τις επόμενες μέρες.";
         }
 
         private static string BuildSourcesCommentaryTr(OverviewStory story)
@@ -425,9 +448,9 @@ namespace Amathus.Common.Overview
 
             if (langs.Count >= 2)
             {
-                return "Bu gelişme ada genelinde ortak gündem olarak yakından takip ediliyor.";
+                return "Üstelik bu konunun adanın her iki kesiminde de yakından takip edilmesi ne kadar önemli olduğunu gösteriyor.";
             }
-            return "Konunun önümüzdeki günlerdeki etkileri kamuoyu tarafından dikkatle izleniyor.";
+            return "Önümüzdeki günlerde bu başlığın nasıl şekilleneceğini hep birlikte göreceğiz.";
         }
 
         private static string BuildSourcesCommentaryEn(OverviewStory story)
@@ -437,33 +460,33 @@ namespace Amathus.Common.Overview
 
             if (langs.Count >= 2)
             {
-                return "We're seeing cross-community attention on this story, underscoring its island-wide impact.";
+                return "It's getting strong attention across both communities too, which really shows how much it matters island-wide.";
             }
-            return "The situation continues to unfold and remains a key focus today.";
+            return "Definitely a story we'll be watching closely as things develop over the coming days.";
         }
 
         private static string BuildClosingHostAEl()
         {
-            return "Αυτές ήταν οι Κύριες Ειδήσεις της Κύπρου για αυτή την ώρα. Μπορείτε να πατήσετε σε οποιαδήποτε είδηση παρακάτω για να διαβάσετε ολόκληρα τα άρθρα.";
+            return "Και κάπου εδώ ολοκληρώσαμε τη σημερινή μας ανασκόπηση! Αν θέλετε να διαβάσετε περισσότερα, απλώς πατήστε σε οποιαδήποτε κάρτα είδησης παρακάτω για να δείτε ολόκληρα τα άρθρα.";
         }
 
         private static string BuildClosingHostATr()
         {
-            return "Kıbrıs Öne Çıkan Haberler bültenimizin sonuna geldik. Aşağıdaki haber kartlarına dokunarak tüm makaleleri detaylı olarak okuyabilirsiniz.";
+            return "Böylece bugünkü öne çıkan haber turumuzun sonuna geldik! Merak ettiğiniz haberlerin tamamını okumak için aşağıdaki kartlara dokunmanız yeterli.";
         }
 
         private static string BuildClosingHostAEn()
         {
-            return "And that wraps up our Cyprus Top Stories briefing. You can tap any story card below to read the full articles.";
+            return "And that brings us to the end of today's roundup! If any story caught your ear, just tap on its card right below to read the full coverage.";
         }
 
         private static string BuildClosingHostBEl(string edition)
         {
             return edition switch
             {
-                "morning" => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Μεσημεριανή μας έκδοση. Καλή συνέχεια στην ημέρα σας!",
-                "midday" => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Βραδινή μας έκδοση. Καλό απόγευμα σε όλους!",
-                _ => "Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας αύριο στην Πρωινή μας έκδοση. Καλό σας βράδυ!"
+                "morning" => "Σας ευχαριστούμε πολύ για την παρέα! Τα λέμε ξανά στη Μεσημεριανή μας έκδοση — να έχετε ένα υπέροχο πρωινό!",
+                "midday" => "Σας ευχαριστούμε πολύ για την παρέα! Ανανεώνουμε το ραντεβού μας για τη Βραδινή μας έκδοση — καλό απόγευμα σε όλους!",
+                _ => "Σας ευχαριστούμε πολύ για την παρέα! Τα λέμε πάλι αύριο στην Πρωινή μας έκδοση — καλό σας βράδυ!"
             };
         }
 
@@ -471,9 +494,9 @@ namespace Amathus.Common.Overview
         {
             return edition switch
             {
-                "morning" => "Bizi dinlediğiniz için teşekkürler. Öğle bültenimizde yeniden görüşmek üzere, herkese güzel bir gün diliyoruz!",
-                "midday" => "Bizi dinlediğiniz için teşekkürler. Akşam bültenimizde yeniden görüşmek üzere, iyi günler!",
-                _ => "Bizi dinlediğiniz için teşekkürler. Yarın Sabah bültenimizde yeniden buluşmak dileğiyle, iyi akşamlar!"
+                "morning" => "Bize katıldığınız için çok teşekkürler! Öğle bültenimizde yeniden buluşmak üzere, herkese harika bir sabah diliyoruz!",
+                "midday" => "Bize katıldığınız için çok teşekkürler! Akşam bültenimizde yeniden görüşmek üzere, keyifli bir gün geçirmeniz dileğiyle!",
+                _ => "Bize katıldığınız için çok teşekkürler! Yarın Sabah bültenimizde yeniden buluşmak üzere, herkese iyi akşamlar!"
             };
         }
 
@@ -481,9 +504,9 @@ namespace Amathus.Common.Overview
         {
             return edition switch
             {
-                "morning" => "Thanks for listening — have a wonderful morning, and join us again for our Mid-Day edition!",
-                "midday" => "Thanks for listening — enjoy the rest of your afternoon, and join us again for our Evening edition!",
-                _ => "Thanks for listening — have a great evening, and join us again tomorrow for our Morning edition!"
+                "morning" => "Thanks so much for hanging out with us — have an awesome morning, and catch you again for our Mid-Day edition!",
+                "midday" => "Thanks so much for tuning in — enjoy the rest of your afternoon, and we'll catch you back here for the Evening edition!",
+                _ => "Thanks so much for listening — have a relaxing evening, and we'll catch you again tomorrow for our Morning edition!"
             };
         }
 

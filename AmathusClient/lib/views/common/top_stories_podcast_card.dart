@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/podcast_audio_player.dart';
@@ -57,6 +59,31 @@ class PodcastPlaybackController extends ChangeNotifier {
   static final PodcastPlaybackController instance =
       PodcastPlaybackController._();
 
+  static const List<String> voicePresetPool = <String>[
+    'chirp_aoede_puck',
+    'chirp_sulafat_achird',
+    'chirp_callirrhoe_umbriel',
+    'chirp_zephyr_charon',
+    'chirp_kore_fenrir',
+    'chirp_leda_orus',
+  ];
+
+  static const List<String> musicPresetPool = <String>[
+    'warm_podcast',
+    'mediterranean',
+    'ambient_lounge',
+    'broadcast_news',
+  ];
+
+  static const List<String> chimePresetPool = <String>[
+    'soft_marimba',
+    'glass_bell',
+    'vibraphone_chord',
+    'harp_pluck',
+    'news_pulse',
+  ];
+
+  final math.Random _random = math.Random();
   final PodcastAudioPlayer _player = PodcastAudioPlayer();
 
   NewsOverview? _overview;
@@ -71,7 +98,12 @@ class PodcastPlaybackController extends ChangeNotifier {
   int _playSessionId = 0;
   double _playbackRate = 1.0;
 
+  String _voicePreset = voicePresetPool.first;
+  String _musicPreset = musicPresetPool.first;
+  String _chimePreset = chimePresetPool.first;
+
   PodcastPlaybackController._() {
+    _randomizeSessionPresets();
     _player.onEnded = _handleTurnEnded;
     _player.onError = _handleTurnError;
     _player.onPositionFractionChanged = (fraction) {
@@ -85,6 +117,24 @@ class PodcastPlaybackController extends ChangeNotifier {
   bool get isPaused => _isPaused;
   double get playbackRate => _playbackRate;
   double? get draggingOverallFraction => _draggingOverallFraction;
+  String get voicePreset => _voicePreset;
+  String get musicPreset => _musicPreset;
+  String get chimePreset => _chimePreset;
+
+  String _pickDifferentRandom(List<String> pool, String current) {
+    if (pool.length <= 1) return pool.first;
+    String candidate = current;
+    for (int i = 0; i < 6 && candidate == current; i++) {
+      candidate = pool[_random.nextInt(pool.length)];
+    }
+    return candidate;
+  }
+
+  void _randomizeSessionPresets() {
+    _voicePreset = _pickDifferentRandom(voicePresetPool, _voicePreset);
+    _musicPreset = _pickDifferentRandom(musicPresetPool, _musicPreset);
+    _chimePreset = _pickDifferentRandom(chimePresetPool, _chimePreset);
+  }
 
   void attachOverview(NewsOverview overview, String defaultLanguage) {
     final prevOverview = _overview;
@@ -145,19 +195,55 @@ class PodcastPlaybackController extends ChangeNotifier {
     return '${Constants.URL_PODCAST_AUDIO}'
         '?lang=${Uri.encodeQueryComponent(lang)}'
         '&speaker=${Uri.encodeQueryComponent(speaker)}'
+        '&voicePreset=${Uri.encodeQueryComponent(_voicePreset)}'
         '&text=${Uri.encodeQueryComponent(text)}';
+  }
+
+  bool _shouldPlayChimeBetween(
+    PodcastDialogueTurn prevTurn,
+    PodcastDialogueTurn nextTurn,
+    int nextIndex,
+    int totalTurns,
+  ) {
+    final prevStory = prevTurn.storyId;
+    final nextStory = nextTurn.storyId;
+    if (nextStory != null && nextStory.isNotEmpty && nextStory != prevStory) {
+      return true;
+    }
+    // Fallback if storyId was not populated: even turns 2..totalTurns-3 start a new story
+    if ((nextStory == null || nextStory.isEmpty) &&
+        (prevStory == null || prevStory.isEmpty) &&
+        nextIndex >= 2 &&
+        nextIndex <= totalTurns - 3 &&
+        nextIndex.isEven) {
+      return true;
+    }
+    return false;
   }
 
   Future<void> _handleTurnEnded() async {
     if (!_isPlaying) return;
     final list = turns;
     if (_currentTurnIndex + 1 < list.length) {
-      _currentTurnIndex++;
+      final prevTurn = list[_currentTurnIndex];
+      final nextIndex = _currentTurnIndex + 1;
+      final nextTurn = list[nextIndex];
+      final playChime = _shouldPlayChimeBetween(
+        prevTurn,
+        nextTurn,
+        nextIndex,
+        list.length,
+      );
+
+      _currentTurnIndex = nextIndex;
       _withinTurnFraction = 0.0;
       notifyListeners();
-      await _playCurrentTurn();
+      await _playCurrentTurn(withStoryChime: playChime);
     } else {
-      await _player.playOutroJingle(playbackRate: _playbackRate);
+      await _player.playOutroJingle(
+        playbackRate: _playbackRate,
+        style: _musicPreset,
+      );
       _isPlaying = false;
       _isPaused = false;
       _currentTurnIndex = 0;
@@ -174,6 +260,7 @@ class PodcastPlaybackController extends ChangeNotifier {
 
   Future<void> _playCurrentTurn({
     bool withIntroJingle = false,
+    bool withStoryChime = false,
     double initialSeekFraction = 0.0,
   }) async {
     final list = turns;
@@ -191,7 +278,19 @@ class PodcastPlaybackController extends ChangeNotifier {
 
     if (withIntroJingle) {
       _player.prefetchUrl(url);
-      await _player.playIntroJingle(playbackRate: _playbackRate);
+      await _player.playIntroJingle(
+        playbackRate: _playbackRate,
+        style: _musicPreset,
+      );
+      if (!_isPlaying || _isPaused || sessionId != _playSessionId) {
+        return;
+      }
+    } else if (withStoryChime) {
+      _player.prefetchUrl(url);
+      await _player.playStoryChime(
+        playbackRate: _playbackRate,
+        style: _chimePreset,
+      );
       if (!_isPlaying || _isPaused || sessionId != _playSessionId) {
         return;
       }
@@ -241,6 +340,9 @@ class PodcastPlaybackController extends ChangeNotifier {
     } else {
       final startingFromBeginning =
           _currentTurnIndex == 0 && _withinTurnFraction < 0.05;
+      if (startingFromBeginning) {
+        _randomizeSessionPresets();
+      }
       _isPlaying = true;
       _isPaused = false;
       notifyListeners();
@@ -406,53 +508,46 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B)
+                            .withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Text(
+                        _editionEmoji(edition),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          height: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B)
-                                  .withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(11),
+                          Text(
+                            Constants.podcastEditionTitleFor(
+                              edition,
+                              lang,
+                              isColumnists: widget.isColumnists,
                             ),
-                            child: Text(
-                              _editionEmoji(edition),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.0,
-                              ),
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F2942),
+                              height: 1.25,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  Constants.podcastEditionTitleFor(
-                                    edition,
-                                    lang,
-                                    isColumnists: widget.isColumnists,
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 15.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F2942),
-                                    height: 1.25,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  Constants.podcastSubtitleFor(edition, lang),
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF334155),
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(height: 3),
+                          Text(
+                            Constants.podcastSubtitleFor(edition, lang),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF334155),
                             ),
                           ),
                         ],

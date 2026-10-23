@@ -48,7 +48,10 @@ class NewsOverview {
         (requestedEdition != null && requestedEdition.trim().isNotEmpty)
             ? requestedEdition.trim().toLowerCase()
             : effectiveEdition;
-    if (podcastTurns.isNotEmpty && targetEdition == effectiveEdition) {
+    if (podcastTurns.isNotEmpty &&
+        targetEdition == effectiveEdition &&
+        podcastTurns.length > 2 &&
+        (podcastTurns[2].storyId ?? '').isNotEmpty) {
       return podcastTurns;
     }
     return PodcastDialogueTurn.buildClientTurns(this, targetEdition);
@@ -221,33 +224,34 @@ class PodcastDialogueTurn {
     turns.add(PodcastDialogueTurn(
       index: idx++,
       speaker: 'A',
+      storyId: null,
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
       textEl:
-          'Καλωσορίσατε στις $titleEl. Πριν περάσουμε στις λεπτομέρειες, ας δούμε συνοπτικά τους βασικούς τίτλους της επικαιρότητας: $rundownFirstEl',
+          'Γεια σας φίλοι μας και καλωσορίσατε στις $titleEl! Πάρτε τον καφέ σας κι ελάτε να δούμε μαζί τι συζητιέται σήμερα σε όλο το νησί. Ξεκινάμε με μια γρήγορη ματιά στους πρώτους τίτλους: $rundownFirstEl',
       textTr:
-          '$titleTr bültenine hoş geldiniz. Detaylara geçmeden önce günün öne çıkan başlıklarına hızlıca göz atalım: $rundownFirstTr',
+          'Herkese merhaba! $titleTr bültenimize hoş geldiniz. Kahvenizi alın, gelin bugün adanın iki yakasında neler konuşuluyor hızlıca bir bakalım: $rundownFirstTr',
       textEn:
-          'Welcome to $titleEn. Before we dive into the details, here is a quick rundown of our top headlines: $rundownFirstEn',
+          'Hey everyone, welcome back to $titleEn! Grab a coffee and settle in — here is a quick look at what everyone is talking about across the island right now: $rundownFirstEn',
     ));
 
     turns.add(PodcastDialogueTurn(
       index: idx++,
       speaker: 'B',
-      storyId: topStories.first.id,
+      storyId: null,
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
       textEl: rundownSecondEl.isNotEmpty
-          ? 'Επίσης στους σημερινούς τίτλους: $rundownSecondEl Ας περάσουμε τώρα αναλυτικά σε κάθε είδηση, ξεκινώντας από το πρώτο μας θέμα.'
-          : 'Ας περάσουμε τώρα αναλυτικά σε κάθε είδηση, ξεκινώντας από το πρώτο μας θέμα.',
+          ? 'Και δεν είναι μόνο αυτά! Στην επικαιρότητα ξεχωρίζουν επίσης: $rundownSecondEl Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.'
+          : 'Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.',
       textTr: rundownSecondTr.isNotEmpty
-          ? 'Gündemdeki diğer önemli başlıklarda ise: $rundownSecondTr Şimdi gelin bu gelişmelerin ayrıntılarına tek tek bakalım.'
-          : 'Şimdi gelin bu gelişmelerin ayrıntılarına tek tek bakalım.',
+          ? 'Aynen öyle, gündem bugün oldukça hareketli! Öne çıkan diğer başlıklarda ise şunlar var: $rundownSecondTr Hadi gelin ilk haberimizle sohbete başlayalım.'
+          : 'Hadi gelin ilk haberimizle sohbete başlayalım.',
       textEn: rundownSecondEn.isNotEmpty
-          ? 'Also making headlines right now: $rundownSecondEn Now let\'s take a closer look at each story one by one.'
-          : 'Now let\'s take a closer look at each story one by one.',
+          ? 'Yeah, plenty happening today! Also catching our eye right now: $rundownSecondEn Let\'s jump right in and unpack each story one by one.'
+          : 'Let\'s jump right in and unpack each story one by one.',
     ));
 
     for (var i = 0; i < topStories.length; i++) {
@@ -274,48 +278,50 @@ class PodcastDialogueTurn {
         speakerNameTr: '',
         speakerNameEn: '',
         textEl:
-            'Πράγματι. Οι εξελίξεις παρακολουθούνται στενά, αναδεικνύοντας τη σημασία του θέματος στην επικαιρότητα της ημέρας.',
+            'Έτσι ακριβώς. Είναι ένα θέμα που συζητιέται έντονα σήμερα και θα έχει μεγάλο ενδιαφέρον να δούμε πώς θα εξελιχθεί.',
         textTr:
-            'Kesinlikle. Bu gelişme ada gündeminde yakından takip edilen konular arasında yer alıyor.',
+            'Kesinlikle. Bu gelişme bugün ada gündeminde en çok konuşulan başlıklar arasında yer alıyor.',
         textEn:
-            'That\'s right. This story remains a key focus across the island today as events continue to unfold.',
+            'Yeah, totally — this is definitely one of those stories everyone across the island is keeping a close eye on today.',
       ));
     }
 
     turns.add(PodcastDialogueTurn(
       index: idx++,
       speaker: 'A',
+      storyId: null,
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
       textEl:
-          'Αυτές ήταν οι Κύριες Ειδήσεις της Κύπρου για αυτή την ώρα. Μπορείτε να πατήσετε σε οποιαδήποτε είδηση παρακάτω για να διαβάσετε ολόκληρα τα άρθρα.',
+          'Και κάπου εδώ ολοκληρώσαμε τη σημερινή μας ανασκόπηση! Αν θέλετε να διαβάσετε περισσότερα, απλώς πατήστε σε οποιαδήποτε κάρτα είδησης παρακάτω για να δείτε ολόκληρα τα άρθρα.',
       textTr:
-          'Kıbrıs Öne Çıkan Haberler bültenimizin sonuna geldik. Aşağıdaki haber kartlarına dokunarak tüm makaleleri detaylı olarak okuyabilirsiniz.',
+          'Böylece bugünkü öne çıkan haber turumuzun sonuna geldik! Merak ettiğiniz haberlerin tamamını okumak için aşağıdaki kartlara dokunmanız yeterli.',
       textEn:
-          'And that wraps up our Cyprus Top Stories briefing. You can tap any story card below to read the full articles.',
+          'And that brings us to the end of today\'s roundup! If any story caught your ear, just tap on its card right below to read the full coverage.',
     ));
 
     final normEdition = edition.trim().toLowerCase();
     final closingEl = normEdition == 'morning'
-        ? 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Μεσημεριανή μας έκδοση!'
+        ? 'Σας ευχαριστούμε πολύ για την παρέα! Τα λέμε ξανά στη Μεσημεριανή μας έκδοση — να έχετε ένα υπέροχο πρωινό!'
         : (normEdition == 'midday'
-            ? 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας στη Βραδινή μας έκδοση!'
-            : 'Σας ευχαριστούμε που μας ακούσατε. Θα είμαστε ξανά μαζί σας αύριο στην Πρωινή μας έκδοση!');
+            ? 'Σας ευχαριστούμε πολύ για την παρέα! Ανανεώνουμε το ραντεβού μας για τη Βραδινή μας έκδοση — καλό απόγευμα σε όλους!'
+            : 'Σας ευχαριστούμε πολύ για την παρέα! Τα λέμε πάλι αύριο στην Πρωινή μας έκδοση — καλό σας βράδυ!');
     final closingTr = normEdition == 'morning'
-        ? 'Bizi dinlediğiniz için teşekkürler. Öğle bültenimizde yeniden görüşmek üzere, hoşça kalın!'
+        ? 'Bize katıldığınız için çok teşekkürler! Öğle bültenimizde yeniden buluşmak üzere, herkese harika bir sabah diliyoruz!'
         : (normEdition == 'midday'
-            ? 'Bizi dinlediğiniz için teşekkürler. Akşam bültenimizde yeniden görüşmek üzere, hoşça kalın!'
-            : 'Bizi dinlediğiniz için teşekkürler. Yarın Sabah bültenimizde yeniden görüşmek üzere, hoşça kalın!');
+            ? 'Bize katıldığınız için çok teşekkürler! Akşam bültenimizde yeniden görüşmek üzere, keyifli bir gün geçirmeniz dileğiyle!'
+            : 'Bize katıldığınız için çok teşekkürler! Yarın Sabah bültenimizde yeniden buluşmak üzere, herkese iyi akşamlar!');
     final closingEn = normEdition == 'morning'
-        ? 'Thanks for listening, and join us again for our Mid-Day edition!'
+        ? 'Thanks so much for hanging out with us — have an awesome morning, and catch you again for our Mid-Day edition!'
         : (normEdition == 'midday'
-            ? 'Thanks for listening, and join us again for our Evening edition!'
-            : 'Thanks for listening, and join us again tomorrow for our Morning edition!');
+            ? 'Thanks so much for tuning in — enjoy the rest of your afternoon, and we\'ll catch you back here for the Evening edition!'
+            : 'Thanks so much for listening — have a relaxing evening, and we\'ll catch you again tomorrow for our Morning edition!');
 
     turns.add(PodcastDialogueTurn(
       index: idx++,
       speaker: 'B',
+      storyId: null,
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',

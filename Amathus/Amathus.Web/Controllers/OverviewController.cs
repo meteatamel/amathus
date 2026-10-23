@@ -127,10 +127,11 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("podcast/audio")]
-        [Produces("audio/mpeg")]
+        [Produces("audio/wav", "audio/mpeg")]
         public async Task<IActionResult> GetPodcastAudio(
             [FromQuery] string lang = "en",
             [FromQuery] string speaker = "A",
+            [FromQuery] string voicePreset = null,
             [FromQuery] string text = "",
             CancellationToken cancellationToken = default)
         {
@@ -143,6 +144,7 @@ namespace Amathus.Web.Controllers
                 text,
                 lang,
                 speaker,
+                voicePreset,
                 cancellationToken);
 
             if (audioBytes == null || audioBytes.Length == 0)
@@ -150,8 +152,14 @@ namespace Amathus.Web.Controllers
                 return StatusCode(502, "Failed to synthesize podcast audio.");
             }
 
+            bool isWav = audioBytes.Length > 4 &&
+                         audioBytes[0] == 0x52 && // 'R'
+                         audioBytes[1] == 0x49 && // 'I'
+                         audioBytes[2] == 0x46 && // 'F'
+                         audioBytes[3] == 0x46;   // 'F'
+
             Response.Headers["Cache-Control"] = "public, max-age=86400";
-            return File(audioBytes, "audio/mpeg", enableRangeProcessing: true);
+            return File(audioBytes, isWav ? "audio/wav" : "audio/mpeg", enableRangeProcessing: true);
         }
     }
 }
