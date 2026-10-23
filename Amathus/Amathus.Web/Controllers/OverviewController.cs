@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Common.FeedStore;
 using Amathus.Common.Overview;
+using Amathus.Common.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -56,6 +57,7 @@ namespace Amathus.Web.Controllers
                 if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                 {
                     var copy = existing.Copy();
+                    EnsureStoryTopicsPopulated(copy);
                     PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
                     return Ok(copy);
                 }
@@ -70,6 +72,7 @@ namespace Amathus.Web.Controllers
                     if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                     {
                         var copy = existing.Copy();
+                        EnsureStoryTopicsPopulated(copy);
                         PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
                         return Ok(copy);
                     }
@@ -84,6 +87,7 @@ namespace Amathus.Web.Controllers
                 _logger.LogInformation($"Generating daily overview (columnists={columnists}) on demand...");
                 var overview = await _overviewAnalyzer.AnalyzeAsync(feeds, columnists);
                 overview.Id = overviewId;
+                EnsureStoryTopicsPopulated(overview);
                 PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
                 await _feedStore.SaveOverviewAsync(overview);
                 return Ok(overview);
@@ -91,6 +95,34 @@ namespace Amathus.Web.Controllers
             finally
             {
                 GenerationLock.Release();
+            }
+        }
+
+        private static void EnsureStoryTopicsPopulated(NewsOverview overview)
+        {
+            if (overview?.Stories == null)
+            {
+                return;
+            }
+
+            foreach (var story in overview.Stories)
+            {
+                if (story == null)
+                {
+                    continue;
+                }
+
+                var normalized = TextUtil.NormalizeTopic(story.Topic);
+                if (normalized == null)
+                {
+                    var firstSource = story.Sources?.FirstOrDefault()?.Article;
+                    normalized = TextUtil.ClassifyTopic(
+                        $"{story.TitleEn} {story.TitleTr} {story.TitleEl}",
+                        $"{story.NarrativeEn} {story.NarrativeTr} {story.NarrativeEl}",
+                        firstSource?.Summary,
+                        firstSource?.Url?.AbsoluteUri);
+                }
+                story.Topic = normalized;
             }
         }
 

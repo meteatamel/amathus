@@ -45,6 +45,10 @@ final ValueNotifier<String?> selectedFeedIdNotifier =
 final ValueNotifier<String?> selectedColumnistNotifier =
     ValueNotifier<String?>(null);
 
+// Selected news topic filter ('all', 'politics', 'society', 'economy', 'sports', 'culture', 'world')
+final ValueNotifier<String> selectedTopicNotifier =
+    ValueNotifier<String>('all');
+
 // Active translation language for Top Stories (null = original majority language per story)
 final ValueNotifier<String?> overviewTranslateLanguageNotifier =
     ValueNotifier<String?>(null);
@@ -132,6 +136,193 @@ void setSelectedColumnist(String? author) {
     selectedColumnistNotifier.value = null;
   } else {
     selectedColumnistNotifier.value = author.trim();
+  }
+}
+
+const List<String> TOPIC_CODES = <String>[
+  'all',
+  'politics',
+  'society',
+  'economy',
+  'sports',
+  'culture',
+  'world',
+];
+
+void setSelectedTopic(String? topic) {
+  if (topic == null || topic.trim().isEmpty || topic == 'all') {
+    selectedTopicNotifier.value = 'all';
+    return;
+  }
+  final normalized = normalizeTopic(topic);
+  selectedTopicNotifier.value = normalized ?? 'all';
+}
+
+String? normalizeTopic(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  final norm = raw.trim().toLowerCase();
+  switch (norm) {
+    case 'politics':
+    case 'siyaset':
+    case 'politika':
+    case 'πολιτική':
+    case 'πολιτικη':
+      return 'politics';
+    case 'society':
+    case 'toplum':
+    case 'asayiş':
+    case 'asayis':
+    case 'κοινωνία':
+    case 'κοινωνια':
+    case 'local':
+      return 'society';
+    case 'economy':
+    case 'ekonomi':
+    case 'business':
+    case 'finance':
+    case 'οικονομία':
+    case 'οικονομια':
+      return 'economy';
+    case 'sports':
+    case 'sport':
+    case 'spor':
+    case 'αθλητισμός':
+    case 'αθλητισμος':
+    case 'αθλητικά':
+      return 'sports';
+    case 'culture':
+    case 'culture & life':
+    case 'lifestyle':
+    case 'kültür':
+    case 'yaşam':
+    case 'πολιτισμός':
+      return 'culture';
+    case 'world':
+    case 'dünya':
+    case 'dunya':
+    case 'international':
+    case 'κόσμος':
+    case 'διεθνή':
+      return 'world';
+    default:
+      return null;
+  }
+}
+
+final RegExp _topicSportsRegex = RegExp(
+  r'(αθλητ|ποδόσφαιρ|μπάσκετ|καλαθόσφαιρ|τένις|ράλλυ|ομόνοια|αποελ|απόλλων|ανόρθωσ|\bαεκ\b|ολυμπιακ|παναθηναϊκ|\bπαοκ\b|ρεάλ|τσίτσιπας|πρωτάθλημ|γήπεδ|προπονητ|διαιτητ|κύπελλ|\bspor\b|futbol|basketbol|voleybol|tenis|ralli|\bmaç\b|\bmaçı\b|şampiyon|turnuva|stadyum|hakem|transfer|antrenör|fenerbahçe|galatasaray|beşiktaş|trabzonspor|ktff|çetinkaya|\bsport|\bfootball|basketball|tennis|rally|\bf1\b|hamilton|omonia|apoel|apollon|anorthosis|pafos\s+fc|olympiacos|panathinaikos|champions\s+league|euroleague|uefa|fifa)',
+  caseSensitive: false,
+);
+
+final RegExp _topicCultureRegex = RegExp(
+  r'(πολιτισμ|μουσικ|συναυλ|τραγουδ|ταινί|κινηματογράφ|θέατρ|ηθοποι|\bσειρές\b|φεστιβάλ|\bτέχνη|\bτέχνες|έκθεσ|μουσεί|βιβλί|μόδα|γαστρονομ|αρχαιολογ|βίσση|αργυρ|μόνροε|ουίλιαμ|kültür|sanat|müzik|konser|şarkı|\bfilm\b|sinema|tiyatro|oyuncu|\bdizi(si|ler|de)?\b|festival|sergi|müze|kitap|edebiyat|şiir|\bmoda\b|magazin|mutfak|gastronomi|arkeoloji|stranger\s+things|culture|music|concert|movie|cinema|theatre|actor|actress|netflix|\bart\b|exhibition|museum|book|fashion|celebrity|lifestyle|cuisine)',
+  caseSensitive: false,
+);
+
+final RegExp _topicEconomyRegex = RegExp(
+  r'(οικονομ|τράπεζ|πληθωρισμ|επιτόκι|φορολογ|\bφπα\b|επενδ|εμπόρι|ενέργει|ηλεκτρ|ηλεκτροκίνησ|φωτοβολταϊκ|τουρισμ|ξενοδοχ|εταιρ|επιχειρήσ|ακίνητ|ενοίκι|προϋπολογισμ|μισθ|σύνταξ|ανεργί|χρηματιστήρι|κεβε|οεβ|ekonom|banka|tcmb|\bfaiz|enflasyon|vergi|\bkdv\b|yatırım|ticaret|enerji|elektrik|kıb-tek|turizm|\botel|şirket|iş\s+dünyası|gayrimenkul|emlak|konut|\bkira\b|bütçe|maaş|asgari\s+ücret|emekli|işsizlik|borsa|döviz|sterlin|ihale|ktto|econom|eurostat|gini|\bbank|inflation|\btax|invest|trade|energy|solar|electricity|tourism|hotel|business|company|property|real\s+estate|budget|salary|wage|pension)',
+  caseSensitive: false,
+);
+
+final RegExp _topicSocietyRegex = RegExp(
+  r'(αστυνομ|δικαστ|κακουργιοδικ|ισόβι|ποιν|φυλακ|δολοφον|φόνο|ληστεί|κλοπ|χειροπέδες|σύλληψ|καταζητ|ναρκωτικ|κάνναβ|τελωνεί|τροχαίο|ατύχημ|δυστύχημ|πυρκαγι|πυροσβεστικ|νοσοκομ|υγεία|γιατρ|ασθεν|γεσυ|οκυπυ|σχολ|μαθητ|εκπαιδευτικ|δάσκαλ|καθηγητ|πανεπιστήμι|παιδεί|απεργία|συνδικαλ|ποεδ|οελμεκ|\bπεο\b|δήμο|δήμαρχ|αφαλάτωσ|αποχέτευσ|ανακύκλωσ|περιβάλλον|δασ|αγριν|φώκια|καιρ|κακοκαιρί|σεισμ|ναυάγι|polis|mahkeme|yüksek\s+mahkeme|ağır\s+ceza|yargıç|\bdava\b|hapis|cezaevi|cinayet|katil|soygun|hırsız|tutukl|zanlı|uyuşturucu|kaza|trafik|yangın|itfaiye|hastane|sağlık|doktor|hemşire|hasta|okul|öğrenci|öğretmen|üniversite|eğitim|grev|sendika|ktös|ktoeös|ktams|belediye|arıtma|çevre|orman|yağmur|fırtına|deprem|gemi\s+kazası|kayıp|soruşturma|police|court|murder|arrest|prison|cannabis|drug|hospital|health|school|education|strike|traffic|accident|fire|wildlife|seal|mouflon|municipality|water|desalination|shipwreck)',
+  caseSensitive: false,
+);
+
+final RegExp _topicPoliticsRegex = RegExp(
+  r'(πρόεδρ|πρωθυπουργ|υπουργ|κυβέρνησ|υπουργικό|βουλ|βουλευτ|κόμμα|εκλογ|υποψήφι|κάλπ|συμπολίτευσ|αντιπολίτευσ|\bοηε\b|νεκρή\s+ζώνη|οδόφραγμ|δικοινοτικ|κυπριακ|διαπραγματεύσ|ομοσπονδ|χριστοδουλίδ|ερχιουρμάν|τατάρ|αναστασιάδ|αννίτα|ακελ|δησυ|δικο|εδεκ|ελαμ|δηπα|διπλωματ|πρέσβ|\bαοζ\b|navtex|cumhurbaşkan|başbakan|bakan|bakanlık|hükümet|kabine|meclis|milletvekili|parti|seçim|aday|sandık|kurultay|koalisyon|muhalefet|\bbm\b|ara\s+bölge|sınır\s+kapısı|iki\s+toplumlu|kıbrıs\s+sorunu|müzakere|federasyon|iki\s+devlet|erhürman|erhurman|tatar|üstel|hristodulidis|\bubp\b|\bctp\b|\bydp\b|\btdp\b|\bhp\b|diplomat|büyükelçi|dışişleri|christodoulides|parliament|president|minister|government|election|unficyp|green\s+line|buffer\s+zone|bicommunal|cyprus\s+problem)',
+  caseSensitive: false,
+);
+
+final RegExp _topicWorldRegex = RegExp(
+  r'(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|ukraine|russia|moscow|gaza|palestin|west\s+bank|israel|france|paris|spain|britain|london|\busa\b)',
+  caseSensitive: false,
+);
+
+String resolveTopic(
+  String? explicitTopic, {
+  String? title,
+  String? summary,
+  String? detail,
+  String? url,
+}) {
+  final direct = normalizeTopic(explicitTopic);
+  if (direct != null) return direct;
+
+  final safeTitle = title ?? '';
+  final safeSummary = summary ?? '';
+  final safeDetail = (detail != null && detail.length > 600)
+      ? detail.substring(0, 600)
+      : (detail ?? '');
+  final safeUrl = url ?? '';
+
+  int scoreFor(RegExp rx) =>
+      rx.allMatches(safeTitle).length * 3 +
+      rx.allMatches(safeSummary).length * 2 +
+      rx.allMatches(safeDetail).length +
+      rx.allMatches(safeUrl).length * 2;
+
+  final candidates = <(String, int)>[
+    ('sports', scoreFor(_topicSportsRegex)),
+    ('economy', scoreFor(_topicEconomyRegex)),
+    ('culture', scoreFor(_topicCultureRegex)),
+    ('society', scoreFor(_topicSocietyRegex)),
+    ('politics', scoreFor(_topicPoliticsRegex)),
+    ('world', scoreFor(_topicWorldRegex)),
+  ];
+
+  var bestTopic = 'society';
+  var bestScore = 0;
+  for (final entry in candidates) {
+    if (entry.$2 > bestScore) {
+      bestScore = entry.$2;
+      bestTopic = entry.$1;
+    }
+  }
+  return bestTopic;
+}
+
+bool matchesSelectedTopic(String resolvedTopic) {
+  final active = selectedTopicNotifier.value;
+  if (active == 'all') return true;
+  return resolvedTopic == active;
+}
+
+String topicLabelFor(String topicCode) {
+  switch (topicCode.trim().toLowerCase()) {
+    case 'politics':
+      return _trElEn("Siyaset", "Πολιτική", "Politics");
+    case 'society':
+      return _trElEn("Toplum", "Κοινωνία", "Society");
+    case 'economy':
+      return _trElEn("Ekonomi", "Οικονομία", "Economy");
+    case 'sports':
+      return _trElEn("Spor", "Αθλητισμός", "Sports");
+    case 'culture':
+      return _trElEn("Kültür & Yaşam", "Πολιτισμός & Ζωή", "Culture & Life");
+    case 'world':
+      return _trElEn("Dünya", "Κόσμος", "World");
+    default:
+      return _trElEn("Tüm Konular", "Όλα τα Θέματα", "All Topics");
+  }
+}
+
+String topicShortLabelFor(String topicCode) {
+  switch (topicCode.trim().toLowerCase()) {
+    case 'politics':
+      return _trElEn("Siyaset", "Πολιτική", "Politics");
+    case 'society':
+      return _trElEn("Toplum", "Κοινωνία", "Society");
+    case 'economy':
+      return _trElEn("Ekonomi", "Οικονομία", "Economy");
+    case 'sports':
+      return _trElEn("Spor", "Αθλητικά", "Sports");
+    case 'culture':
+      return _trElEn("Kültür", "Πολιτισμός", "Culture");
+    case 'world':
+      return _trElEn("Dünya", "Κόσμος", "World");
+    default:
+      return _trElEn("Tümü", "Όλα", "All");
   }
 }
 
@@ -270,9 +461,9 @@ String languageLabelFor(String langCode) {
 // localized app strings
 String get APP_NAME => "Cyprus Bicommunal News";
 String get APP_SUBTITLE => _trElEn(
-      "Kıbrıs İki Toplumlu Güncel Haber Kaynakları",
-      "Δικοινοτικές Πηγές Ειδήσεων από όλη την Κύπρο",
-      "Daily Bicommunal News Sources Across Cyprus",
+      "Kıbrıs genelinden günlük haberler",
+      "Καθημερινές ειδήσεις από όλη την Κύπρο",
+      "Daily news all across Cyprus",
     );
 
 // source language filter labels

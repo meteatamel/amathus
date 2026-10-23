@@ -33,12 +33,19 @@ class FeedItemsRecentView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Image.asset(
-                'assets/launcher/icon.png',
-                width: 30,
-                height: 30,
-                fit: BoxFit.cover,
+              borderRadius: BorderRadius.circular(9),
+              child: SizedBox(
+                width: 42,
+                height: 42,
+                child: Transform.scale(
+                  scale: 1.14,
+                  child: Image.asset(
+                    'assets/launcher/icon.png',
+                    width: 42,
+                    height: 42,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),

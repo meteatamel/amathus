@@ -45,6 +45,9 @@ namespace Amathus.Common.Feeds
         [FirestoreProperty]
         public bool IsColumnist { get; set; }
 
+        [FirestoreProperty]
+        public string Topic { get; set; }
+
         [JsonIgnore]
         public int Length
         {

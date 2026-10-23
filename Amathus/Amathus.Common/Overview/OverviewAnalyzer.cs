@@ -136,6 +136,9 @@ namespace Amathus.Common.Overview
             [JsonProperty("narrativeEl")]
             public string NarrativeEl { get; set; }
 
+            [JsonProperty("topic")]
+            public string Topic { get; set; }
+
             [JsonProperty("articleIndices")]
             public List<int> ArticleIndices { get; set; }
         }
@@ -347,18 +350,27 @@ namespace Amathus.Common.Overview
                     .FirstOrDefault(u => u != null);
 
                 var publishDate = EnsureUtc(matchedCandidates.Max(c => c.Item.PublishDate));
+                var titleEn = NullIfEmpty(gs.TitleEn) ?? sources[0].Article.Title;
+                var narrativeEn = NullIfEmpty(gs.NarrativeEn) ?? string.Empty;
+                var resolvedTopic = TextUtil.NormalizeTopic(gs.Topic)
+                    ?? TextUtil.ClassifyTopic(
+                        $"{titleEn} {gs.TitleTr} {gs.TitleEl}",
+                        $"{narrativeEn} {gs.NarrativeTr} {gs.NarrativeEl}",
+                        sources[0].Article.Summary,
+                        sources[0].Article.Url?.AbsoluteUri);
 
                 stories.Add(new OverviewStory
                 {
                     Id = $"story-{rank}",
-                    TitleEn = NullIfEmpty(gs.TitleEn) ?? sources[0].Article.Title,
+                    TitleEn = titleEn,
                     TitleTr = NullIfEmpty(gs.TitleTr) ?? NullIfEmpty(gs.TitleEn) ?? sources[0].Article.Title,
                     TitleEl = NullIfEmpty(gs.TitleEl) ?? NullIfEmpty(gs.TitleEn) ?? sources[0].Article.Title,
-                    NarrativeEn = NullIfEmpty(gs.NarrativeEn) ?? string.Empty,
+                    NarrativeEn = narrativeEn,
                     NarrativeTr = NullIfEmpty(gs.NarrativeTr) ?? NullIfEmpty(gs.NarrativeEn) ?? string.Empty,
                     NarrativeEl = NullIfEmpty(gs.NarrativeEl) ?? NullIfEmpty(gs.NarrativeEn) ?? string.Empty,
                     ImageUrl = imageUrl,
                     PublishDate = publishDate,
+                    Topic = resolvedTopic,
                     Sources = sources
                 });
                 rank++;
@@ -532,6 +544,7 @@ namespace Amathus.Common.Overview
             sb.AppendLine("1. For each top story/column:");
             sb.AppendLine("- Write a clear, journalistic headline in English (titleEn), Turkish (titleTr), and Greek (titleEl).");
             sb.AppendLine("- Write a rich 2-4 sentence narrative synthesis in English (narrativeEn), Turkish (narrativeTr), and Greek (narrativeEl) explaining the key arguments/developments and how the newspapers/columnists cover it.");
+            sb.AppendLine("- Provide topic: one of \"politics\", \"society\", \"economy\", \"sports\", \"culture\", or \"world\".");
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
             sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
             sb.AppendLine("3. Also generate a ~5-minute two-host broadcast news podcast script (podcastTurns, 18 to 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
@@ -553,6 +566,7 @@ namespace Amathus.Common.Overview
       ""narrativeEn"": ""..."",
       ""narrativeTr"": ""..."",
       ""narrativeEl"": ""..."",
+      ""topic"": ""politics"",
       ""articleIndices"": [0, 5, 12]
     }
   ],
@@ -682,6 +696,11 @@ namespace Amathus.Common.Overview
                     .FirstOrDefault(u => u != null);
 
                 var publishDate = EnsureUtc(cluster.Max(c => c.Item.PublishDate));
+                var resolvedTopic = TextUtil.ClassifyTopic(
+                    $"{enLeadTitle} {titleTrTask.Result} {titleElTask.Result}",
+                    $"{narrativeEn} {narrativeTrTask.Result} {narrativeElTask.Result}",
+                    primary.Item.Summary,
+                    primary.Item.Url?.AbsoluteUri);
 
                 stories.Add(new OverviewStory
                 {
@@ -694,6 +713,7 @@ namespace Amathus.Common.Overview
                     NarrativeEl = narrativeElTask.Result,
                     ImageUrl = imageUrl,
                     PublishDate = publishDate,
+                    Topic = resolvedTopic,
                     Sources = sources
                 });
 

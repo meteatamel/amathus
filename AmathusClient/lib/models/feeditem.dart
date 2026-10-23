@@ -1,4 +1,5 @@
 import 'package:amathus/models/feed.dart';
+import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:json_annotation/json_annotation.dart';
 
 part 'feeditem.g.dart';
@@ -29,6 +30,9 @@ class FeedItem {
   @JsonKey(name: 'IsColumnist')
   final bool isColumnist;
 
+  @JsonKey(name: 'Topic')
+  final String? topic;
+
   @JsonKey(includeFromJson: false, includeToJson: false)
   Feed? feed;
 
@@ -41,7 +45,16 @@ class FeedItem {
     this.url, {
     this.author,
     this.isColumnist = false,
+    this.topic,
   });
+
+  String get effectiveTopic => Constants.resolveTopic(
+        topic,
+        title: title,
+        summary: summary,
+        detail: detail,
+        url: url,
+      );
 
   factory FeedItem.fromJson(Map<String, dynamic> json) =>
       _$FeedItemFromJson(json);

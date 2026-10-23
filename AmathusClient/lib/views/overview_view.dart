@@ -39,6 +39,8 @@ class _OverviewViewState extends State<OverviewView> {
   final FeedItemsController _feedItemsController = FeedItemsController();
   final BulkTranslateController _bulkTranslateController =
       BulkTranslateController();
+  final ValueNotifier<List<FeedItem>> _latestItemsNotifier =
+      ValueNotifier<List<FeedItem>>(const []);
   NewsOverview? _overview;
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -95,21 +97,69 @@ class _OverviewViewState extends State<OverviewView> {
   }
 
   bool _matchesVisibleLatestFilter(FeedItem item) {
-    return item.feed == null ||
+    final matchesSource = item.feed == null ||
         Constants.matchesSourceLanguage(
           item.feed?.id,
           item.feed?.language,
         );
+    if (!matchesSource) return false;
+    return Constants.matchesSelectedTopic(item.effectiveTopic);
+  }
+
+  Map<String, int>? _computeTopicCounts(bool isTopMode) {
+    final counts = <String, int>{
+      for (final code in Constants.TOPIC_CODES) code: 0,
+    };
+    if (isTopMode) {
+      final ov = _overview;
+      if (ov == null || ov.stories.isEmpty) return null;
+      var total = 0;
+      for (final story in ov.stories) {
+        if (_visibleSourcesFor(story).isEmpty) continue;
+        final t = story.effectiveTopic;
+        counts[t] = (counts[t] ?? 0) + 1;
+        total++;
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    } else {
+      final list = _latestItemsNotifier.value;
+      if (list.isEmpty) return null;
+      var total = 0;
+      for (final item in list) {
+        final matchesSource = item.feed == null ||
+            Constants.matchesSourceLanguage(
+              item.feed?.id,
+              item.feed?.language,
+            );
+        if (!matchesSource) continue;
+        final t = item.effectiveTopic;
+        counts[t] = (counts[t] ?? 0) + 1;
+        total++;
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    }
   }
 
   Future<List<FeedItem>?> _loadLatestCachedData() async {
     final feeds = await _feedItemsController.readRecentStored();
-    return _extractSortedLatestItems(feeds);
+    final items = _extractSortedLatestItems(feeds);
+    if (items != null && items.isNotEmpty) {
+      _latestItemsNotifier.value = items;
+    }
+    return items;
   }
 
   Future<List<FeedItem>?> _loadLatestData() async {
     final feeds = await _feedItemsController.readRecent();
-    return _extractSortedLatestItems(feeds);
+    final items = _extractSortedLatestItems(feeds);
+    if (items != null) {
+      _latestItemsNotifier.value = items;
+    }
+    return items;
   }
 
   List<FeedItem>? _extractSortedLatestItems(List<dynamic>? feeds) {
@@ -144,12 +194,19 @@ class _OverviewViewState extends State<OverviewView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.asset(
-                    'assets/launcher/icon.png',
-                    width: 30,
-                    height: 30,
-                    fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: Transform.scale(
+                      scale: 1.14,
+                      child: Image.asset(
+                        'assets/launcher/icon.png',
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -187,6 +244,17 @@ class _OverviewViewState extends State<OverviewView> {
               SourceLanguageFilterBar(
                 showNewspaperSelector: !isTopMode,
               ),
+              ListenableBuilder(
+                listenable: Listenable.merge([
+                  Constants.sourceLanguageNotifier,
+                  Constants.selectedFeedIdNotifier,
+                  Constants.hiddenFeedsNotifier,
+                  _latestItemsNotifier,
+                ]),
+                builder: (context, _) => TopicFilterChipBar(
+                  countsByTopic: _computeTopicCounts(isTopMode),
+                ),
+              ),
               if (isTopMode && _isRefreshing)
                 const LinearProgressIndicator(minHeight: 2),
               Expanded(
@@ -198,6 +266,10 @@ class _OverviewViewState extends State<OverviewView> {
                         wideTile: true,
                         bulkController: _bulkTranslateController,
                         bannerText: Constants.RECENT_NEWS_BANNER,
+                        customFilter: (item) => Constants.matchesSelectedTopic(
+                          item.effectiveTopic,
+                        ),
+                        extraListenable: Constants.selectedTopicNotifier,
                       ),
               ),
             ],
@@ -264,6 +336,7 @@ class _OverviewViewState extends State<OverviewView> {
         Constants.overviewTranslateLanguageNotifier,
         Constants.sourceLanguageNotifier,
         Constants.hiddenFeedsNotifier,
+        Constants.selectedTopicNotifier,
       ]),
       builder: (context, _) {
         final activeTranslateLang =
@@ -273,7 +346,8 @@ class _OverviewViewState extends State<OverviewView> {
 
         for (final story in overview.stories) {
           final sources = _visibleSourcesFor(story);
-          if (sources.isNotEmpty) {
+          if (sources.isNotEmpty &&
+              Constants.matchesSelectedTopic(story.effectiveTopic)) {
             visibleStories.add((story, sources));
           }
         }
@@ -301,7 +375,7 @@ class _OverviewViewState extends State<OverviewView> {
                   if (index == 0) {
                     return PageIntroBanner(
                       text: Constants.TOP_STORIES_BANNER,
-                      icon: Icons.auto_awesome_rounded,
+                      emoji: '✨',
                     );
                   }
                   if (index == 1) {
@@ -396,10 +470,9 @@ class OverviewLanguageSelector extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.restore_rounded,
-                      size: 18,
-                      color: Color(0xFF475569),
+                    const Text(
+                      '🔄',
+                      style: TextStyle(fontSize: 15, height: 1.0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -441,16 +514,9 @@ class OverviewLanguageSelector extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.translate_rounded,
-                  size: 15,
-                  color: lightOnDark
-                      ? (activeLang == null
-                          ? Colors.white
-                          : const Color(0xFF0F2942))
-                      : (activeLang == null
-                          ? const Color(0xFF0F2942)
-                          : const Color(0xFF1D4ED8)),
+                const Text(
+                  '🌐',
+                  style: TextStyle(fontSize: 14, height: 1.0),
                 ),
                 const SizedBox(width: 5),
                 if (activeLang != null) ...[
@@ -551,6 +617,12 @@ class OverviewStoryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: TopicBadgePill(
+                          topicCode: story.effectiveTopic,
+                        ),
+                      ),
                       Text(
                         title,
                         style: const TextStyle(
@@ -692,12 +764,19 @@ class OverviewStoryView extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.asset(
-                    'assets/launcher/icon.png',
-                    width: 30,
-                    height: 30,
-                    fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: Transform.scale(
+                      scale: 1.14,
+                      child: Image.asset(
+                        'assets/launcher/icon.png',
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),

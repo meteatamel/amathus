@@ -202,16 +202,9 @@ class TranslateIconButton extends StatelessWidget {
                         ),
                       )
                     else
-                      Icon(
-                        Icons.translate_rounded,
-                        size: 15,
-                        color: lightOnDark
-                            ? (activeLang == null
-                                ? Colors.white
-                                : const Color(0xFF0F2942))
-                            : (activeLang == null
-                                ? const Color(0xFF0F2942)
-                                : const Color(0xFF1D4ED8)),
+                      const Text(
+                        '🌐',
+                        style: TextStyle(fontSize: 14, height: 1.0),
                       ),
                     const SizedBox(width: 5),
                     if (activeLang != null) ...[
@@ -359,10 +352,9 @@ class BulkTranslateIconButton extends StatelessWidget {
                         height: 14,
                       )
                     else
-                      const Icon(
-                        Icons.restore_rounded,
-                        size: 18,
-                        color: Color(0xFF475569),
+                      const Text(
+                        '🔄',
+                        style: TextStyle(fontSize: 15, height: 1.0),
                       ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -423,16 +415,9 @@ class BulkTranslateIconButton extends StatelessWidget {
                     ),
                   )
                 else
-                  Icon(
-                    Icons.translate_rounded,
-                    size: 15,
-                    color: lightOnDark
-                        ? (activeLang == null
-                            ? Colors.white
-                            : const Color(0xFF0F2942))
-                        : (activeLang == null
-                            ? const Color(0xFF0F2942)
-                            : const Color(0xFF1D4ED8)),
+                  const Text(
+                    '🌐',
+                    style: TextStyle(fontSize: 14, height: 1.0),
                   ),
                 const SizedBox(width: 5),
                 if (activeLang != null) ...[

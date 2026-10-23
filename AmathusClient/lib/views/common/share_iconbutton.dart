@@ -38,7 +38,7 @@ class ShareIconButton extends StatelessWidget {
                 const Icon(
                   Icons.share_outlined,
                   size: 16,
-                  color: Color(0xFF0F2942),
+                  color: Color(0xFF2563EB),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -58,7 +58,11 @@ class ShareIconButton extends StatelessWidget {
 
     return IconButton(
       tooltip: Constants.SHARE,
-      icon: const Icon(Icons.share_outlined, size: 20),
+      icon: const Icon(
+        Icons.share_outlined,
+        size: 20,
+        color: Color(0xFF2563EB),
+      ),
       onPressed: () async =>
           await _socialShare(context, item.title, item.url ?? ''),
     );

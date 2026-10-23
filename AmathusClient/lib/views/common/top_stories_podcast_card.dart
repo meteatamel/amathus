@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 
 class PageIntroBanner extends StatelessWidget {
   final String text;
-  final IconData icon;
+  final String emoji;
 
   const PageIntroBanner({
     super.key,
     required this.text,
-    this.icon = Icons.auto_awesome_rounded,
+    this.emoji = '✨',
   });
 
   @override
@@ -29,10 +29,12 @@ class PageIntroBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: const Color(0xFFFBBF24),
+          Text(
+            emoji,
+            style: const TextStyle(
+              fontSize: 18,
+              height: 1.0,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -351,14 +353,14 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
     }
   }
 
-  IconData _editionIcon(String edition) {
+  String _editionEmoji(String edition) {
     switch (edition) {
       case 'morning':
-        return Icons.wb_sunny_rounded;
+        return '☀️';
       case 'midday':
-        return Icons.light_mode_rounded;
+        return '🌤️';
       default:
-        return Icons.nights_stay_rounded;
+        return '🌙';
     }
   }
 
@@ -416,10 +418,12 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                                   .withValues(alpha: 0.22),
                               borderRadius: BorderRadius.circular(11),
                             ),
-                            child: Icon(
-                              _editionIcon(edition),
-                              size: 20,
-                              color: const Color(0xFFB45309),
+                            child: Text(
+                              _editionEmoji(edition),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                height: 1.0,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),

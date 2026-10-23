@@ -23,6 +23,7 @@ void main() {
     FeedsController.clearCache();
     OverviewController.clearCache();
     Constants.setSelectedFeedId(null);
+    Constants.setSelectedTopic('all');
     Constants.setOverviewTranslateLanguage(null);
     Constants.newsViewModeNotifier.value = 'top';
     Constants.columnistsViewModeNotifier.value = 'top';
@@ -43,7 +44,7 @@ void main() {
     expect(find.text('Öne Çıkan Haberler'), findsOneWidget);
     expect(find.text('Son Haberler'), findsOneWidget);
     expect(find.text('Köşe Yazarları'), findsOneWidget);
-    expect(find.text('Tümü'), findsOneWidget);
+    expect(find.text('Tümü'), findsWidgets);
 
     // Switch to Greek
     await Constants.setLanguage('el');
@@ -53,7 +54,7 @@ void main() {
     expect(find.text('Κυριότερες Ειδήσεις'), findsOneWidget);
     expect(find.text('Τελευταία Νέα'), findsOneWidget);
     expect(find.text('Αρθρογράφοι'), findsOneWidget);
-    expect(find.text('Όλα'), findsOneWidget);
+    expect(find.text('Όλα'), findsWidgets);
 
     // Switch to English
     await Constants.setLanguage('en');
@@ -63,7 +64,7 @@ void main() {
     expect(find.text('Top Stories'), findsOneWidget);
     expect(find.text('Latest News'), findsOneWidget);
     expect(find.text('Columnists'), findsOneWidget);
-    expect(find.text('All'), findsOneWidget);
+    expect(find.text('All'), findsWidgets);
   });
 
   testWidgets(
@@ -134,6 +135,33 @@ void main() {
             ),
           ],
         ),
+        OverviewStory(
+          id: 'story-2',
+          titleEn: 'Omonia and APOEL Prepare for Nicosia Football Derby',
+          titleTr: 'Omonia ve APOEL Lefkoşa Futbol Derbisine Hazırlanıyor',
+          titleEl: 'Ομόνοια και ΑΠΟΕΛ ετοιμάζονται για το ντέρμπι',
+          narrativeEn: 'Sports sections cover the upcoming football derby.',
+          narrativeTr: 'Spor sayfaları yaklaşan futbol derbisini ele alıyor.',
+          narrativeEl: 'Τα αθλητικά καλύπτουν το επερχόμενο ποδοσφαιρικό ντέρμπι.',
+          publishDate: DateTime(2026, 10, 22, 10, 30),
+          topic: 'sports',
+          sources: [
+            OverviewStorySource(
+              feedId: 'philenews',
+              feedTitle: 'Philenews',
+              feedLanguage: 'el',
+              article: FeedItem(
+                'Ντέρμπι αιωνίων στη Λευκωσία',
+                DateTime(2026, 10, 22, 10, 30),
+                'Sports summary',
+                '<p>Sports detail</p>',
+                null,
+                'https://philenews.com/sports/derby',
+                topic: 'sports',
+              ),
+            ),
+          ],
+        ),
       ],
     );
 
@@ -193,9 +221,24 @@ void main() {
     expect(find.byType(OverviewStoryView), findsNothing);
     expect(find.byType(FeedItemView), findsNothing);
 
-    // Reset Read In and tap newspaper logo inside OverviewStoryCard to open FeedItemView
+    // Reset Read In and test Topic Filtering before tapping newspaper logo
     Constants.setOverviewTranslateLanguage(null);
     await tester.pump();
+    expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
+
+    // Filter by Sports topic
+    Constants.setSelectedTopic('sports');
+    await tester.pump();
+    expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsNothing);
+    expect(find.text('Ομόνοια και ΑΠΟΕΛ ετοιμάζονται για το ντέρμπι'), findsOneWidget);
+
+    // Reset topic to All
+    Constants.setSelectedTopic('all');
+    await tester.pump();
+    expect(find.text('Yeni Geçiş Noktası Görüşmeleri İlerliyor'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Yenidüzen').first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Yenidüzen').first);
     await tester.pumpAndSettle();
 
@@ -251,7 +294,7 @@ void main() {
 
     expect(find.byType(TranslateIconButton), findsOneWidget);
     expect(find.byType(ShareIconButton), findsOneWidget);
-    expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
+    expect(find.text('🌐'), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
     expect(find.text('Read in'), findsOneWidget);
     expect(find.textContaining('Serhat İncirli • Yenidüzen'), findsOneWidget);

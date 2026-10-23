@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -220,6 +221,122 @@ namespace Amathus.Common.Util
                 1 => "Turkey",
                 _ => "World"
             };
+        }
+
+        private static readonly Regex TopicSportsRegex = new Regex(
+            @"(αθλητ|ποδόσφαιρ|μπάσκετ|καλαθόσφαιρ|τένις|ράλλυ|ομόνοια|αποελ|απόλλων|ανόρθωσ|\bαεκ\b|ολυμπιακ|παναθηναϊκ|\bπαοκ\b|ρεάλ|τσίτσιπας|πρωτάθλημ|γήπεδ|προπονητ|διαιτητ|κύπελλ|\bspor\b|futbol|basketbol|voleybol|tenis|ralli|\bmaç\b|\bmaçı\b|şampiyon|turnuva|stadyum|hakem|transfer|antrenör|fenerbahçe|galatasaray|beşiktaş|trabzonspor|ktff|çetinkaya|\bsport|\bfootball|basketball|tennis|rally|\bf1\b|hamilton|omonia|apoel|apollon|anorthosis|pafos\s+fc|olympiacos|panathinaikos|champions\s+league|euroleague|uefa|fifa)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TopicCultureRegex = new Regex(
+            @"(πολιτισμ|μουσικ|συναυλ|τραγουδ|ταινί|κινηματογράφ|θέατρ|ηθοποι|\bσειρές\b|φεστιβάλ|\bτέχνη|\bτέχνες|έκθεσ|μουσεί|βιβλί|μόδα|γαστρονομ|αρχαιολογ|βίσση|αργυρ|μόνροε|ουίλιαμ|kültür|sanat|müzik|konser|şarkı|\bfilm\b|sinema|tiyatro|oyuncu|\bdizi(si|ler|de)?\b|festival|sergi|müze|kitap|edebiyat|şiir|\bmoda\b|magazin|mutfak|gastronomi|arkeoloji|stranger\s+things|culture|music|concert|movie|cinema|theatre|actor|actress|netflix|\bart\b|exhibition|museum|book|fashion|celebrity|lifestyle|cuisine)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TopicEconomyRegex = new Regex(
+            @"(οικονομ|τράπεζ|πληθωρισμ|επιτόκι|φορολογ|\bφπα\b|επενδ|εμπόρι|ενέργει|ηλεκτρ|ηλεκτροκίνησ|φωτοβολταϊκ|τουρισμ|ξενοδοχ|εταιρ|επιχειρήσ|ακίνητ|ενοίκι|προϋπολογισμ|μισθ|σύνταξ|ανεργί|χρηματιστήρι|κεβε|οεβ|ekonom|banka|tcmb|\bfaiz|enflasyon|vergi|\bkdv\b|yatırım|ticaret|enerji|elektrik|kıb-tek|turizm|\botel|şirket|iş\s+dünyası|gayrimenkul|emlak|konut|\bkira\b|bütçe|maaş|asgari\s+ücret|emekli|işsizlik|borsa|döviz|sterlin|ihale|ktto|econom|eurostat|gini|\bbank|inflation|\btax|invest|trade|energy|solar|electricity|tourism|hotel|business|company|property|real\s+estate|budget|salary|wage|pension)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TopicSocietyRegex = new Regex(
+            @"(αστυνομ|δικαστ|κακουργιοδικ|ισόβι|ποιν|φυλακ|δολοφον|φόνο|ληστεί|κλοπ|χειροπέδες|σύλληψ|καταζητ|ναρκωτικ|κάνναβ|τελωνεί|τροχαίο|ατύχημ|δυστύχημ|πυρκαγι|πυροσβεστικ|νοσοκομ|υγεία|γιατρ|ασθεν|γεσυ|οκυπυ|σχολ|μαθητ|εκπαιδευτικ|δάσκαλ|καθηγητ|πανεπιστήμι|παιδεί|απεργία|συνδικαλ|ποεδ|οελμεκ|\bπεο\b|δήμο|δήμαρχ|αφαλάτωσ|αποχέτευσ|ανακύκλωσ|περιβάλλον|δασ|αγριν|φώκια|καιρ|κακοκαιρί|σεισμ|ναυάγι|polis|mahkeme|yüksek\s+mahkeme|ağır\s+ceza|yargıç|\bdava\b|hapis|cezaevi|cinayet|katil|soygun|hırsız|tutukl|zanlı|uyuşturucu|kaza|trafik|yangın|itfaiye|hastane|sağlık|doktor|hemşire|hasta|okul|öğrenci|öğretmen|üniversite|eğitim|grev|sendika|ktös|ktoeös|ktams|belediye|arıtma|çevre|orman|yağmur|fırtına|deprem|gemi\s+kazası|kayıp|soruşturma|police|court|murder|arrest|prison|cannabis|drug|hospital|health|school|education|strike|traffic|accident|fire|wildlife|seal|mouflon|municipality|water|desalination|shipwreck)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TopicPoliticsRegex = new Regex(
+            @"(πρόεδρ|πρωθυπουργ|υπουργ|κυβέρνησ|υπουργικό|βουλ|βουλευτ|κόμμα|εκλογ|υποψήφι|κάλπ|συμπολίτευσ|αντιπολίτευσ|\bοηε\b|νεκρή\s+ζώνη|οδόφραγμ|δικοινοτικ|κυπριακ|διαπραγματεύσ|ομοσπονδ|χριστοδουλίδ|ερχιουρμάν|τατάρ|αναστασιάδ|αννίτα|ακελ|δησυ|δικο|εδεκ|ελαμ|δηπα|διπλωματ|πρέσβ|\bαοζ\b|navtex|cumhurbaşkan|başbakan|bakan|bakanlık|hükümet|kabine|meclis|milletvekili|parti|seçim|aday|sandık|kurultay|koalisyon|muhalefet|\bbm\b|ara\s+bölge|sınır\s+kapısı|iki\s+toplumlu|kıbrıs\s+sorunu|müzakere|federasyon|iki\s+devlet|erhürman|erhurman|tatar|üstel|hristodulidis|\bubp\b|\bctp\b|\bydp\b|\btdp\b|\bhp\b|diplomat|büyükelçi|dışişleri|christodoulides|parliament|president|minister|government|election|unficyp|green\s+line|buffer\s+zone|bicommunal|cyprus\s+problem)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TopicWorldRegex = new Regex(
+            @"(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|ukraine|russia|moscow|gaza|palestin|west\s+bank|israel|france|paris|spain|britain|london|\busa\b)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        public static string NormalizeTopic(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return null;
+            }
+
+            var norm = raw.Trim().ToLowerInvariant();
+            return norm switch
+            {
+                "politics" or "siyaset" or "politika" or "πολιτική" or "πολιτικη" => "politics",
+                "society" or "toplum" or "asayiş" or "asayis" or "κοινωνία" or "κοινωνια" or "local" => "society",
+                "economy" or "ekonomi" or "business" or "finance" or "οικονομία" or "οικονομια" => "economy",
+                "sports" or "sport" or "spor" or "αθλητισμός" or "αθλητισμος" or "αθλητικά" => "sports",
+                "culture" or "culture & life" or "lifestyle" or "kültür" or "yaşam" or "πολιτισμός" => "culture",
+                "world" or "dünya" or "dunya" or "international" or "κόσμος" or "διεθνή" => "world",
+                _ => null
+            };
+        }
+
+        public static string ClassifyTopic(
+            string title,
+            string summary = null,
+            string detail = null,
+            string url = null,
+            IEnumerable<string> categories = null)
+        {
+            if (categories != null)
+            {
+                foreach (var cat in categories)
+                {
+                    if (string.IsNullOrWhiteSpace(cat))
+                    {
+                        continue;
+                    }
+                    var direct = NormalizeTopic(cat);
+                    if (direct != null)
+                    {
+                        return direct;
+                    }
+                    if (TopicSportsRegex.IsMatch(cat)) return "sports";
+                    if (TopicEconomyRegex.IsMatch(cat)) return "economy";
+                    if (TopicCultureRegex.IsMatch(cat)) return "culture";
+                    if (TopicWorldRegex.IsMatch(cat)) return "world";
+                    if (TopicSocietyRegex.IsMatch(cat)) return "society";
+                    if (TopicPoliticsRegex.IsMatch(cat)) return "politics";
+                }
+            }
+
+            var safeTitle = title ?? string.Empty;
+            var safeSummary = summary ?? string.Empty;
+            var safeDetail = !string.IsNullOrEmpty(detail) && detail.Length > 600
+                ? detail.Substring(0, 600)
+                : (detail ?? string.Empty);
+            var safeUrl = url ?? string.Empty;
+
+            int Score(Regex rx) =>
+                rx.Matches(safeTitle).Count * 3 +
+                rx.Matches(safeSummary).Count * 2 +
+                rx.Matches(safeDetail).Count +
+                rx.Matches(safeUrl).Count * 2;
+
+            var scores = new (string topic, int score)[]
+            {
+                ("sports", Score(TopicSportsRegex)),
+                ("economy", Score(TopicEconomyRegex)),
+                ("culture", Score(TopicCultureRegex)),
+                ("society", Score(TopicSocietyRegex)),
+                ("politics", Score(TopicPoliticsRegex)),
+                ("world", Score(TopicWorldRegex))
+            };
+
+            string bestTopic = "society";
+            int bestScore = 0;
+            foreach (var (topic, score) in scores)
+            {
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTopic = topic;
+                }
+            }
+
+            if (bestScore > 0)
+            {
+                return bestTopic;
+            }
+
+            var geoTier = GetGeoRelevanceTier(safeTitle, safeSummary, safeDetail);
+            return geoTier == 0 ? "world" : "society";
         }
     }
 }

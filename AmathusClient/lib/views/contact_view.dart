@@ -89,9 +89,9 @@ class _ContactFormState extends State<ContactForm> {
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(
-                        Icons.email_outlined,
-                        color: Color(0xFF0F2942),
+                      leading: const Text(
+                        '✉️',
+                        style: TextStyle(fontSize: 20, height: 1.0),
                       ),
                       title: Linkify(
                         onOpen: (link) => _launchURL(link.url, context),

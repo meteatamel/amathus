@@ -3,6 +3,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
+import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -80,6 +81,13 @@ class FeedItemListTileWide extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (!item.isColumnist)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: TopicBadgePill(
+                                  topicCode: item.effectiveTopic,
+                                ),
+                              ),
                             Text(
                               displayTitle,
                               maxLines: 2,

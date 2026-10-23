@@ -44,7 +44,7 @@ namespace Amathus.Common.Converter
             var summary = TextUtil.HtmlDecode(item.Summary?.Text ?? string.Empty);
             var detail = GetExtension(item, "encoded");
 
-            ExtractColumnistMetadata(item, title, out var isColumnist, out var author, out var overrideImageUrl);
+            ExtractColumnistMetadata(item, title, out var isColumnist, out var author, out var overrideImageUrl, out var regularCategories);
 
             if (overrideImageUrl != null &&
                 (imageUrl == null || imageUrl.AbsoluteUri.IndexOf("no_headline", StringComparison.OrdinalIgnoreCase) >= 0))
@@ -66,7 +66,8 @@ namespace Amathus.Common.Converter
                 Url = articleLink,
                 ImageUrl = TextUtil.EnsureHttps(imageUrl),
                 Author = string.IsNullOrWhiteSpace(author) ? null : author.Trim(),
-                IsColumnist = isColumnist
+                IsColumnist = isColumnist,
+                Topic = TextUtil.ClassifyTopic(title, summary, detail, articleLink?.AbsoluteUri, regularCategories)
             };
 
             return feedItem;
@@ -77,13 +78,14 @@ namespace Amathus.Common.Converter
             string decodedTitle,
             out bool isColumnist,
             out string author,
-            out Uri overrideImageUrl)
+            out Uri overrideImageUrl,
+            out List<string> regularCategories)
         {
             isColumnist = false;
             author = null;
             overrideImageUrl = null;
 
-            var regularCategories = new List<string>();
+            regularCategories = new List<string>();
             if (item.Categories != null)
             {
                 foreach (var cat in item.Categories)

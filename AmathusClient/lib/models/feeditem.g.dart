@@ -17,6 +17,7 @@ FeedItem _$FeedItemFromJson(Map<String, dynamic> json) => FeedItem(
       json['Url'] as String?,
       author: json['Author'] as String?,
       isColumnist: (json['IsColumnist'] as bool?) ?? false,
+      topic: (json['Topic'] as String?) ?? (json['topic'] as String?),
     );
 
 Map<String, dynamic> _$FeedItemToJson(FeedItem instance) => <String, dynamic>{
@@ -28,4 +29,5 @@ Map<String, dynamic> _$FeedItemToJson(FeedItem instance) => <String, dynamic>{
       'Url': instance.url,
       'Author': instance.author,
       'IsColumnist': instance.isColumnist,
+      'Topic': instance.topic,
     };

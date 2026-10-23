@@ -40,7 +40,8 @@ namespace Amathus.Web.Controllers
         public async Task<IActionResult> GetAll(
             [FromQuery] int? limit = null,
             [FromQuery] string language = null,
-            [FromQuery] bool? columnists = null)
+            [FromQuery] bool? columnists = null,
+            [FromQuery] string topic = null)
         {
             if (limit != null && limit < 1)
             {
@@ -59,7 +60,7 @@ namespace Amathus.Web.Controllers
                 feeds = feeds.Where(f => string.Equals(f.Language ?? "tr", lang, System.StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            feeds = FilterAndOrderFeeds(feeds, columnists);
+            feeds = FilterAndOrderFeeds(feeds, columnists, topic);
 
             if (limit == null)
             {
@@ -97,9 +98,9 @@ namespace Amathus.Web.Controllers
             return Ok(feed);
         }
 
-        private List<Feed> FilterAndOrderFeeds(List<Feed> feeds, bool? columnists = null)
+        private List<Feed> FilterAndOrderFeeds(List<Feed> feeds, bool? columnists = null, string topic = null)
         {
-            feeds = feeds.Select(feed => FilterFeedItems(feed, columnists)).ToList();
+            feeds = feeds.Select(feed => FilterFeedItems(feed, columnists, topic)).ToList();
 
             var orderedFeeds = feeds
                 .OrderByDescending(feed => feed.AverageItemPictures)
@@ -108,7 +109,7 @@ namespace Amathus.Web.Controllers
             return orderedFeeds;
         }
 
-        private Feed FilterFeedItems(Feed feed, bool? columnists = null)
+        private Feed FilterFeedItems(Feed feed, bool? columnists = null, string topic = null)
         {
             if (feed.Items == null)
             {
@@ -135,6 +136,22 @@ namespace Amathus.Web.Controllers
                 TextUtil.ContainsBannedWords(item.Title) ||
                 TextUtil.ContainsBannedWords(item.Summary) ||
                 TextUtil.ContainsBannedWords(item.Detail))).ToList();
+
+            foreach (var item in feed.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.Topic))
+                {
+                    item.Topic = TextUtil.ClassifyTopic(item.Title, item.Summary, item.Detail, item.Url?.AbsoluteUri);
+                }
+            }
+
+            var normalizedTopic = TextUtil.NormalizeTopic(topic);
+            if (!string.IsNullOrWhiteSpace(normalizedTopic))
+            {
+                feed.Items = feed.Items
+                    .Where(item => string.Equals(item.Topic, normalizedTopic, System.StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             if (columnists != true)
             {

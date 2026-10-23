@@ -338,6 +338,7 @@ class OverviewStory {
   final String narrativeEl;
   final String? imageUrl;
   final DateTime publishDate;
+  final String? topic;
   final List<OverviewStorySource> sources;
 
   OverviewStory({
@@ -350,8 +351,17 @@ class OverviewStory {
     required this.narrativeEl,
     this.imageUrl,
     required this.publishDate,
+    this.topic,
     required this.sources,
   });
+
+  String get effectiveTopic => Constants.resolveTopic(
+        topic,
+        title: '$titleEn $titleTr $titleEl',
+        summary: '$narrativeEn $narrativeTr $narrativeEl',
+        detail: sources.isNotEmpty ? sources.first.article.summary : null,
+        url: sources.isNotEmpty ? sources.first.article.url : null,
+      );
 
   String titleFor(String lang) {
     switch (lang.toLowerCase()) {
@@ -419,6 +429,7 @@ class OverviewStory {
       imageUrl: json['ImageUrl'] as String?,
       publishDate: DateTime.tryParse((json['PublishDate'] as String?) ?? '') ??
           DateTime.now(),
+      topic: (json['Topic'] as String?) ?? (json['topic'] as String?),
       sources: rawSources
           .map((e) => OverviewStorySource.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -435,6 +446,7 @@ class OverviewStory {
         'NarrativeEl': narrativeEl,
         'ImageUrl': imageUrl,
         'PublishDate': publishDate.toIso8601String(),
+        'Topic': topic,
         'Sources': sources.map((e) => e.toJson()).toList(),
       };
 }
@@ -478,6 +490,7 @@ class OverviewStorySource {
       article.url,
       author: article.author,
       isColumnist: article.isColumnist,
+      topic: article.topic,
     );
     item.feed = toFeed();
     return item;

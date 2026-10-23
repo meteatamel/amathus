@@ -16,7 +16,7 @@ class FeedItemsList extends StatefulWidget {
   final bool wideTile;
   final BulkTranslateController? bulkController;
   final String? bannerText;
-  final IconData bannerIcon;
+  final String bannerEmoji;
   final bool Function(FeedItem)? customFilter;
   final Listenable? extraListenable;
   final bool columnistsOnly;
@@ -28,7 +28,7 @@ class FeedItemsList extends StatefulWidget {
     this.wideTile = false,
     this.bulkController,
     this.bannerText,
-    this.bannerIcon = Icons.bolt_rounded,
+    this.bannerEmoji = '⚡',
     this.customFilter,
     this.extraListenable,
     this.columnistsOnly = false,
@@ -238,10 +238,12 @@ class _FeedItemsListState extends State<FeedItemsList> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Icon(
-                              widget.bannerIcon,
-                              size: 20,
-                              color: const Color(0xFFFBBF24),
+                            Text(
+                              widget.bannerEmoji,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                height: 1.0,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

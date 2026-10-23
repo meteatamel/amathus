@@ -28,10 +28,10 @@ class AppDrawer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.22),
                       width: 1.5,
@@ -45,10 +45,13 @@ class AppDrawer extends StatelessWidget {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.5),
-                    child: Image.asset(
-                      'assets/launcher/icon.png',
-                      fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(14.5),
+                    child: Transform.scale(
+                      scale: 1.12,
+                      child: Image.asset(
+                        'assets/launcher/icon.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
@@ -79,7 +82,7 @@ class AppDrawer extends StatelessWidget {
               children: [
                 _buildDrawerItem(
                   context,
-                  icon: Icons.newspaper_rounded,
+                  emoji: '📰',
                   title: Constants.NEWS,
                   onTap: () => Navigator.pushReplacement(
                     context,
@@ -90,7 +93,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.edit_note_rounded,
+                  emoji: '✍️',
                   title: Constants.COLUMNISTS,
                   onTap: () => Navigator.pushReplacement(
                     context,
@@ -105,7 +108,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.tune_rounded,
+                  emoji: '⚙️',
                   title: Constants.SETTINGS,
                   onTap: () {
                     Navigator.pop(context);
@@ -117,7 +120,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.mail_outline_rounded,
+                  emoji: '✉️',
                   title: Constants.CONTACT,
                   onTap: () {
                     Navigator.pop(context);
@@ -137,13 +140,16 @@ class AppDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(
     BuildContext context, {
-    required IconData icon,
+    required String emoji,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon, size: 22, color: const Color(0xFF1E3A5F)),
+      leading: Text(
+        emoji,
+        style: const TextStyle(fontSize: 20, height: 1.0),
+      ),
       title: Text(
         title,
         style: const TextStyle(

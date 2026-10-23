@@ -51,18 +51,24 @@ class AppBottomNavigationBar extends StatelessWidget {
         },
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.newspaper_outlined),
-            selectedIcon: const Icon(
-              Icons.newspaper_rounded,
-              color: Color(0xFF0F2942),
+            icon: const Text(
+              '📰',
+              style: TextStyle(fontSize: 19, height: 1.0),
+            ),
+            selectedIcon: const Text(
+              '📰',
+              style: TextStyle(fontSize: 21, height: 1.0),
             ),
             label: Constants.NEWS,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.edit_note_outlined),
-            selectedIcon: const Icon(
-              Icons.edit_note_rounded,
-              color: Color(0xFF0F2942),
+            icon: const Text(
+              '✍️',
+              style: TextStyle(fontSize: 19, height: 1.0),
+            ),
+            selectedIcon: const Text(
+              '✍️',
+              style: TextStyle(fontSize: 21, height: 1.0),
             ),
             label: Constants.COLUMNISTS,
           ),

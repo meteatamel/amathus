@@ -97,10 +97,9 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                           children: [
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.language_rounded,
-                                  color: Color(0xFF0F2942),
-                                  size: 22,
+                                const Text(
+                                  '🌐',
+                                  style: TextStyle(fontSize: 19, height: 1.0),
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
@@ -176,10 +175,12 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(
-                                      Icons.filter_list_rounded,
-                                      color: Color(0xFF0F2942),
-                                      size: 22,
+                                    const Text(
+                                      '🌍',
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        height: 1.0,
+                                      ),
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
@@ -209,9 +210,12 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                                         value: 'all',
                                         label:
                                             Text(Constants.SOURCE_FILTER_ALL),
-                                        icon: const Icon(
-                                          Icons.public_rounded,
-                                          size: 16,
+                                        icon: const Text(
+                                          '🌍',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            height: 1.0,
+                                          ),
                                         ),
                                       ),
                                       ButtonSegment<String>(
@@ -256,10 +260,9 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.newspaper_rounded,
-                          size: 20,
-                          color: Color(0xFF0F2942),
+                        const Text(
+                          '📰',
+                          style: TextStyle(fontSize: 19, height: 1.0),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

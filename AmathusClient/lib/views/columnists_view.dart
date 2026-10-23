@@ -172,12 +172,19 @@ class _ColumnistsViewState extends State<ColumnistsView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.asset(
-                    'assets/launcher/icon.png',
-                    width: 30,
-                    height: 30,
-                    fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: Transform.scale(
+                      scale: 1.14,
+                      child: Image.asset(
+                        'assets/launcher/icon.png',
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -228,7 +235,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                         wideTile: true,
                         bulkController: _bulkTranslateController,
                         bannerText: Constants.COLUMNISTS_BANNER,
-                        bannerIcon: Icons.edit_note_rounded,
+                        bannerEmoji: '✍️',
                         columnistsOnly: true,
                       ),
               ),
@@ -332,7 +339,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                   if (index == 0) {
                     return PageIntroBanner(
                       text: Constants.TOP_COLUMNS_BANNER,
-                      icon: Icons.edit_note_rounded,
+                      emoji: '✍️',
                     );
                   }
                   final (story, sources) = visibleStories[index - 1];

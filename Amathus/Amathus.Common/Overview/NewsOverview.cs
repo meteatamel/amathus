@@ -129,6 +129,9 @@ namespace Amathus.Common.Overview
         public DateTime PublishDate { get; set; }
 
         [FirestoreProperty]
+        public string Topic { get; set; }
+
+        [FirestoreProperty]
         public List<OverviewStorySource> Sources { get; set; } = new List<OverviewStorySource>();
 
         public OverviewStory Copy()
@@ -172,7 +175,10 @@ namespace Amathus.Common.Overview
                     Summary = Article.Summary,
                     Detail = Article.Detail,
                     ImageUrl = Article.ImageUrl,
-                    Url = Article.Url
+                    Url = Article.Url,
+                    Author = Article.Author,
+                    IsColumnist = Article.IsColumnist,
+                    Topic = Article.Topic
                 };
             }
             return copy;
