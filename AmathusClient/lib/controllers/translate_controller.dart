@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:amathus/models/feeditem.dart';
+import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -132,8 +133,107 @@ class TranslateController {
     }
   }
 
+  static final Set<String> _inFlightStoryTranslations = <String>{};
+
   static void clearTranslation(FeedItem item) {
     activeLanguageNotifier(item).value = null;
+  }
+
+  static Future<bool> translateOverviewStory(
+    OverviewStory story,
+    String targetLanguage,
+  ) async {
+    final normalizedTarget = targetLanguage.trim().toLowerCase();
+    if (normalizedTarget != 'tr' &&
+        normalizedTarget != 'el' &&
+        normalizedTarget != 'en') {
+      return false;
+    }
+    if (!story.needsTranslationFor(normalizedTarget)) {
+      return false;
+    }
+
+    final flightKey = '${story.id}|$normalizedTarget';
+    if (!_inFlightStoryTranslations.add(flightKey)) {
+      return false;
+    }
+
+    try {
+      final majLang = story.majorityLanguage();
+      final sourceTitle = story.sources.isNotEmpty &&
+              story.sources.first.article.title.trim().isNotEmpty
+          ? story.sources.first.article.title.trim()
+          : story.titleFor(majLang);
+      final sourceNarrative = story.narrativeFor(majLang);
+
+      final response = await http.post(
+        Uri.parse(Constants.URL_TRANSLATE),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'Title': sourceTitle,
+          'Summary': sourceNarrative,
+          'Detail': '',
+          'SourceLanguage': '',
+          'TargetLanguage': normalizedTarget,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final trTitle = (data['Title'] as String?)?.trim() ?? '';
+        final trSummary = (data['Summary'] as String?)?.trim() ?? '';
+        if (trTitle.isNotEmpty || trSummary.isNotEmpty) {
+          story.applyTranslation(
+            normalizedTarget,
+            title: trTitle.isNotEmpty ? trTitle : sourceTitle,
+            narrative: trSummary.isNotEmpty ? trSummary : sourceNarrative,
+          );
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to translate overview story ${story.id}: $e');
+    } finally {
+      _inFlightStoryTranslations.remove(flightKey);
+    }
+    return false;
+  }
+
+  static Future<void> ensureOverviewStoriesTranslated(
+    List<OverviewStory> stories,
+    String? targetLanguage, {
+    VoidCallback? onUpdated,
+  }) async {
+    if (targetLanguage == null || targetLanguage.trim().isEmpty) return;
+    final normalizedTarget = targetLanguage.trim().toLowerCase();
+    if (normalizedTarget != 'tr' &&
+        normalizedTarget != 'el' &&
+        normalizedTarget != 'en') {
+      return;
+    }
+
+    final pending = stories
+        .where((s) => s.needsTranslationFor(normalizedTarget))
+        .toList();
+    if (pending.isEmpty) return;
+
+    const int concurrency = 6;
+    int nextIndex = 0;
+
+    Future<void> worker() async {
+      while (true) {
+        if (nextIndex >= pending.length) return;
+        final story = pending[nextIndex++];
+        final updated = await translateOverviewStory(story, normalizedTarget);
+        if (updated && onUpdated != null) {
+          onUpdated();
+        }
+      }
+    }
+
+    final workerCount =
+        pending.length < concurrency ? pending.length : concurrency;
+    await Future.wait(List.generate(workerCount, (_) => worker()));
   }
 
   static void seedOverviewTranslations(
@@ -147,6 +247,10 @@ class TranslateController {
     String? activeTargetLang,
   }) {
     final key = _itemKey(item);
+    final sourceLang = Constants.resolveFeedLanguage(
+      item.feed?.id,
+      item.feed?.language,
+    );
     final entries = <String, (String, String)>{
       'el': (titleEl, summaryEl),
       'tr': (titleTr, summaryTr),
@@ -155,8 +259,20 @@ class TranslateController {
     for (final entry in entries.entries) {
       final lang = entry.key;
       final t = entry.value.$1.trim();
-      final s = entry.value.$2.trim();
+      final s = OverviewStory.cleanNarrativeText(entry.value.$2);
       if (t.isEmpty && s.isEmpty) continue;
+      if (OverviewStory.isTextUntranslatedFor(
+            t,
+            lang,
+            sourceLang: sourceLang,
+          ) ||
+          (lang != sourceLang &&
+              t.isNotEmpty &&
+              t == item.title.trim() &&
+              titleEl.trim() == titleTr.trim() &&
+              titleTr.trim() == titleEn.trim())) {
+        continue;
+      }
       final cacheKey = '$key|$lang';
       final prev = _cache[cacheKey];
       _cache[cacheKey] = TranslatedFeedItemContent(
@@ -167,15 +283,15 @@ class TranslateController {
       );
     }
 
-    final sourceLang = Constants.resolveFeedLanguage(
-      item.feed?.id,
-      item.feed?.language,
-    );
     if (activeTargetLang != null &&
         activeTargetLang.trim().isNotEmpty &&
         activeTargetLang.trim().toLowerCase() != sourceLang) {
-      activeLanguageNotifier(item).value =
-          activeTargetLang.trim().toLowerCase();
+      final targetNorm = activeTargetLang.trim().toLowerCase();
+      if (_cache.containsKey('$key|$targetNorm')) {
+        activeLanguageNotifier(item).value = targetNorm;
+      } else {
+        translateItem(item, targetNorm, includeDetail: false);
+      }
     } else {
       activeLanguageNotifier(item).value = null;
     }

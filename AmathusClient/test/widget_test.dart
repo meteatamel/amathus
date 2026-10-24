@@ -397,4 +397,101 @@ void main() {
     expect(find.text('Fresh Background Headline'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
+
+  test(
+      'OverviewStory detects untranslated Greek/Turkish titles and narratives and cleans legacy report wrappers',
+      () {
+    final greekStoryWithUntranslatedFields = OverviewStory(
+      id: 'story-2',
+      titleEn: 'Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο',
+      titleTr: 'Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο',
+      titleEl: 'Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο',
+      narrativeEn:
+          'Lemesos reports: Η Αστυνομία αναφέρει ότι ανταποκρίθηκε άμεσα. Covered by Lemesos, Philenews.',
+      narrativeTr:
+          'Lemesos reports: Η Αστυνομία αναφέρει ότι ανταποκρίθηκε άμεσα. Covered by Lemesos, Philenews.',
+      narrativeEl:
+          'Lemesos reports: Η Αστυνομία αναφέρει ότι ανταποκρίθηκε άμεσα. Covered by Lemesos, Philenews.',
+      publishDate: DateTime(2026, 10, 24, 13, 0),
+      sources: [
+        OverviewStorySource(
+          feedId: 'philenews',
+          feedTitle: 'Philenews',
+          feedLanguage: 'el',
+          article: FeedItem(
+            'Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο',
+            DateTime(2026, 10, 24, 13, 0),
+            'Η Αστυνομία αναφέρει ότι ανταποκρίθηκε άμεσα.',
+            null,
+            null,
+            'https://philenews.com/story2',
+          ),
+        ),
+      ],
+    );
+
+    expect(greekStoryWithUntranslatedFields.needsTranslationFor('tr'), isTrue);
+    expect(greekStoryWithUntranslatedFields.needsTranslationFor('en'), isTrue);
+    expect(greekStoryWithUntranslatedFields.needsTranslationFor('el'), isFalse);
+    expect(
+      greekStoryWithUntranslatedFields.narrativeFor('el'),
+      'Η Αστυνομία αναφέρει ότι ανταποκρίθηκε άμεσα.',
+    );
+
+    greekStoryWithUntranslatedFields.applyTranslation(
+      'tr',
+      title: 'Polis: Baf\'ta iki yaşındaki çocuğun istismar edildiği iddialarını yalanladı',
+      narrative: 'Polis olay yerine derhal intikal edildiğini bildirdi.',
+    );
+    expect(greekStoryWithUntranslatedFields.needsTranslationFor('tr'), isFalse);
+    expect(
+      greekStoryWithUntranslatedFields.titleFor('tr'),
+      'Polis: Baf\'ta iki yaşındaki çocuğun istismar edildiği iddialarını yalanladı',
+    );
+
+    final mixedTurn = const PodcastDialogueTurn(
+      index: 0,
+      speaker: 'A',
+      storyId: null,
+      speakerNameEl: '',
+      speakerNameTr: '',
+      speakerNameEn: '',
+      textEl: 'Γεια σας! Aktunç: Avrupalı başkent söylemle olmaz.',
+      textTr:
+          'Herkese merhaba! Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο.',
+      textEn:
+          'Hey everyone! Αστυνομία: Διαψεύδει τα περί κακοποίησης δίχρονου παιδιού στην Πάφο.',
+    );
+
+    expect(
+      PodcastDialogueTurn.hasMixedOrUntranslatedTurns(
+        List.filled(6, mixedTurn),
+      ),
+      isTrue,
+    );
+
+    final overviewWithMixedTurns = NewsOverview(
+      id: 'latest',
+      generatedAt: DateTime(2026, 10, 24, 13, 0),
+      totalFeedsAnalyzed: 34,
+      totalArticlesAnalyzed: 120,
+      summaryEn: 'Summary',
+      summaryTr: 'Özet',
+      summaryEl: 'Σύνοψη',
+      edition: 'midday',
+      stories: [greekStoryWithUntranslatedFields],
+      podcastTurns: List.filled(6, mixedTurn),
+    );
+
+    final rebuiltTurns = overviewWithMixedTurns.turnsForEdition('midday');
+    expect(rebuiltTurns, isNotEmpty);
+    expect(
+      rebuiltTurns.first.textFor('tr'),
+      contains('Polis: Baf\'ta iki yaşındaki çocuğun istismar edildiği iddialarını yalanladı'),
+    );
+    expect(
+      rebuiltTurns.first.textFor('tr').contains('Αστυνομία'),
+      isFalse,
+    );
+  });
 }

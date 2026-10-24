@@ -15,6 +15,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -24,6 +25,7 @@ using System.Threading.Tasks;
 using Amathus.Common.Feeds;
 using Amathus.Common.Util;
 using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Translation.V2;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -34,15 +36,54 @@ namespace Amathus.Common.Overview
     {
         private static readonly HttpClient Http = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(90)
+            Timeout = TimeSpan.FromSeconds(180)
         };
 
         private static readonly HttpClient TranslateHttp = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(12)
+            Timeout = TimeSpan.FromSeconds(15)
         };
 
         private static readonly ConcurrentDictionary<string, string> TranslationCache = new();
+        private static readonly Regex GreekScriptRegex = new(@"[\u0370-\u03FF\u1F00-\u1FFF]", RegexOptions.Compiled);
+        private static readonly Regex TurkishSpecificRegex = new(@"[ğĞşŞıİ]", RegexOptions.Compiled);
+        private static readonly Regex LegacyReportsPrefixRegex = new(@"(?:^|\s)[^:.]{1,40}\s+reports:\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex LegacyCoveredBySuffixRegex = new(@"\s*Covered by\s+[^.]+\.?\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static TranslationClient _translationClient;
+        private static bool _clientInitAttempted;
+        private static readonly object ClientLock = new();
+
+        private static TranslationClient GetTranslationClient()
+        {
+            if (_clientInitAttempted)
+            {
+                return _translationClient;
+            }
+
+            lock (ClientLock)
+            {
+                if (_clientInitAttempted)
+                {
+                    return _translationClient;
+                }
+
+                try
+                {
+                    _translationClient = TranslationClient.Create();
+                }
+                catch
+                {
+                    _translationClient = null;
+                }
+                finally
+                {
+                    _clientInitAttempted = true;
+                }
+
+                return _translationClient;
+            }
+        }
 
         private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -281,13 +322,17 @@ namespace Amathus.Common.Overview
             bool columnistsOnly = false)
         {
             var prompt = BuildGeminiPrompt(candidates, totalFeeds, columnistsOnly);
-            string responseText = null;
+            GeminiOverviewResult parsed = null;
 
             var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={Uri.EscapeDataString(apiKey)}";
-                responseText = await CallGeminiEndpointAsync(url, null, prompt);
+                var responseText = await CallGeminiEndpointAsync(url, null, prompt);
+                if (!string.IsNullOrWhiteSpace(responseText))
+                {
+                    parsed = JsonConvert.DeserializeObject<GeminiOverviewResult>(CleanJsonFence(responseText));
+                }
             }
             else
             {
@@ -301,10 +346,10 @@ namespace Amathus.Common.Overview
                 {
                     var modelsToTry = new[]
                     {
-                        ("global", "gemini-3-flash-preview"),
-                        ("global", "gemini-3.1-pro-preview"),
                         (_location, "gemini-2.5-flash"),
-                        ("us-central1", "gemini-2.5-flash")
+                        ("us-central1", "gemini-2.5-flash"),
+                        ("global", "gemini-3-flash-preview"),
+                        ("global", "gemini-3.1-pro-preview")
                     };
 
                     foreach (var (loc, model) in modelsToTry)
@@ -315,11 +360,16 @@ namespace Amathus.Common.Overview
                                 ? "aiplatform.googleapis.com"
                                 : $"{loc}-aiplatform.googleapis.com";
                             var url = $"https://{host}/v1/projects/{_projectId}/locations/{loc}/publishers/google/models/{model}:generateContent";
-                            responseText = await CallGeminiEndpointAsync(url, token, prompt);
+                            var responseText = await CallGeminiEndpointAsync(url, token, prompt);
                             if (!string.IsNullOrWhiteSpace(responseText))
                             {
-                                _logger?.LogInformation($"Gemini synthesis succeeded using model {model} in {loc}.");
-                                break;
+                                var candidateParsed = JsonConvert.DeserializeObject<GeminiOverviewResult>(CleanJsonFence(responseText));
+                                if (candidateParsed?.Stories != null && candidateParsed.Stories.Count > 0)
+                                {
+                                    parsed = candidateParsed;
+                                    _logger?.LogInformation($"Gemini synthesis succeeded using model {model} in {loc} with {parsed.Stories.Count} stories.");
+                                    break;
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -330,12 +380,6 @@ namespace Amathus.Common.Overview
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(responseText))
-            {
-                return null;
-            }
-
-            var parsed = JsonConvert.DeserializeObject<GeminiOverviewResult>(CleanJsonFence(responseText));
             if (parsed?.Stories == null || parsed.Stories.Count == 0)
             {
                 return null;
@@ -543,6 +587,7 @@ namespace Amathus.Common.Overview
                 generationConfig = new
                 {
                     temperature = 0.2,
+                    maxOutputTokens = 32768,
                     responseMimeType = "application/json"
                 }
             };
@@ -730,28 +775,34 @@ namespace Amathus.Common.Overview
                     ? primary.EnglishTitle
                     : primary.Item.Title;
 
-                // Translate summaries of the top 3 sources in this cluster to English to build a rich narrative
+                if (primary.Language != "en" &&
+                    (string.Equals(enLeadTitle, primary.Item.Title, StringComparison.Ordinal) ||
+                     NeedsTranslationForLanguage(enLeadTitle, "en", primary.Language)))
+                {
+                    enLeadTitle = await TranslateViaGtxAsync(primary.Item.Title, null, "en");
+                }
+
+                // Translate summaries of the top 2 sources in this cluster to English to build a rich narrative
                 var snippetParts = new List<string>();
-                foreach (var member in cluster.Take(3))
+                foreach (var member in cluster.Take(2))
                 {
                     var rawSnippet = CleanSnippet(member.Item.Summary ?? member.Item.Detail, 220);
                     if (!string.IsNullOrWhiteSpace(rawSnippet))
                     {
                         var enSnippet = member.Language == "en"
                             ? rawSnippet
-                            : await TranslateViaGtxAsync(rawSnippet, member.Language, "en");
+                            : await TranslateViaGtxAsync(rawSnippet, null, "en");
                         if (!string.IsNullOrWhiteSpace(enSnippet))
                         {
-                            snippetParts.Add($"{member.Feed.Title} reports: {EnsurePeriod(enSnippet)}");
+                            snippetParts.Add(EnsurePeriod(enSnippet));
                         }
                     }
                 }
 
-                var sourceNames = string.Join(", ", sources.Select(s => s.FeedTitle).Distinct());
                 string narrativeEn;
                 if (snippetParts.Count > 1)
                 {
-                    narrativeEn = $"{string.Join(" ", snippetParts.Take(2))} Covered by {sourceNames}.";
+                    narrativeEn = string.Join(" ", snippetParts.Take(2));
                 }
                 else if (snippetParts.Count == 1)
                 {
@@ -759,19 +810,29 @@ namespace Amathus.Common.Overview
                 }
                 else
                 {
-                    narrativeEn = $"Reported by {sourceNames}: {EnsurePeriod(enLeadTitle)}";
+                    narrativeEn = EnsurePeriod(enLeadTitle);
                 }
 
                 var titleTrTask = primary.Language == "tr"
                     ? Task.FromResult(primary.Item.Title)
-                    : TranslateViaGtxAsync(enLeadTitle, "en", "tr");
+                    : TranslateViaGtxAsync(primary.Item.Title, null, "tr");
 
                 var titleElTask = primary.Language == "el"
                     ? Task.FromResult(primary.Item.Title)
-                    : TranslateViaGtxAsync(enLeadTitle, "en", "el");
+                    : TranslateViaGtxAsync(primary.Item.Title, null, "el");
 
-                var narrativeTrTask = TranslateViaGtxAsync(narrativeEn, "en", "tr");
-                var narrativeElTask = TranslateViaGtxAsync(narrativeEn, "en", "el");
+                var primaryRawSnippet = CleanSnippet(primary.Item.Summary ?? primary.Item.Detail, 260);
+                var narrativeSourceForSingle = cluster.Count == 1 && !string.IsNullOrWhiteSpace(primaryRawSnippet)
+                    ? EnsurePeriod(primaryRawSnippet)
+                    : narrativeEn;
+
+                var narrativeTrTask = (cluster.Count == 1 && primary.Language == "tr" && !string.IsNullOrWhiteSpace(primaryRawSnippet))
+                    ? Task.FromResult(EnsurePeriod(primaryRawSnippet))
+                    : TranslateViaGtxAsync(narrativeSourceForSingle, null, "tr");
+
+                var narrativeElTask = (cluster.Count == 1 && primary.Language == "el" && !string.IsNullOrWhiteSpace(primaryRawSnippet))
+                    ? Task.FromResult(EnsurePeriod(primaryRawSnippet))
+                    : TranslateViaGtxAsync(narrativeSourceForSingle, null, "el");
 
                 await Task.WhenAll(titleTrTask, titleElTask, narrativeTrTask, narrativeElTask);
 
@@ -990,6 +1051,157 @@ namespace Amathus.Common.Overview
             return tokens;
         }
 
+        public static bool NeedsTranslationForLanguage(string text, string targetLang, string majoritySourceLang = null)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            var tl = (targetLang ?? "en").Trim().ToLowerInvariant();
+            if (tl == "el")
+            {
+                return !GreekScriptRegex.IsMatch(text);
+            }
+
+            if (GreekScriptRegex.IsMatch(text))
+            {
+                return true;
+            }
+
+            if (tl == "en" && TurkishSpecificRegex.IsMatch(text))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(majoritySourceLang) &&
+                !string.Equals(majoritySourceLang.Trim(), tl, StringComparison.OrdinalIgnoreCase) &&
+                LegacyReportsPrefixRegex.IsMatch(text))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string StripLegacyReportWrappers(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var cleaned = LegacyReportsPrefixRegex.Replace(text, " ");
+            cleaned = LegacyCoveredBySuffixRegex.Replace(cleaned, string.Empty);
+            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim();
+            return cleaned;
+        }
+
+        public static async Task<bool> EnsureStoriesTranslatedAsync(NewsOverview overview)
+        {
+            if (overview?.Stories == null || overview.Stories.Count == 0)
+            {
+                return false;
+            }
+
+            bool modified = false;
+            using var semaphore = new SemaphoreSlim(8);
+            var tasks = overview.Stories.Select(async story =>
+            {
+                if (story == null) return;
+
+                var firstSource = story.Sources?.FirstOrDefault();
+                var sourceLang = firstSource?.FeedLanguage?.Trim().ToLowerInvariant();
+                var rawSourceTitle = firstSource?.Article?.Title?.Trim() ?? string.Empty;
+
+                var tEn = story.TitleEn?.Trim() ?? string.Empty;
+                var tTr = story.TitleTr?.Trim() ?? string.Empty;
+                var tEl = story.TitleEl?.Trim() ?? string.Empty;
+
+                bool allTitlesSame = !string.IsNullOrEmpty(tEn) &&
+                                     string.Equals(tEn, tTr, StringComparison.Ordinal) &&
+                                     string.Equals(tEn, tEl, StringComparison.Ordinal);
+
+                bool needTitleEn = NeedsTranslationForLanguage(tEn, "en", sourceLang) ||
+                                   (allTitlesSame && sourceLang != null && sourceLang != "en");
+                bool needTitleTr = NeedsTranslationForLanguage(tTr, "tr", sourceLang) ||
+                                   (allTitlesSame && sourceLang != null && sourceLang != "tr");
+                bool needTitleEl = NeedsTranslationForLanguage(tEl, "el", sourceLang) ||
+                                   (allTitlesSame && sourceLang != null && sourceLang != "el");
+
+                var nEn = story.NarrativeEn?.Trim() ?? string.Empty;
+                var nTr = story.NarrativeTr?.Trim() ?? string.Empty;
+                var nEl = story.NarrativeEl?.Trim() ?? string.Empty;
+
+                bool allNarrativesSame = !string.IsNullOrEmpty(nEn) &&
+                                         string.Equals(nEn, nTr, StringComparison.Ordinal) &&
+                                         string.Equals(nEn, nEl, StringComparison.Ordinal);
+
+                bool needNarrativeEn = NeedsTranslationForLanguage(nEn, "en", sourceLang) ||
+                                       (allNarrativesSame && sourceLang != null && sourceLang != "en");
+                bool needNarrativeTr = NeedsTranslationForLanguage(nTr, "tr", sourceLang) ||
+                                       (allNarrativesSame && sourceLang != null && sourceLang != "tr");
+                bool needNarrativeEl = NeedsTranslationForLanguage(nEl, "el", sourceLang) ||
+                                       (allNarrativesSame && sourceLang != null && sourceLang != "el");
+
+                if (!needTitleEn && !needTitleTr && !needTitleEl &&
+                    !needNarrativeEn && !needNarrativeTr && !needNarrativeEl)
+                {
+                    return;
+                }
+
+                await semaphore.WaitAsync();
+                try
+                {
+                    var baseTitle = !string.IsNullOrWhiteSpace(rawSourceTitle)
+                        ? rawSourceTitle
+                        : (!string.IsNullOrWhiteSpace(tEn) ? tEn : (!string.IsNullOrWhiteSpace(tTr) ? tTr : tEl));
+
+                    var baseNarrative = StripLegacyReportWrappers(
+                        !string.IsNullOrWhiteSpace(nEn) ? nEn : (!string.IsNullOrWhiteSpace(nTr) ? nTr : nEl));
+
+                    if (needTitleEn && !string.IsNullOrWhiteSpace(baseTitle))
+                    {
+                        story.TitleEn = await TranslateViaGtxAsync(baseTitle, null, "en");
+                        modified = true;
+                    }
+                    if (needTitleTr && !string.IsNullOrWhiteSpace(baseTitle))
+                    {
+                        story.TitleTr = await TranslateViaGtxAsync(baseTitle, null, "tr");
+                        modified = true;
+                    }
+                    if (needTitleEl && !string.IsNullOrWhiteSpace(baseTitle))
+                    {
+                        story.TitleEl = await TranslateViaGtxAsync(baseTitle, null, "el");
+                        modified = true;
+                    }
+
+                    if (needNarrativeEn && !string.IsNullOrWhiteSpace(baseNarrative))
+                    {
+                        story.NarrativeEn = await TranslateViaGtxAsync(baseNarrative, null, "en");
+                        modified = true;
+                    }
+                    if (needNarrativeTr && !string.IsNullOrWhiteSpace(baseNarrative))
+                    {
+                        story.NarrativeTr = await TranslateViaGtxAsync(baseNarrative, null, "tr");
+                        modified = true;
+                    }
+                    if (needNarrativeEl && !string.IsNullOrWhiteSpace(baseNarrative))
+                    {
+                        story.NarrativeEl = await TranslateViaGtxAsync(baseNarrative, null, "el");
+                        modified = true;
+                    }
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(tasks);
+            return modified;
+        }
+
         private static async Task<string> TranslateViaGtxAsync(string text, string sourceLang, string targetLang)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -1008,6 +1220,30 @@ namespace Amathus.Common.Overview
             if (TranslationCache.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
+            }
+
+            var client = GetTranslationClient();
+            if (client != null)
+            {
+                try
+                {
+                    var cloudSourceLang = sl == "auto" ? null : sl;
+                    var res = await client.TranslateTextAsync(text, tl, cloudSourceLang);
+                    var cloudTranslated = WebUtility.HtmlDecode(res?.TranslatedText ?? string.Empty).Trim();
+                    if (!string.IsNullOrEmpty(cloudTranslated))
+                    {
+                        if (TranslationCache.Count > 3000)
+                        {
+                            TranslationCache.Clear();
+                        }
+                        TranslationCache[cacheKey] = cloudTranslated;
+                        return cloudTranslated;
+                    }
+                }
+                catch
+                {
+                    // Fall back to Google Translate GTX endpoint if Cloud Translation V2 fails
+                }
             }
 
             try

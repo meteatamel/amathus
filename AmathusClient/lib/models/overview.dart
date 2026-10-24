@@ -51,7 +51,8 @@ class NewsOverview {
     if (podcastTurns.isNotEmpty &&
         targetEdition == effectiveEdition &&
         podcastTurns.length > 2 &&
-        (podcastTurns[2].storyId ?? '').isNotEmpty) {
+        (podcastTurns[2].storyId ?? '').isNotEmpty &&
+        !PodcastDialogueTurn.hasMixedOrUntranslatedTurns(podcastTurns)) {
       return podcastTurns;
     }
     return PodcastDialogueTurn.buildClientTurns(this, targetEdition);
@@ -106,6 +107,33 @@ class NewsOverview {
 }
 
 class PodcastDialogueTurn {
+  static final RegExp _greekScriptRegex = RegExp(r'[\u0370-\u03FF\u1F00-\u1FFF]');
+  static final RegExp _turkishSpecificRegex = RegExp(r'[ğĞşŞıİ]');
+  static final RegExp _latinMultiWordRegex = RegExp(
+    r'[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}',
+  );
+
+  static bool hasMixedOrUntranslatedTurns(List<PodcastDialogueTurn> turns) {
+    if (turns.length < 6) return true;
+    for (final turn in turns) {
+      final tr = turn.textTr.trim();
+      final en = turn.textEn.trim();
+      final el = turn.textEl.trim();
+      if (tr.isEmpty || en.isEmpty || el.isEmpty) return true;
+      if (_greekScriptRegex.hasMatch(tr) || _greekScriptRegex.hasMatch(en)) {
+        return true;
+      }
+      if (_turkishSpecificRegex.hasMatch(en) ||
+          _turkishSpecificRegex.hasMatch(el)) {
+        return true;
+      }
+      if (!_greekScriptRegex.hasMatch(el) || _latinMultiWordRegex.hasMatch(el)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   final int index;
   final String speaker;
   final String? storyId;
@@ -335,13 +363,24 @@ class PodcastDialogueTurn {
 }
 
 class OverviewStory {
+  static final RegExp _greekScriptRegex = RegExp(r'[\u0370-\u03FF\u1F00-\u1FFF]');
+  static final RegExp _turkishSpecificRegex = RegExp(r'[ğĞşŞıİ]');
+  static final RegExp _legacyReportsPrefixRegex = RegExp(
+    r'(?:^|\s)[^:.]{1,40}\s+reports:\s*',
+    caseSensitive: false,
+  );
+  static final RegExp _legacyCoveredBySuffixRegex = RegExp(
+    r'\s*Covered by\s+[^.]+\.?\s*$',
+    caseSensitive: false,
+  );
+
   final String id;
-  final String titleEn;
-  final String titleTr;
-  final String titleEl;
-  final String narrativeEn;
-  final String narrativeTr;
-  final String narrativeEl;
+  String titleEn;
+  String titleTr;
+  String titleEl;
+  String narrativeEn;
+  String narrativeTr;
+  String narrativeEl;
   final String? imageUrl;
   final DateTime publishDate;
   final String? topic;
@@ -360,6 +399,89 @@ class OverviewStory {
     this.topic,
     required this.sources,
   });
+
+  static String cleanNarrativeText(String raw) {
+    if (raw.trim().isEmpty) return '';
+    var cleaned = raw.replaceAll(_legacyReportsPrefixRegex, ' ');
+    cleaned = cleaned.replaceAll(_legacyCoveredBySuffixRegex, '');
+    return cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  static bool isTextUntranslatedFor(
+    String text,
+    String targetLang, {
+    String? sourceLang,
+  }) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+    final tl = targetLang.trim().toLowerCase();
+    if (tl == 'el') {
+      return !_greekScriptRegex.hasMatch(trimmed);
+    }
+    if (_greekScriptRegex.hasMatch(trimmed)) {
+      return true;
+    }
+    if (tl == 'en' && _turkishSpecificRegex.hasMatch(trimmed)) {
+      return true;
+    }
+    if (sourceLang != null &&
+        sourceLang.trim().toLowerCase() != tl &&
+        _legacyReportsPrefixRegex.hasMatch(trimmed)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool needsTranslationFor(String lang) {
+    final tl = lang.trim().toLowerCase();
+    if (tl != 'tr' && tl != 'el' && tl != 'en') return false;
+
+    final majLang = majorityLanguage();
+    final t = titleFor(tl).trim();
+    final n = narrativeFor(tl).trim();
+
+    if (isTextUntranslatedFor(t, tl, sourceLang: majLang) ||
+        isTextUntranslatedFor(n, tl, sourceLang: majLang)) {
+      return true;
+    }
+
+    if (majLang != tl) {
+      final allTitlesSame = titleEn.trim().isNotEmpty &&
+          titleEn.trim() == titleTr.trim() &&
+          titleEn.trim() == titleEl.trim();
+      if (allTitlesSame) return true;
+
+      final allNarrativesSame = narrativeEn.trim().isNotEmpty &&
+          narrativeEn.trim() == narrativeTr.trim() &&
+          narrativeEn.trim() == narrativeEl.trim();
+      if (allNarrativesSame) return true;
+    }
+
+    return false;
+  }
+
+  void applyTranslation(
+    String lang, {
+    required String title,
+    required String narrative,
+  }) {
+    final cleanTitle = title.trim();
+    final cleanNarr = cleanNarrativeText(narrative);
+    switch (lang.trim().toLowerCase()) {
+      case 'tr':
+        if (cleanTitle.isNotEmpty) titleTr = cleanTitle;
+        if (cleanNarr.isNotEmpty) narrativeTr = cleanNarr;
+        break;
+      case 'el':
+        if (cleanTitle.isNotEmpty) titleEl = cleanTitle;
+        if (cleanNarr.isNotEmpty) narrativeEl = cleanNarr;
+        break;
+      case 'en':
+        if (cleanTitle.isNotEmpty) titleEn = cleanTitle;
+        if (cleanNarr.isNotEmpty) narrativeEn = cleanNarr;
+        break;
+    }
+  }
 
   String get effectiveTopic => Constants.resolveTopic(
         topic,
@@ -381,14 +503,19 @@ class OverviewStory {
   }
 
   String narrativeFor(String lang) {
+    String raw;
     switch (lang.toLowerCase()) {
       case 'tr':
-        return narrativeTr.trim().isNotEmpty ? narrativeTr : narrativeEn;
+        raw = narrativeTr.trim().isNotEmpty ? narrativeTr : narrativeEn;
+        break;
       case 'el':
-        return narrativeEl.trim().isNotEmpty ? narrativeEl : narrativeEn;
+        raw = narrativeEl.trim().isNotEmpty ? narrativeEl : narrativeEn;
+        break;
       default:
-        return narrativeEn.trim().isNotEmpty ? narrativeEn : narrativeTr;
+        raw = narrativeEn.trim().isNotEmpty ? narrativeEn : narrativeTr;
+        break;
     }
+    return cleanNarrativeText(raw);
   }
 
   String majorityLanguage([List<OverviewStorySource>? visibleSources]) {

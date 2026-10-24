@@ -50,8 +50,40 @@ class _OverviewViewState extends State<OverviewView> {
   @override
   void initState() {
     super.initState();
+    Constants.overviewTranslateLanguageNotifier
+        .addListener(_onTranslateLanguageChanged);
     _loadLatestCachedData();
     _loadInitial();
+  }
+
+  @override
+  void dispose() {
+    Constants.overviewTranslateLanguageNotifier
+        .removeListener(_onTranslateLanguageChanged);
+    _latestItemsNotifier.dispose();
+    super.dispose();
+  }
+
+  void _onTranslateLanguageChanged() {
+    _translateVisibleStoriesIfNeeded();
+  }
+
+  void _translateVisibleStoriesIfNeeded() {
+    final ov = _overview;
+    final targetLang = Constants.overviewTranslateLanguageNotifier.value;
+    if (ov == null || ov.stories.isEmpty || targetLang == null) return;
+    final visibleSlice = ov.stories.take(_maxVisibleTopStories).toList();
+    TranslateController.ensureOverviewStoriesTranslated(
+      visibleSlice,
+      targetLang,
+      onUpdated: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    ).then((_) {
+      PodcastPlaybackController.instance.onStoriesUpdated();
+    });
   }
 
   Future<void> _loadInitial() async {
@@ -62,6 +94,7 @@ class _OverviewViewState extends State<OverviewView> {
         _overview = cached;
         _isLoading = false;
       });
+      _translateVisibleStoriesIfNeeded();
     }
     await _refreshFromServer(forceRefresh: false);
   }
@@ -88,6 +121,7 @@ class _OverviewViewState extends State<OverviewView> {
       _isLoading = false;
       _isRefreshing = false;
     });
+    _translateVisibleStoriesIfNeeded();
   }
 
   List<OverviewStorySource> _visibleSourcesFor(OverviewStory story) {
@@ -294,6 +328,7 @@ class _OverviewViewState extends State<OverviewView> {
           _maxVisibleTopStories = 40;
           _isLoadingMoreStories = false;
         });
+        _translateVisibleStoriesIfNeeded();
       }
     }
   }

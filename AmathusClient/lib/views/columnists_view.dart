@@ -50,15 +50,41 @@ class _ColumnistsViewState extends State<ColumnistsView> {
   @override
   void initState() {
     super.initState();
+    Constants.overviewTranslateLanguageNotifier
+        .addListener(_onTranslateLanguageChanged);
     loadCachedData();
     _loadInitialOverview();
   }
 
   @override
   void dispose() {
+    Constants.overviewTranslateLanguageNotifier
+        .removeListener(_onTranslateLanguageChanged);
     _itemsNotifier.dispose();
     _columnistFeedIdsNotifier.dispose();
     super.dispose();
+  }
+
+  void _onTranslateLanguageChanged() {
+    _translateVisibleStoriesIfNeeded();
+  }
+
+  void _translateVisibleStoriesIfNeeded() {
+    final ov = _overview;
+    final targetLang = Constants.overviewTranslateLanguageNotifier.value;
+    if (ov == null || ov.stories.isEmpty || targetLang == null) return;
+    final visibleSlice = ov.stories.take(_maxVisibleTopStories).toList();
+    TranslateController.ensureOverviewStoriesTranslated(
+      visibleSlice,
+      targetLang,
+      onUpdated: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    ).then((_) {
+      PodcastPlaybackController.instance.onStoriesUpdated();
+    });
   }
 
   Future<void> _loadInitialOverview() async {
@@ -70,6 +96,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
         _overview = cached;
         _isLoadingOverview = false;
       });
+      _translateVisibleStoriesIfNeeded();
     }
     await _refreshOverviewFromServer(forceRefresh: false);
   }
@@ -97,6 +124,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
       _isLoadingOverview = false;
       _isRefreshingOverview = false;
     });
+    _translateVisibleStoriesIfNeeded();
   }
 
   List<OverviewStorySource> _visibleSourcesFor(OverviewStory story) {
@@ -260,6 +288,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           _maxVisibleTopStories = 40;
           _isLoadingMoreStories = false;
         });
+        _translateVisibleStoriesIfNeeded();
       }
     }
   }

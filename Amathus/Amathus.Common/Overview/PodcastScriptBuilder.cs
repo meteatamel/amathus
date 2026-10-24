@@ -45,21 +45,72 @@ namespace Amathus.Common.Overview
             return "evening";
         }
 
-        public static void EnsurePodcastPopulated(NewsOverview overview, string requestedEdition = null)
+        private static readonly Regex GreekScriptRegex = new(@"[\u0370-\u03FF\u1F00-\u1FFF]", RegexOptions.Compiled);
+        private static readonly Regex TurkishSpecificRegex = new(@"[ğĞşŞıİ]", RegexOptions.Compiled);
+        private static readonly Regex LatinMultiWordRegex = new(@"[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}", RegexOptions.Compiled);
+
+        public static bool HasMixedOrUntranslatedTurns(List<PodcastDialogueTurn> turns)
+        {
+            if (turns == null || turns.Count < 6)
+            {
+                return true;
+            }
+
+            foreach (var turn in turns)
+            {
+                if (turn == null)
+                {
+                    return true;
+                }
+
+                var tr = turn.TextTr ?? string.Empty;
+                var en = turn.TextEn ?? string.Empty;
+                var el = turn.TextEl ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(tr) || string.IsNullOrWhiteSpace(en) || string.IsNullOrWhiteSpace(el))
+                {
+                    return true;
+                }
+
+                // Turkish or English turns should never contain Greek script
+                if (GreekScriptRegex.IsMatch(tr) || GreekScriptRegex.IsMatch(en))
+                {
+                    return true;
+                }
+
+                // English or Greek turns should never contain Turkish-specific letters
+                if (TurkishSpecificRegex.IsMatch(en) || TurkishSpecificRegex.IsMatch(el))
+                {
+                    return true;
+                }
+
+                // Greek turns should not contain multi-word Latin sentences
+                if (!GreekScriptRegex.IsMatch(el) || LatinMultiWordRegex.IsMatch(el))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool EnsurePodcastPopulated(NewsOverview overview, string requestedEdition = null, bool forceRebuild = false)
         {
             if (overview == null || overview.Stories == null || overview.Stories.Count == 0)
             {
-                return;
+                return false;
             }
 
             var targetEdition = ResolveEdition(DateTime.UtcNow, requestedEdition);
             overview.Edition = targetEdition;
-            if (overview.PodcastTurns == null ||
+            if (forceRebuild ||
+                overview.PodcastTurns == null ||
                 overview.PodcastTurns.Count < 6 ||
-                (overview.PodcastTurns.Count > 2 && string.IsNullOrWhiteSpace(overview.PodcastTurns[2]?.StoryId)))
+                (overview.PodcastTurns.Count > 2 && string.IsNullOrWhiteSpace(overview.PodcastTurns[2]?.StoryId)) ||
+                HasMixedOrUntranslatedTurns(overview.PodcastTurns))
             {
                 overview.PodcastTurns = BuildTurns(overview, targetEdition);
-                return;
+                return true;
             }
 
             // Ensure StoryId is populated on story turns (turns 2 .. N-3)
@@ -81,6 +132,7 @@ namespace Amathus.Common.Overview
                     }
                 }
             }
+            return false;
         }
 
         public static List<PodcastDialogueTurn> BuildTurns(NewsOverview overview, string edition = null)

@@ -58,7 +58,12 @@ namespace Amathus.Web.Controllers
                 {
                     var copy = existing.Copy();
                     EnsureStoryTopicsPopulated(copy);
-                    PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                    bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
+                    bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition, forceRebuild: storiesRepaired);
+                    if (storiesRepaired || podcastRebuilt)
+                    {
+                        _ = _feedStore.SaveOverviewAsync(copy);
+                    }
                     _ = WarmupInitialPodcastTurnsAsync(copy);
                     return Ok(copy);
                 }
@@ -74,7 +79,12 @@ namespace Amathus.Web.Controllers
                     {
                         var copy = existing.Copy();
                         EnsureStoryTopicsPopulated(copy);
-                        PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                        bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
+                        bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition, forceRebuild: storiesRepaired);
+                        if (storiesRepaired || podcastRebuilt)
+                        {
+                            _ = _feedStore.SaveOverviewAsync(copy);
+                        }
                         _ = WarmupInitialPodcastTurnsAsync(copy);
                         return Ok(copy);
                     }
@@ -90,7 +100,8 @@ namespace Amathus.Web.Controllers
                 var overview = await _overviewAnalyzer.AnalyzeAsync(feeds, columnists);
                 overview.Id = overviewId;
                 EnsureStoryTopicsPopulated(overview);
-                PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
+                bool storiesRepairedOnGen = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(overview);
+                PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition, forceRebuild: storiesRepairedOnGen);
                 await _feedStore.SaveOverviewAsync(overview);
                 _ = WarmupInitialPodcastTurnsAsync(overview);
                 return Ok(overview);

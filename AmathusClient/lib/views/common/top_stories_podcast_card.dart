@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/podcast_audio_player.dart';
@@ -167,13 +168,25 @@ class PodcastPlaybackController extends ChangeNotifier {
   }
 
   void _prefetchInitialTurns() {
+    final ov = _overview;
+    if (ov == null) return;
+    final lang = effectiveLanguage;
+    if (ov.stories.take(8).any((s) => s.needsTranslationFor(lang))) {
+      return;
+    }
     final list = turns;
     if (list.isEmpty) return;
-    final lang = effectiveLanguage;
     _player.prefetchUrl(_buildAudioUrl(list[0], lang));
     if (list.length > 1) {
       _player.prefetchUrl(_buildAudioUrl(list[1], lang));
     }
+  }
+
+  void onStoriesUpdated() {
+    if (!_isPlaying) {
+      _prefetchInitialTurns();
+    }
+    notifyListeners();
   }
 
   void attachOverview(NewsOverview overview, String defaultLanguage) {
@@ -303,17 +316,30 @@ class PodcastPlaybackController extends ChangeNotifier {
     bool withStoryChime = false,
     double initialSeekFraction = 0.0,
   }) async {
+    final sessionId = ++_playSessionId;
+    _needsReloadOnResume = false;
+    final lang = effectiveLanguage;
+
+    final ov = _overview;
+    if (ov != null) {
+      final top8 = ov.stories.take(8).toList();
+      if (top8.any((s) => s.needsTranslationFor(lang))) {
+        _isLoadingAudio = true;
+        notifyListeners();
+        await TranslateController.ensureOverviewStoriesTranslated(top8, lang);
+        if (!_isPlaying || _isPaused || sessionId != _playSessionId) {
+          return;
+        }
+      }
+    }
+
     final list = turns;
     if (list.isEmpty) return;
     if (_currentTurnIndex < 0 || _currentTurnIndex >= list.length) {
       _currentTurnIndex = 0;
     }
 
-    final sessionId = ++_playSessionId;
-    _needsReloadOnResume = false;
-
     final currentTurn = list[_currentTurnIndex];
-    final lang = effectiveLanguage;
     final url = _buildAudioUrl(currentTurn, lang);
 
     // Immediately start downloading current turn and next turn in parallel
