@@ -48,7 +48,7 @@ class _OverviewViewState extends State<OverviewView> {
   @override
   void initState() {
     super.initState();
-    _feedItemsController.readRecentStored();
+    _loadLatestCachedData();
     _loadInitial();
   }
 
@@ -104,6 +104,61 @@ class _OverviewViewState extends State<OverviewView> {
         );
     if (!matchesSource) return false;
     return Constants.matchesSelectedTopic(item.effectiveTopic);
+  }
+
+  Map<String, int>? _computeSourceCounts(bool isTopMode) {
+    final counts = <String, int>{
+      'all': 0,
+      'el': 0,
+      'tr': 0,
+      'en': 0,
+    };
+    if (isTopMode) {
+      final ov = _overview;
+      if (ov == null || ov.stories.isEmpty) return null;
+      var total = 0;
+      for (final story in ov.stories) {
+        if (!Constants.matchesSelectedTopic(story.effectiveTopic)) continue;
+        final visibleSources = story.sources
+            .where((s) => Constants.isFeedVisible(s.feedId))
+            .toList();
+        if (visibleSources.isEmpty) continue;
+        total++;
+        final seenLangs = <String>{};
+        for (final s in visibleSources) {
+          seenLangs.add(
+            Constants.resolveFeedLanguage(s.feedId, s.feedLanguage),
+          );
+        }
+        for (final lang in seenLangs) {
+          counts[lang] = (counts[lang] ?? 0) + 1;
+        }
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    } else {
+      final list = _latestItemsNotifier.value;
+      if (list.isEmpty) return null;
+      final selectedFeed = Constants.selectedFeedIdNotifier.value;
+      var total = 0;
+      for (final item in list) {
+        final feedId = item.feed?.id;
+        if (!Constants.isFeedVisible(feedId)) continue;
+        if (selectedFeed != null &&
+            (feedId == null || feedId.trim().toLowerCase() != selectedFeed)) {
+          continue;
+        }
+        if (!Constants.matchesSelectedTopic(item.effectiveTopic)) continue;
+        final lang =
+            Constants.resolveFeedLanguage(feedId, item.feed?.language);
+        counts[lang] = (counts[lang] ?? 0) + 1;
+        total++;
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    }
   }
 
   Map<String, int>? _computeTopicCounts(bool isTopMode) {
@@ -195,40 +250,43 @@ class _OverviewViewState extends State<OverviewView> {
           appBar: AppBar(
             centerTitle: true,
             titleSpacing: 4,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
-                  child: SizedBox(
-                    width: 38,
-                    height: 38,
-                    child: Transform.scale(
-                      scale: 1.14,
-                      child: Image.asset(
-                        'assets/launcher/icon.png',
-                        width: 38,
-                        height: 38,
-                        fit: BoxFit.cover,
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: Transform.scale(
+                        scale: 1.14,
+                        child: Image.asset(
+                          'assets/launcher/icon.png',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 9),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      Constants.APP_NAME,
-                      maxLines: 1,
+                  const SizedBox(width: 9),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        Constants.APP_NAME,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(left: 8, right: 12),
                 child: Center(
                   child: isTopMode
                       ? const OverviewLanguageSelector(lightOnDark: true)
@@ -250,8 +308,17 @@ class _OverviewViewState extends State<OverviewView> {
           body: Column(
             children: [
               const PwaInstallBanner(),
-              SourceLanguageFilterBar(
-                showNewspaperSelector: !isTopMode,
+              ListenableBuilder(
+                listenable: Listenable.merge([
+                  Constants.selectedFeedIdNotifier,
+                  Constants.hiddenFeedsNotifier,
+                  Constants.selectedTopicNotifier,
+                  _latestItemsNotifier,
+                ]),
+                builder: (context, _) => SourceLanguageFilterBar(
+                  showNewspaperSelector: !isTopMode,
+                  countsBySource: _computeSourceCounts(isTopMode),
+                ),
               ),
               ListenableBuilder(
                 listenable: Listenable.merge([
@@ -421,6 +488,33 @@ class OverviewLanguageSelector extends StatelessWidget {
   }
 }
 
+void _openOverviewSource(BuildContext context, OverviewStorySource source) {
+  final feed = source.toFeed();
+  final cached = FeedItemsController.findCachedItemByUrl(
+    source.article.url,
+  );
+  final feedItem = cached ?? source.toFeedItem();
+  feedItem.feed ??= feed;
+
+  final activeOverviewLang =
+      Constants.overviewTranslateLanguageNotifier.value;
+  final sourceLang = Constants.resolveFeedLanguage(
+    source.feedId,
+    source.feedLanguage,
+  );
+  if (activeOverviewLang != null && activeOverviewLang != sourceLang) {
+    TranslateController.activeLanguageNotifier(feedItem).value =
+        activeOverviewLang;
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => FeedItemView(item: feedItem),
+    ),
+  );
+}
+
 class OverviewStoryCard extends StatelessWidget {
   final OverviewStory story;
   final List<OverviewStorySource> sources;
@@ -462,112 +556,117 @@ class OverviewStoryCard extends StatelessWidget {
       ),
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: TopicBadgePill(
-                          topicCode: story.effectiveTopic,
+      child: InkWell(
+        onTap: sources.isNotEmpty
+            ? () => _openOverviewSource(context, sources.first)
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: TopicBadgePill(
+                            topicCode: story.effectiveTopic,
+                          ),
                         ),
-                      ),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                          height: 1.35,
-                        ),
-                      ),
-                      if (narrative.isNotEmpty) ...[
-                        const SizedBox(height: 6),
                         Text(
-                          narrative,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blueGrey.shade700,
-                            height: 1.45,
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            height: 1.35,
+                          ),
+                        ),
+                        if (narrative.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            narrative,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.blueGrey.shade700,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (resolvedImage.isNotEmpty) ...[
+                    const SizedBox(width: 14),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 124,
+                        height: 92,
+                        child: kIsWeb
+                            ? Image.network(
+                                resolvedImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox.shrink(),
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: resolvedImage,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) =>
+                                    const SizedBox.shrink(),
+                              ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 2),
+                          child: Text(
+                            Constants.READ_FROM_LABEL,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.blueGrey.shade700,
+                            ),
+                          ),
+                        ),
+                        for (final source in sources)
+                          _NewspaperStoryChip(source: source),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            time,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blueGrey.shade600,
+                            ),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                if (resolvedImage.isNotEmpty) ...[
-                  const SizedBox(width: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 124,
-                      height: 92,
-                      child: kIsWeb
-                          ? Image.network(
-                              resolvedImage,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const SizedBox.shrink(),
-                            )
-                          : CachedNetworkImage(
-                              imageUrl: resolvedImage,
-                              fit: BoxFit.cover,
-                              errorWidget: (context, url, error) =>
-                                  const SizedBox.shrink(),
-                            ),
                     ),
                   ),
+                  ShareIconButton(item: shareItem, compact: true),
                 ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 2),
-                        child: Text(
-                          Constants.READ_FROM_LABEL,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.blueGrey.shade700,
-                          ),
-                        ),
-                      ),
-                      for (final source in sources)
-                        _NewspaperStoryChip(source: source),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Text(
-                          time,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blueGrey.shade600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ShareIconButton(item: shareItem, compact: true),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -826,32 +925,7 @@ class _NewspaperStoryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            final cached = FeedItemsController.findCachedItemByUrl(
-              source.article.url,
-            );
-            final feedItem = cached ?? source.toFeedItem();
-            feedItem.feed ??= feed;
-
-            final activeOverviewLang =
-                Constants.overviewTranslateLanguageNotifier.value;
-            final sourceLang = Constants.resolveFeedLanguage(
-              source.feedId,
-              source.feedLanguage,
-            );
-            if (activeOverviewLang != null &&
-                activeOverviewLang != sourceLang) {
-              TranslateController.activeLanguageNotifier(feedItem).value =
-                  activeOverviewLang;
-            }
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => FeedItemView(item: feedItem),
-              ),
-            );
-          },
+          onTap: () => _openOverviewSource(context, source),
           child: FeedImage(
             item: feed,
             width: 68,

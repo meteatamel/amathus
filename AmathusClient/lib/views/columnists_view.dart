@@ -113,6 +113,59 @@ class _ColumnistsViewState extends State<ColumnistsView> {
         );
   }
 
+  Map<String, int>? _computeSourceCounts(bool isTopMode) {
+    final counts = <String, int>{
+      'all': 0,
+      'el': 0,
+      'tr': 0,
+      'en': 0,
+    };
+    if (isTopMode) {
+      final ov = _overview;
+      if (ov == null || ov.stories.isEmpty) return null;
+      var total = 0;
+      for (final story in ov.stories) {
+        final visibleSources = story.sources
+            .where((s) => Constants.isFeedVisible(s.feedId))
+            .toList();
+        if (visibleSources.isEmpty) continue;
+        total++;
+        final seenLangs = <String>{};
+        for (final s in visibleSources) {
+          seenLangs.add(
+            Constants.resolveFeedLanguage(s.feedId, s.feedLanguage),
+          );
+        }
+        for (final lang in seenLangs) {
+          counts[lang] = (counts[lang] ?? 0) + 1;
+        }
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    } else {
+      final list = _itemsNotifier.value;
+      if (list.isEmpty) return null;
+      final selectedFeed = Constants.selectedFeedIdNotifier.value;
+      var total = 0;
+      for (final item in list) {
+        final feedId = item.feed?.id;
+        if (!Constants.isFeedVisible(feedId)) continue;
+        if (selectedFeed != null &&
+            (feedId == null || feedId.trim().toLowerCase() != selectedFeed)) {
+          continue;
+        }
+        final lang =
+            Constants.resolveFeedLanguage(feedId, item.feed?.language);
+        counts[lang] = (counts[lang] ?? 0) + 1;
+        total++;
+      }
+      if (total == 0) return null;
+      counts['all'] = total;
+      return counts;
+    }
+  }
+
   FeedItem _buildTopColumnFeedItem(
     OverviewStory story,
     OverviewStorySource source,
@@ -174,40 +227,43 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           appBar: AppBar(
             centerTitle: true,
             titleSpacing: 4,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
-                  child: SizedBox(
-                    width: 38,
-                    height: 38,
-                    child: Transform.scale(
-                      scale: 1.14,
-                      child: Image.asset(
-                        'assets/launcher/icon.png',
-                        width: 38,
-                        height: 38,
-                        fit: BoxFit.cover,
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: Transform.scale(
+                        scale: 1.14,
+                        child: Image.asset(
+                          'assets/launcher/icon.png',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 9),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      Constants.APP_NAME,
-                      maxLines: 1,
+                  const SizedBox(width: 9),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        Constants.APP_NAME,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(left: 8, right: 12),
                 child: Center(
                   child: isTopMode
                       ? const OverviewLanguageSelector(lightOnDark: true)
@@ -229,10 +285,18 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           body: Column(
             children: [
               const PwaInstallBanner(),
-              SourceLanguageFilterBar(
-                showNewspaperSelector: !isTopMode,
-                allowedNewspaperIdsListenable:
-                    !isTopMode ? _columnistFeedIdsNotifier : null,
+              ListenableBuilder(
+                listenable: Listenable.merge([
+                  Constants.selectedFeedIdNotifier,
+                  Constants.hiddenFeedsNotifier,
+                  _itemsNotifier,
+                ]),
+                builder: (context, _) => SourceLanguageFilterBar(
+                  showNewspaperSelector: !isTopMode,
+                  allowedNewspaperIdsListenable:
+                      !isTopMode ? _columnistFeedIdsNotifier : null,
+                  countsBySource: _computeSourceCounts(isTopMode),
+                ),
               ),
               if (isTopMode && _isRefreshingOverview)
                 const LinearProgressIndicator(minHeight: 2),

@@ -71,7 +71,7 @@ void main() {
   });
 
   testWidgets(
-      'OverviewView renders top stories in English, Turkish, and Greek, keeps story card non-clickable, and opens FeedItemView when tapping a newspaper logo',
+      'OverviewView renders top stories in English, Turkish, and Greek, and opens FeedItemView from the first source when tapping a story card or newspaper logo',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -217,7 +217,7 @@ void main() {
       findsOneWidget,
     );
 
-    // Tapping the story title itself should NOT navigate anywhere
+    // Tapping the story card opens FeedItemView for the first source by default
     await tester.ensureVisible(
       find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
     );
@@ -226,7 +226,12 @@ void main() {
       find.text('Προχωρούν οι συζητήσεις για νέο σημείο διέλευσης'),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(OverviewStoryView), findsNothing);
+    expect(find.byType(FeedItemView), findsOneWidget);
+    expect(find.text('Geçiş kapılarında yeni adım'), findsOneWidget);
+
+    // Navigate back to Top Stories
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     expect(find.byType(FeedItemView), findsNothing);
 
     // Show Original and test Topic Filtering before tapping newspaper logo

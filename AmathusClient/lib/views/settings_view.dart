@@ -19,10 +19,14 @@ class SettingsView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
-            title: Text(Constants.SETTINGS),
+            titleSpacing: 4,
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(Constants.SETTINGS),
+            ),
             actions: const [
               Padding(
-                padding: EdgeInsets.only(right: 12),
+                padding: EdgeInsets.only(left: 8, right: 12),
                 child: Center(
                   child: AppLanguageButton(lightOnDark: true),
                 ),

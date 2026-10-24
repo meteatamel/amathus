@@ -127,8 +127,14 @@ namespace Amathus.Converter.Controllers
                 if (allFeeds != null && allFeeds.Count >= 5)
                 {
                     _logger?.LogInformation("Refreshing daily overview in Firestore after feed conversion batch...");
-                    var overview = await _overviewAnalyzer.AnalyzeAsync(allFeeds);
+                    var overview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: false);
+                    overview.Id = "latest";
                     await _store.SaveOverviewAsync(overview);
+
+                    var columnistsOverview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: true);
+                    columnistsOverview.Id = "latest_columnists";
+                    await _store.SaveOverviewAsync(columnistsOverview);
+
                     _lastOverviewCheckUtc = DateTime.UtcNow;
                 }
             }

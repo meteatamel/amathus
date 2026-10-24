@@ -198,7 +198,7 @@ namespace Amathus.Common.Overview
         private List<CandidateArticle> CollectCandidates(List<Feed> feeds, bool columnistsOnly = false)
         {
             var result = new List<CandidateArticle>();
-            var cutoff = DateTime.UtcNow.AddDays(columnistsOnly ? -7 : -3);
+            var cutoff = DateTime.UtcNow.AddHours(columnistsOnly ? -96 : -36);
 
             foreach (var feed in feeds)
             {
@@ -215,21 +215,12 @@ namespace Amathus.Common.Overview
                     .ToList();
 
                 var recent = filtered
-                    .Where(i => i.PublishDate >= cutoff)
+                    .Where(i => EnsureUtc(i.PublishDate) >= cutoff)
                     .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
                     .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
                     .ThenByDescending(i => i.PublishDate)
-                    .Take(5)
+                    .Take(7)
                     .ToList();
-                if (recent.Count == 0)
-                {
-                    recent = filtered
-                        .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
-                        .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
-                        .ThenByDescending(i => i.PublishDate)
-                        .Take(4)
-                        .ToList();
-                }
 
                 foreach (var item in recent)
                 {
@@ -243,10 +234,36 @@ namespace Amathus.Common.Overview
                 }
             }
 
+            if (result.Count == 0)
+            {
+                foreach (var feed in feeds)
+                {
+                    var lang = string.IsNullOrWhiteSpace(feed.Language) ? "tr" : feed.Language.Trim().ToLowerInvariant();
+                    var fallbackRecent = feed.Items
+                        .Where(item => item != null &&
+                                       item.IsColumnist == columnistsOnly &&
+                                       !string.IsNullOrWhiteSpace(item.Title))
+                        .OrderByDescending(i => i.PublishDate)
+                        .Take(4)
+                        .ToList();
+
+                    foreach (var item in fallbackRecent)
+                    {
+                        result.Add(new CandidateArticle
+                        {
+                            Feed = feed,
+                            Item = item,
+                            Language = lang,
+                            GeoTier = TextUtil.GetGeoRelevanceTier(item.Title, item.Summary, item.Detail)
+                        });
+                    }
+                }
+            }
+
             result = result
                 .OrderByDescending(c => c.GeoTier >= 3 ? 3 : c.GeoTier)
                 .ThenByDescending(c => c.Item.PublishDate)
-                .Take(160)
+                .Take(190)
                 .ToList();
 
             for (int i = 0; i < result.Count; i++)
@@ -381,7 +398,9 @@ namespace Amathus.Common.Overview
                 return null;
             }
 
-            // Ensure stories are strictly ordered by geographic priority: Cyprus (3) -> Greece (2) -> Turkey (1) -> World (0)
+            // Ensure stories are strictly ordered by geographic priority: Cyprus (3) -> Greece (2) -> Turkey (1) -> World (0),
+            // and prioritize fresh stories (last 18 hours) before older stories.
+            var nowUtc = DateTime.UtcNow;
             stories = stories
                 .Select((story, originalIndex) =>
                 {
@@ -389,9 +408,12 @@ namespace Amathus.Common.Overview
                         $"{story.TitleEn} {story.TitleTr} {story.TitleEl}",
                         $"{story.NarrativeEn} {story.NarrativeTr} {story.NarrativeEl}");
                     var bucket = tier >= 3 ? 3 : tier;
-                    return (story, bucket, originalIndex);
+                    var ageHours = (nowUtc - EnsureUtc(story.PublishDate)).TotalHours;
+                    var isRecent = ageHours <= 18.0 ? 1 : 0;
+                    return (story, bucket, isRecent, originalIndex);
                 })
                 .OrderByDescending(x => x.bucket)
+                .ThenByDescending(x => x.isRecent)
                 .ThenBy(x => x.originalIndex)
                 .Select((x, i) =>
                 {
@@ -544,13 +566,14 @@ namespace Amathus.Common.Overview
             if (columnistsOnly)
             {
                 sb.AppendLine($"Below are {candidates.Count} recent opinion columns and commentaries from Turkish, Greek, and English newspaper columnists across Cyprus.");
-                sb.AppendLine("Analyze all columns and identify the major opinion themes and top columns of the day (typically between 8 and 14 top column topics/pieces).");
+                sb.AppendLine("Analyze all columns and identify the major opinion themes and top columns of the day (aim for 12 to 16 top column topics/pieces).");
             }
             else
             {
                 sb.AppendLine($"Below are {candidates.Count} recent news articles from Turkish, Greek, and English newspapers across Cyprus.");
-                sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (typically between 10 and 16 stories).");
+                sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (aim for 18 to 22 top stories; include at least 18 distinct stories).");
             }
+            sb.AppendLine("RECENCY PRIORITY: Prioritize breaking and recent stories published within the last 12–18 hours over older stories from yesterday.");
             sb.AppendLine("GEOGRAPHIC PRIORITY (STRICT): You MUST prioritize and order stories/columns in this exact geographic hierarchy:");
             sb.AppendLine("  1st Priority: CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, legal, social, and cultural developments).");
             sb.AppendLine("  2nd Priority: GREECE (especially developments in Greece relevant to Cyprus or the Eastern Mediterranean).");
@@ -600,12 +623,14 @@ namespace Amathus.Common.Overview
             sb.AppendLine();
             sb.AppendLine("ARTICLES:");
 
+            var nowForPrompt = DateTime.UtcNow;
             foreach (var c in candidates)
             {
                 var cleanSummary = CleanSnippet(c.Item.Summary ?? c.Item.Detail, 180);
                 var geoLabel = TextUtil.GetGeoRelevanceLabel(c.GeoTier);
                 var authorPart = !string.IsNullOrWhiteSpace(c.Item.Author) ? $" | Author: {c.Item.Author}" : string.Empty;
-                sb.AppendLine($"[{c.Index}] ({c.Feed.Id} | {c.Feed.Title} | {c.Language} | Geo: {geoLabel}{authorPart}) {c.Item.Title} — {cleanSummary}");
+                var hoursAgo = Math.Max(0, (int)Math.Round((nowForPrompt - EnsureUtc(c.Item.PublishDate)).TotalHours));
+                sb.AppendLine($"[{c.Index}] ({c.Feed.Id} | {c.Feed.Title} | {c.Language} | {hoursAgo}h ago | Geo: {geoLabel}{authorPart}) {c.Item.Title} — {cleanSummary}");
             }
 
             return sb.ToString();
@@ -641,7 +666,7 @@ namespace Amathus.Common.Overview
             await Task.WhenAll(titleTasks);
 
             // Step 2: Group articles into story clusters based on token similarity across different newspapers
-            var clusters = BuildStoryClusters(candidates, minStories: 10, maxStories: 20);
+            var clusters = BuildStoryClusters(candidates, minStories: 18, maxStories: 22);
 
             // Step 3: For each cluster, synthesize English, Turkish, and Greek titles and narratives
             var stories = new List<OverviewStory>();
@@ -868,7 +893,7 @@ namespace Amathus.Common.Overview
             var sources = new List<OverviewStorySource>();
             var seenFeeds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var c in cluster)
+            foreach (var c in cluster.OrderByDescending(x => EnsureUtc(x.Item.PublishDate)))
             {
                 if (c?.Feed == null || c.Item == null || string.IsNullOrWhiteSpace(c.Feed.Id))
                 {

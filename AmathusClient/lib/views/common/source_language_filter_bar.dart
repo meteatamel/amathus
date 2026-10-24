@@ -141,6 +141,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
   final bool showNewspaperSelector;
   final Widget? extraSelector;
   final ValueListenable<Set<String>?>? allowedNewspaperIdsListenable;
+  final Map<String, int>? countsBySource;
 
   const SourceLanguageFilterBar({
     super.key,
@@ -151,6 +152,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.showNewspaperSelector = false,
     this.extraSelector,
     this.allowedNewspaperIdsListenable,
+    this.countsBySource,
   });
 
   Widget _leadingFor(String code) {
@@ -172,6 +174,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
       ]),
       builder: (context, _) {
         final selectedLang = Constants.sourceLanguageNotifier.value;
+        final counts = countsBySource;
         final options = <(String, String)>[
           ('all', Constants.SOURCE_FILTER_ALL),
           ('el', Constants.SOURCE_FILTER_EL),
@@ -191,43 +194,56 @@ class SourceLanguageFilterBar extends StatelessWidget {
             alignment: Alignment.center,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 860),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (leadingSelector != null) ...[
-                      leadingSelector!,
-                      const SizedBox(width: 6),
-                    ],
-                    for (var i = 0; i < options.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 5),
-                      _buildSourceChip(
-                        code: options[i].$1,
-                        label: options[i].$2,
-                        selected: selectedLang == options[i].$1,
-                      ),
-                    ],
-                    if (extraSelector != null) ...[
-                      const SizedBox(width: 6),
-                      extraSelector!,
-                    ],
-                    if (trailing != null) ...[
-                      const SizedBox(width: 6),
-                      trailing!,
-                    ] else if (bulkController != null) ...[
-                      const SizedBox(width: 6),
-                      BulkTranslateIconButton(
-                        controller: bulkController!,
-                        itemFilter: itemFilter,
-                      ),
-                    ],
-                  ],
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final showLabels = constraints.maxWidth >= 660;
+                  final visibleOptions = options;
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (leadingSelector != null) ...[
+                          leadingSelector!,
+                          const SizedBox(width: 6),
+                        ],
+                        for (var i = 0; i < visibleOptions.length; i++) ...[
+                          if (i > 0)
+                            SizedBox(width: showLabels ? 5 : 4),
+                          _buildSourceChip(
+                            code: visibleOptions[i].$1,
+                            label: visibleOptions[i].$2,
+                            selected: selectedLang == visibleOptions[i].$1,
+                            count: counts != null
+                                ? counts[visibleOptions[i].$1]
+                                : null,
+                            showLabel:
+                                showLabels || visibleOptions[i].$1 == 'all',
+                          ),
+                        ],
+                        if (extraSelector != null) ...[
+                          const SizedBox(width: 6),
+                          extraSelector!,
+                        ],
+                        if (trailing != null) ...[
+                          const SizedBox(width: 6),
+                          trailing!,
+                        ] else if (bulkController != null) ...[
+                          const SizedBox(width: 6),
+                          BulkTranslateIconButton(
+                            controller: bulkController!,
+                            itemFilter: itemFilter,
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -240,10 +256,15 @@ class SourceLanguageFilterBar extends StatelessWidget {
     required String code,
     required String label,
     required bool selected,
+    int? count,
+    bool showLabel = true,
   }) {
     const activeNavy = Color(0xFF0F2942);
+    final baseTooltip = Constants.sourceFilterTooltipFor(code);
+    final tooltipText =
+        count != null ? '$baseTooltip ($count)' : baseTooltip;
     return Tooltip(
-      message: Constants.sourceFilterTooltipFor(code),
+      message: tooltipText,
       waitDuration: const Duration(milliseconds: 250),
       child: Material(
         color: Colors.transparent,
@@ -257,8 +278,8 @@ class SourceLanguageFilterBar extends StatelessWidget {
             }
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 9.5,
+            padding: EdgeInsets.symmetric(
+              horizontal: showLabel ? 9.0 : 8.0,
               vertical: 4.5,
             ),
             decoration: BoxDecoration(
@@ -272,15 +293,31 @@ class SourceLanguageFilterBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _leadingFor(code),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: selected ? Colors.white : const Color(0xFF1E293B),
+                if (showLabel) ...[
+                  const SizedBox(width: 5),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      color:
+                          selected ? Colors.white : const Color(0xFF1E293B),
+                    ),
                   ),
-                ),
+                ],
+                if (count != null) ...[
+                  SizedBox(width: showLabel ? 3.5 : 4),
+                  Text(
+                    showLabel ? '($count)' : '$count',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.82)
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

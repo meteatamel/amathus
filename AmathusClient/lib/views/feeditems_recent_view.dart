@@ -29,37 +29,41 @@ class FeedItemsRecentView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: SizedBox(
-                width: 42,
-                height: 42,
-                child: Transform.scale(
-                  scale: 1.14,
-                  child: Image.asset(
-                    'assets/launcher/icon.png',
-                    width: 42,
-                    height: 42,
-                    fit: BoxFit.cover,
+        titleSpacing: 4,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(9),
+                child: SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: Transform.scale(
+                    scale: 1.14,
+                    child: Image.asset(
+                      'assets/launcher/icon.png',
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                Constants.RECENT_NEWS,
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  Constants.RECENT_NEWS,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(left: 8, right: 12),
             child: Center(
               child: BulkTranslateIconButton(
                 controller: _bulkTranslateController,

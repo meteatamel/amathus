@@ -23,24 +23,30 @@ class FeedItemsByIdView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FeedImage(item: feed, width: 92, height: 34, compact: true),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                feed.title,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        titleSpacing: 4,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FeedImage(item: feed, width: 92, height: 34, compact: true),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  feed.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(left: 8, right: 12),
             child: Center(
               child: BulkTranslateIconButton(
                 controller: _bulkTranslateController,

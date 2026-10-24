@@ -73,34 +73,38 @@ class _FeedItemViewState extends State<FeedItemView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: item.feed != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FeedImage(
-                    item: item.feed,
-                    width: 88,
-                    height: 32,
-                    compact: true,
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      item.feed!.title,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+        titleSpacing: 4,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: item.feed != null
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FeedImage(
+                      item: item.feed,
+                      width: 88,
+                      height: 32,
+                      compact: true,
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        item.feed!.title,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            : Text(Constants.APP_NAME),
+                  ],
+                )
+              : Text(Constants.APP_NAME),
+        ),
         centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(left: 8, right: 12),
             child: Center(
               child: TranslateIconButton(
                 item: item,

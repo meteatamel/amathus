@@ -18,11 +18,15 @@ class ContactView extends StatelessWidget {
       builder: (context, _, __) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(Constants.CONTACT),
+            titleSpacing: 4,
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(Constants.CONTACT),
+            ),
             centerTitle: true,
             actions: const [
               Padding(
-                padding: EdgeInsets.only(right: 12),
+                padding: EdgeInsets.only(left: 8, right: 12),
                 child: Center(
                   child: AppLanguageButton(lightOnDark: true),
                 ),
