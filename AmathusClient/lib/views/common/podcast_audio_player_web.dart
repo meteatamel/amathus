@@ -185,7 +185,9 @@ class PodcastAudioPlayer {
     // If not already cached in memory, signal loading state while downloading
     String? resolvedSrc = _blobUrlCache[url];
     if (resolvedSrc == null) {
-      _unlockAudioSynchronously();
+      if (!_isAudioUnlocked) {
+        _unlockAudioSynchronously();
+      }
       onLoadingChanged?.call(true);
       resolvedSrc = await _fetchBlobUrl(url);
       if (token != _activePlayToken) {

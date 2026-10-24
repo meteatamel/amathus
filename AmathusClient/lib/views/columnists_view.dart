@@ -44,6 +44,8 @@ class _ColumnistsViewState extends State<ColumnistsView> {
   NewsOverview? _overview;
   bool _isLoadingOverview = true;
   bool _isRefreshingOverview = false;
+  int _maxVisibleTopStories = 20;
+  bool _isLoadingMoreStories = false;
 
   @override
   void initState() {
@@ -124,7 +126,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
       final ov = _overview;
       if (ov == null || ov.stories.isEmpty) return null;
       var total = 0;
-      for (final story in ov.stories) {
+      for (final story in ov.stories.take(_maxVisibleTopStories)) {
         final visibleSources = story.sources
             .where((s) => Constants.isFeedVisible(s.feedId))
             .toList();
@@ -146,15 +148,10 @@ class _ColumnistsViewState extends State<ColumnistsView> {
     } else {
       final list = _itemsNotifier.value;
       if (list.isEmpty) return null;
-      final selectedFeed = Constants.selectedFeedIdNotifier.value;
       var total = 0;
       for (final item in list) {
         final feedId = item.feed?.id;
         if (!Constants.isFeedVisible(feedId)) continue;
-        if (selectedFeed != null &&
-            (feedId == null || feedId.trim().toLowerCase() != selectedFeed)) {
-          continue;
-        }
         final lang =
             Constants.resolveFeedLanguage(feedId, item.feed?.language);
         counts[lang] = (counts[lang] ?? 0) + 1;
@@ -163,6 +160,107 @@ class _ColumnistsViewState extends State<ColumnistsView> {
       if (total == 0) return null;
       counts['all'] = total;
       return counts;
+    }
+  }
+
+  Map<String, int>? _computeNewspaperCounts() {
+    final list = _itemsNotifier.value;
+    if (list.isEmpty) return null;
+    final counts = <String, int>{'all': 0};
+    var total = 0;
+    for (final item in list) {
+      final feedId = item.feed?.id.trim().toLowerCase();
+      if (feedId == null || feedId.isEmpty) continue;
+      if (!Constants.matchesSourceLanguageOnly(feedId, item.feed?.language)) {
+        continue;
+      }
+      counts[feedId] = (counts[feedId] ?? 0) + 1;
+      total++;
+    }
+    if (total == 0) return null;
+    counts['all'] = total;
+    return counts;
+  }
+
+  Future<void> _loadMoreTopColumns() async {
+    if (_maxVisibleTopStories >= 40 || _isLoadingMoreStories) return;
+    final ov = _overview;
+    if (ov == null) return;
+
+    setState(() {
+      _isLoadingMoreStories = true;
+    });
+
+    try {
+      final minSpinnerDelay =
+          Future<void>.delayed(const Duration(milliseconds: 650));
+      var allColumns = _itemsNotifier.value;
+      if (allColumns.isEmpty) {
+        allColumns = await loadCachedData() ?? const [];
+      }
+      if (allColumns.isEmpty) {
+        allColumns = await loadData() ?? const [];
+      }
+      await minSpinnerDelay;
+
+      if (ov.stories.length < 40 && allColumns.isNotEmpty) {
+        final existingUrls = <String>{};
+        for (final s in ov.stories) {
+          for (final src in s.sources) {
+            final u = (src.article.url ?? '').trim();
+            if (u.isNotEmpty) existingUrls.add(u);
+          }
+        }
+
+        final extraStories = <OverviewStory>[];
+        for (final item in allColumns) {
+          if (ov.stories.length + extraStories.length >= 40) break;
+          final url = (item.url ?? '').trim();
+          if (url.isNotEmpty && existingUrls.contains(url)) continue;
+          final feed = item.feed;
+          if (feed == null) continue;
+          if (url.isNotEmpty) existingUrls.add(url);
+
+          final narrative = (item.summary ?? '').trim().isNotEmpty
+              ? item.summary!.trim()
+              : (item.detail ?? '').trim();
+          final source = OverviewStorySource(
+            feedId: feed.id,
+            feedTitle: feed.title,
+            feedLanguage:
+                Constants.resolveFeedLanguage(feed.id, feed.language),
+            feedImageUrl: feed.imageUrl,
+            feedUrl: feed.url,
+            article: item,
+          );
+          extraStories.add(
+            OverviewStory(
+              id: 'extra-col-${ov.stories.length + extraStories.length + 1}',
+              titleEn: item.title,
+              titleTr: item.title,
+              titleEl: item.title,
+              narrativeEn: narrative,
+              narrativeTr: narrative,
+              narrativeEl: narrative,
+              imageUrl: item.imageUrl,
+              publishDate: item.publishDate,
+              topic: item.effectiveTopic,
+              sources: [source],
+            ),
+          );
+        }
+
+        if (extraStories.isNotEmpty) {
+          ov.stories.addAll(extraStories);
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _maxVisibleTopStories = 40;
+          _isLoadingMoreStories = false;
+        });
+      }
     }
   }
 
@@ -287,6 +385,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
               const PwaInstallBanner(),
               ListenableBuilder(
                 listenable: Listenable.merge([
+                  Constants.sourceLanguageNotifier,
                   Constants.selectedFeedIdNotifier,
                   Constants.hiddenFeedsNotifier,
                   _itemsNotifier,
@@ -296,9 +395,11 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                   allowedNewspaperIdsListenable:
                       !isTopMode ? _columnistFeedIdsNotifier : null,
                   countsBySource: _computeSourceCounts(isTopMode),
+                  countsByNewspaper:
+                      !isTopMode ? _computeNewspaperCounts() : null,
                 ),
               ),
-              if (isTopMode && _isRefreshingOverview)
+              if (isTopMode && (_isRefreshingOverview || _isLoadingMoreStories))
                 const LinearProgressIndicator(minHeight: 2),
               Expanded(
                 child: isTopMode
@@ -309,7 +410,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                         wideTile: true,
                         bulkController: _bulkTranslateController,
                         bannerText: Constants.COLUMNISTS_BANNER,
-                        bannerEmoji: '✍️',
+                        bannerEmoji: '📰',
                         columnistsOnly: true,
                       ),
               ),
@@ -384,7 +485,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
             Constants.overviewTranslateLanguageNotifier.value;
         final visibleStories = <(OverviewStory, List<OverviewStorySource>)>[];
 
-        for (final story in overview.stories) {
+        for (final story in overview.stories.take(_maxVisibleTopStories)) {
           final sources = _visibleSourcesFor(story);
           if (sources.isNotEmpty) {
             visibleStories.add((story, sources));
@@ -400,31 +501,92 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () => _refreshOverviewFromServer(forceRefresh: false),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                itemCount: visibleStories.length + 1,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return PageIntroBanner(
-                      text: Constants.TOP_COLUMNS_BANNER,
-                      emoji: '✍️',
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (_maxVisibleTopStories < 40 &&
+                !_isLoadingMoreStories &&
+                notification.metrics.maxScrollExtent > 0 &&
+                notification.metrics.pixels >=
+                    notification.metrics.maxScrollExtent - 250) {
+              _loadMoreTopColumns();
+            }
+            return false;
+          },
+          child: RefreshIndicator(
+            onRefresh: () => _refreshOverviewFromServer(forceRefresh: false),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 860),
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                  itemCount: visibleStories.length +
+                      1 +
+                      (_isLoadingMoreStories ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return PageIntroBanner(
+                        text: Constants.TOP_COLUMNS_BANNER,
+                        emoji: '✨',
+                      );
+                    }
+                    final storyIdx = index - 1;
+                    if (storyIdx >= visibleStories.length) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF0F2942),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              Constants.LOADING_MORE,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    final (story, sources) = visibleStories[storyIdx];
+                    final item = _buildTopColumnFeedItem(
+                      story,
+                      sources.first,
+                      activeTranslateLang,
                     );
-                  }
-                  final (story, sources) = visibleStories[index - 1];
-                  final item = _buildTopColumnFeedItem(
-                    story,
-                    sources.first,
-                    activeTranslateLang,
-                  );
-                  return FeedItemListTileWide(item: item);
-                },
+                    final tile = FeedItemListTileWide(item: item);
+                    if (storyIdx >= 20) {
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('anim-col-${story.id}'),
+                        tween: Tween<double>(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, 18 * (1.0 - value)),
+                            child: child,
+                          ),
+                        ),
+                        child: tile,
+                      );
+                    }
+                    return tile;
+                  },
+                ),
               ),
             ),
           ),

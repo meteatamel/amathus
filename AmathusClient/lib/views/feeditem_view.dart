@@ -53,6 +53,18 @@ class _FeedItemViewState extends State<FeedItemView> {
     );
   }
 
+  void _openNewspaperFromDetail(BuildContext context) {
+    final feedId = item.feed?.id;
+    if (feedId == null || feedId.trim().isEmpty) return;
+    Constants.selectNewspaperFilter(
+      feedId,
+      isColumnist: item.isColumnist,
+    );
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sourceLang = Constants.resolveFeedLanguage(
@@ -77,27 +89,40 @@ class _FeedItemViewState extends State<FeedItemView> {
         title: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: item.feed != null
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FeedImage(
-                      item: item.feed,
-                      width: 88,
-                      height: 32,
-                      compact: true,
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        item.feed!.title,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
+              ? Tooltip(
+                  message: item.feed!.title,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => _openNewspaperFromDetail(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FeedImage(
+                            item: item.feed,
+                            width: 88,
+                            height: 32,
+                            compact: true,
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              item.feed!.title,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 )
               : Text(Constants.APP_NAME),
         ),
@@ -211,11 +236,23 @@ class _FeedItemViewState extends State<FeedItemView> {
                           Row(
                             children: [
                               if (item.feed != null) ...[
-                                FeedImage(
-                                  item: item.feed,
-                                  width: 72,
-                                  height: 28,
-                                  compact: true,
+                                Tooltip(
+                                  message: item.feed!.title,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () =>
+                                          _openNewspaperFromDetail(context),
+                                      child: FeedImage(
+                                        item: item.feed,
+                                        width: 72,
+                                        height: 28,
+                                        compact: true,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                               ],

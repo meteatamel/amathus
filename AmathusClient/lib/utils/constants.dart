@@ -154,21 +154,51 @@ Future<void> setShowOriginal(bool showOriginal) async {
 Future<void> setSourceLanguage(String lang) async {
   if (lang != 'all' && lang != 'tr' && lang != 'el' && lang != 'en') return;
   sourceLanguageNotifier.value = lang;
-  final currentFeed = selectedFeedIdNotifier.value;
-  if (currentFeed != null &&
-      lang != 'all' &&
-      resolveFeedLanguage(currentFeed, null) != lang) {
-    selectedFeedIdNotifier.value = null;
+  selectedFeedIdNotifier.value = null;
+  if (lang == 'all') {
+    selectedTopicNotifier.value = 'all';
+    selectedColumnistNotifier.value = null;
   }
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(SOURCE_LANGUAGE_PREF_KEY, lang);
 }
+
+String get LOADING_MORE => _trElEn(
+      "Daha fazlası yükleniyor...",
+      "Φόρτωση περισσότερων...",
+      "Loading more...",
+    );
 
 void setSelectedFeedId(String? feedId) {
   if (feedId == null || feedId.trim().isEmpty || feedId == 'all') {
     selectedFeedIdNotifier.value = null;
   } else {
     selectedFeedIdNotifier.value = feedId.trim().toLowerCase();
+  }
+}
+
+void selectNewspaperFilter(
+  String? feedId, {
+  bool isColumnist = false,
+  bool toggleIfSame = false,
+}) {
+  if (feedId == null || feedId.trim().isEmpty) return;
+  final normalized = feedId.trim().toLowerCase();
+  if (toggleIfSame && selectedFeedIdNotifier.value == normalized) {
+    selectedFeedIdNotifier.value = null;
+    return;
+  }
+  final currentSourceLang = sourceLanguageNotifier.value;
+  if (currentSourceLang != 'all' &&
+      resolveFeedLanguage(normalized, null) != currentSourceLang) {
+    sourceLanguageNotifier.value = 'all';
+  }
+  selectedTopicNotifier.value = 'all';
+  selectedFeedIdNotifier.value = normalized;
+  if (isColumnist) {
+    columnistsViewModeNotifier.value = 'latest';
+  } else {
+    newsViewModeNotifier.value = 'latest';
   }
 }
 
@@ -591,9 +621,9 @@ String get TOP_COLUMNS => _trElEn(
       "Top Columns",
     );
 String get LATEST_COLUMNS => _trElEn(
-      "Son Köşe Yazıları",
-      "Τελευταία Άρθρα Γνώμης",
-      "Latest Columns",
+      "Tüm Köşe Yazıları",
+      "Όλα τα Άρθρα Γνώμης",
+      "All Columns",
     );
 String get HAVE_FEEDBACK => _trElEn(
       "Geri bildirim?",
@@ -745,16 +775,16 @@ String sourcesCountLabel(int count) => _trElEn(
       "$count ${count == 1 ? 'newspaper' : 'newspapers'}",
     );
 String get RECENT_NEWS =>
-    _trElEn("Son Haberler", "Τελευταία Νέα", "Latest News");
+    _trElEn("Tüm Haberler", "Όλες οι Ειδήσεις", "All News");
 String get TOP_STORIES_BANNER => _trElEn(
       "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden yapay zeka ile özetlenen öne çıkan haberler.",
       "Οι κυριότερες ειδήσεις από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου, συνοψισμένες με τεχνητή νοημοσύνη.",
       "Top stories across Turkish, Greek, and English newspapers in Cyprus, summarized by AI.",
     );
 String get RECENT_NEWS_BANNER => _trElEn(
-      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden son dakika ve güncel haberler.",
-      "Τελευταία νέα από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
-      "Latest news across Turkish, Greek, and English newspapers in Cyprus.",
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden tüm güncel haberler.",
+      "Όλες οι ειδήσεις από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
+      "All news across Turkish, Greek, and English newspapers in Cyprus.",
     );
 String get COLUMNISTS =>
     _trElEn("Köşe Yazarları", "Αρθρογράφοι", "Columnists");
@@ -764,9 +794,9 @@ String get TOP_COLUMNS_BANNER => _trElEn(
       "Top opinion pieces and columns across Turkish, Greek, and English newspapers in Cyprus.",
     );
 String get COLUMNISTS_BANNER => _trElEn(
-      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden güncel köşe yazıları ve görüşler.",
-      "Πρόσφατα άρθρα γνώμης και αρθρογραφία από εφημερίδες όλης της Κύπρου.",
-      "Latest opinion pieces and columns across Turkish, Greek, and English newspapers in Cyprus.",
+      "Kıbrıs genelindeki Türkçe, Yunanca ve İngilizce gazetelerden tüm köşe yazıları ve görüşler.",
+      "Όλα τα άρθρα γνώμης και αρθρογραφία από εφημερίδες όλης της Κύπρου.",
+      "All opinion pieces and columns across Turkish, Greek, and English newspapers in Cyprus.",
     );
 String get ALL_COLUMNISTS => _trElEn(
       "Tüm Yazarlar",
@@ -789,9 +819,9 @@ String get ABOUT_TITLE => _trElEn(
       "Why I Built This App",
     );
 String get ABOUT_BODY => _trElEn(
-      "Kıbrıslılar arasında birlik ve uyuma inanan bir Kıbrıslı olan Mete Atamel tarafından; insanları her iki toplumun gazetelerini okumaya teşvik ederek Kıbrıs genelinde daha iyi bir anlayışa katkıda bulunmak ümidiyle geliştirilmiştir.",
-      "Δημιουργήθηκε από τον Mete Atamel, έναν Κύπριο που πιστεύει στην ενότητα και την αρμονία μεταξύ των Κυπρίων και ελπίζει να συμβάλει στην καλύτερη αλληλοκατανόηση σε όλη την Κύπρο, ενθαρρύνοντας τους ανθρώπους να διαβάζουν εφημερίδες και από τις δύο κοινότητες.",
-      "Built by Mete Atamel, a Cypriot who believes in unity and harmony among Cypriots and hopes to contribute to better understanding across Cyprus by encouraging people to read newspapers across the divide.",
+      "İnsanları her iki toplumun gazetelerini okumaya teşvik ederek Kıbrıs genelinde daha iyi bir anlayış, birlik ve uyuma katkıda bulunmak amacıyla geliştirilmiştir.",
+      "Δημιουργήθηκε για να συμβάλει στην καλύτερη αλληλοκατανόηση, την ενότητα και την αρμονία σε όλη την Κύπρο, ενθαρρύνοντας τους ανθρώπους να διαβάζουν εφημερίδες και από τις δύο κοινότητες.",
+      "Built to contribute to better understanding, unity, and harmony across Cyprus by encouraging people to read newspapers across the divide.",
     );
 String get INSTALL_APP_TITLE => _trElEn(
       "Uygulamayı Yükle",
@@ -860,7 +890,7 @@ String get REORDER_NEWS => _trElEn(
 String get REORDER_HINT => _trElEn(
       "Gazete filtre çubuğundaki sıralamayı değiştirmek için sürükleyin. Gizlenen gazeteler haber listelerinde gösterilmez.",
       "Σύρετε για αλλαγή σειράς στη γραμμή φίλτρου εφημερίδων. Οι κρυμμένες εφημερίδες δεν εμφανίζονται στις ειδήσεις.",
-      "Drag to reorder newspapers in the filter bar. Hidden newspapers are excluded from Top Stories and Latest News.",
+      "Drag to reorder newspapers in the filter bar. Hidden newspapers are excluded from Top Stories and All News.",
     );
 
 // feeditem_view & lists

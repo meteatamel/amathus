@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:amathus/controllers/feeds_controller.dart';
 import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feed.dart';
@@ -9,16 +11,31 @@ import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+class _HorizontalChipScrollBehavior extends MaterialScrollBehavior {
+  const _HorizontalChipScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
+}
+
 class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
   final ValueNotifier<String> modeNotifier;
   final String topLabel;
   final String latestLabel;
+  final String topEmoji;
+  final String latestEmoji;
 
   const AppBarModeTabs({
     super.key,
     required this.modeNotifier,
     required this.topLabel,
     required this.latestLabel,
+    this.topEmoji = '✨',
+    this.latestEmoji = '📰',
   });
 
   @override
@@ -48,7 +65,7 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   Expanded(
                     child: _AppBarModeTabButton(
-                      emoji: '✨',
+                      emoji: topEmoji,
                       label: topLabel,
                       selected: isTop,
                       onTap: () => modeNotifier.value = 'top',
@@ -56,7 +73,7 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   Expanded(
                     child: _AppBarModeTabButton(
-                      emoji: '⚡',
+                      emoji: latestEmoji,
                       label: latestLabel,
                       selected: !isTop,
                       onTap: () => modeNotifier.value = 'latest',
@@ -142,6 +159,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
   final Widget? extraSelector;
   final ValueListenable<Set<String>?>? allowedNewspaperIdsListenable;
   final Map<String, int>? countsBySource;
+  final Map<String, int>? countsByNewspaper;
 
   const SourceLanguageFilterBar({
     super.key,
@@ -153,6 +171,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.extraSelector,
     this.allowedNewspaperIdsListenable,
     this.countsBySource,
+    this.countsByNewspaper,
   });
 
   Widget _leadingFor(String code) {
@@ -170,10 +189,12 @@ class SourceLanguageFilterBar extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([
         Constants.sourceLanguageNotifier,
+        Constants.selectedFeedIdNotifier,
         Constants.languageNotifier,
       ]),
       builder: (context, _) {
         final selectedLang = Constants.sourceLanguageNotifier.value;
+        final hasSelectedFeed = Constants.selectedFeedIdNotifier.value != null;
         final counts = countsBySource;
         final options = <(String, String)>[
           ('all', Constants.SOURCE_FILTER_ALL),
@@ -182,71 +203,85 @@ class SourceLanguageFilterBar extends StatelessWidget {
           ('en', Constants.SOURCE_FILTER_EN),
         ];
 
-        return Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.center,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final showLabels = constraints.maxWidth >= 660;
-                  final visibleOptions = options;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                ),
+              ),
+              child: Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 860),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showLabels = constraints.maxWidth >= 660;
+                      final visibleOptions = options;
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (leadingSelector != null) ...[
-                          leadingSelector!,
-                          const SizedBox(width: 6),
-                        ],
-                        for (var i = 0; i < visibleOptions.length; i++) ...[
-                          if (i > 0)
-                            SizedBox(width: showLabels ? 5 : 4),
-                          _buildSourceChip(
-                            code: visibleOptions[i].$1,
-                            label: visibleOptions[i].$2,
-                            selected: selectedLang == visibleOptions[i].$1,
-                            count: counts != null
-                                ? counts[visibleOptions[i].$1]
-                                : null,
-                            showLabel:
-                                showLabels || visibleOptions[i].$1 == 'all',
+                      return ScrollConfiguration(
+                        behavior: const _HorizontalChipScrollBehavior(),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                        ],
-                        if (extraSelector != null) ...[
-                          const SizedBox(width: 6),
-                          extraSelector!,
-                        ],
-                        if (trailing != null) ...[
-                          const SizedBox(width: 6),
-                          trailing!,
-                        ] else if (bulkController != null) ...[
-                          const SizedBox(width: 6),
-                          BulkTranslateIconButton(
-                            controller: bulkController!,
-                            itemFilter: itemFilter,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (leadingSelector != null) ...[
+                                leadingSelector!,
+                                const SizedBox(width: 6),
+                              ],
+                              for (var i = 0; i < visibleOptions.length; i++) ...[
+                                if (i > 0)
+                                  SizedBox(width: showLabels ? 5 : 4),
+                                _buildSourceChip(
+                                  code: visibleOptions[i].$1,
+                                  label: visibleOptions[i].$2,
+                                  selected: !hasSelectedFeed &&
+                                      selectedLang == visibleOptions[i].$1,
+                                  count: counts != null
+                                      ? counts[visibleOptions[i].$1]
+                                      : null,
+                                  showLabel: showLabels ||
+                                      visibleOptions[i].$1 == 'all',
+                                ),
+                              ],
+                              if (extraSelector != null) ...[
+                                const SizedBox(width: 6),
+                                extraSelector!,
+                              ],
+                              if (trailing != null) ...[
+                                const SizedBox(width: 6),
+                                trailing!,
+                              ] else if (bulkController != null) ...[
+                                const SizedBox(width: 6),
+                                BulkTranslateIconButton(
+                                  controller: bulkController!,
+                                  itemFilter: itemFilter,
+                                ),
+                              ],
+                            ],
                           ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
-          ),
+            if (showNewspaperSelector)
+              NewspaperFilterChipBar(
+                allowedFeedIdsListenable: allowedNewspaperIdsListenable,
+                countsByNewspaper: countsByNewspaper,
+              ),
+          ],
         );
       },
     );
@@ -391,7 +426,7 @@ class ViewModeDropdownSelector extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    '⚡',
+                    '📰',
                     style: TextStyle(fontSize: 16, height: 1.0),
                   ),
                   const SizedBox(width: 10),
@@ -428,7 +463,7 @@ class ViewModeDropdownSelector extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isTop ? '✨' : '⚡',
+                  isTop ? '✨' : '📰',
                   style: const TextStyle(fontSize: 14, height: 1.0),
                 ),
                 const SizedBox(width: 5),
@@ -451,6 +486,310 @@ class ViewModeDropdownSelector extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class NewspaperFilterChipBar extends StatefulWidget {
+  final ValueListenable<Set<String>?>? allowedFeedIdsListenable;
+  final Map<String, int>? countsByNewspaper;
+
+  const NewspaperFilterChipBar({
+    super.key,
+    this.allowedFeedIdsListenable,
+    this.countsByNewspaper,
+  });
+
+  @override
+  State<NewspaperFilterChipBar> createState() => _NewspaperFilterChipBarState();
+}
+
+class _NewspaperFilterChipBarState extends State<NewspaperFilterChipBar> {
+  final FeedsController _feedsController = FeedsController();
+  final Map<String, GlobalKey> _chipKeys = <String, GlobalKey>{};
+  List<Feed> _feeds = const [];
+  String? _lastScrolledFeedId;
+
+  @override
+  void initState() {
+    super.initState();
+    Constants.selectedFeedIdNotifier.addListener(_onSelectedFeedChanged);
+    _loadFeeds();
+  }
+
+  @override
+  void dispose() {
+    Constants.selectedFeedIdNotifier.removeListener(_onSelectedFeedChanged);
+    super.dispose();
+  }
+
+  void _onSelectedFeedChanged() {
+    final selectedId = Constants.selectedFeedIdNotifier.value;
+    if (selectedId == _lastScrolledFeedId) return;
+    _lastScrolledFeedId = selectedId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final key = _chipKeys[selectedId ?? 'all'];
+      final ctx = key?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.35,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  GlobalKey _keyFor(String id) {
+    return _chipKeys.putIfAbsent(id, () => GlobalKey());
+  }
+
+  Future<void> _loadFeeds() async {
+    final stored = await _feedsController.readAllStored();
+    if (stored != null && stored.isNotEmpty && mounted) {
+      setState(() {
+        _feeds = stored;
+      });
+    }
+    final fresh = await _feedsController.readAll();
+    if (fresh != null && fresh.isNotEmpty && mounted) {
+      setState(() {
+        _feeds = fresh;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.sourceLanguageNotifier,
+        Constants.hiddenFeedsNotifier,
+        Constants.selectedFeedIdNotifier,
+        if (widget.allowedFeedIdsListenable != null)
+          widget.allowedFeedIdsListenable!,
+      ]),
+      builder: (context, _) {
+        final allowedIds = widget.allowedFeedIdsListenable?.value;
+        final counts = widget.countsByNewspaper;
+        final selectedId = Constants.selectedFeedIdNotifier.value;
+
+        final visibleFeeds = _feeds.where((f) {
+          final normId = f.id.trim().toLowerCase();
+          if (!Constants.matchesSourceLanguageOnly(f.id, f.language)) {
+            return false;
+          }
+          if (allowedIds != null &&
+              allowedIds.isNotEmpty &&
+              !allowedIds.contains(normId) &&
+              selectedId != normId) {
+            return false;
+          }
+          return true;
+        }).toList();
+
+        return Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: ScrollConfiguration(
+                behavior: const _HorizontalChipScrollBehavior(),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildAllNewspapersChip(
+                        key: _keyFor('all'),
+                        selected: selectedId == null,
+                        count: counts != null ? counts['all'] : null,
+                      ),
+                      for (final feed in visibleFeeds) ...[
+                        const SizedBox(width: 5),
+                        _buildNewspaperChip(
+                          key: _keyFor(feed.id.trim().toLowerCase()),
+                          feed: feed,
+                          selected: selectedId == feed.id.trim().toLowerCase(),
+                          count: counts != null
+                              ? counts[feed.id.trim().toLowerCase()]
+                              : null,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAllNewspapersChip({
+    Key? key,
+    required bool selected,
+    int? count,
+  }) {
+    const activeNavy = Color(0xFF0F2942);
+    final label = Constants.ALL_NEWSPAPERS;
+    final tooltipText = count != null ? '$label ($count)' : label;
+
+    return Tooltip(
+      key: key,
+      message: tooltipText,
+      waitDuration: const Duration(milliseconds: 250),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => Constants.setSelectedFeedId(null),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9.0,
+              vertical: 4.5,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? activeNavy : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? activeNavy : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '📰',
+                  style: TextStyle(fontSize: 13, height: 1.0),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: selected ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: 3.5),
+                  Text(
+                    '($count)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.82)
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNewspaperChip({
+    Key? key,
+    required Feed feed,
+    required bool selected,
+    int? count,
+  }) {
+    const activeNavy = Color(0xFF0F2942);
+    final hasLogo = Constants.resolveImageUrl(feed.imageUrl).isNotEmpty;
+    final tooltipText =
+        count != null ? '${feed.title} ($count)' : feed.title;
+
+    return Tooltip(
+      key: key,
+      message: tooltipText,
+      waitDuration: const Duration(milliseconds: 250),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () {
+            if (selected) {
+              Constants.setSelectedFeedId(null);
+            } else {
+              Constants.setSelectedFeedId(feed.id);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8.5,
+              vertical: 4.0,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? activeNavy : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? activeNavy : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (hasLogo) ...[
+                  FeedImage(
+                    item: feed,
+                    width: 28,
+                    height: 15,
+                    compact: true,
+                  ),
+                  const SizedBox(width: 5),
+                ] else ...[
+                  const Text(
+                    '📰',
+                    style: TextStyle(fontSize: 12.5, height: 1.0),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  feed.title,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: selected ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: 3.5),
+                  Text(
+                    '($count)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.82)
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1021,34 +1360,40 @@ class TopicFilterChipBar extends StatelessWidget {
                         code,
                   ];
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0; i < visibleCodes.length; i++) ...[
-                          if (i > 0)
-                            SizedBox(width: showLabels ? 5 : 4),
-                          _TopicChipButton(
-                            topicCode: visibleCodes[i],
-                            selected: selected == visibleCodes[i],
-                            count: counts != null ? counts[visibleCodes[i]] : null,
-                            showLabel: showLabels || visibleCodes[i] == 'all',
-                            onTap: () {
-                              final code = visibleCodes[i];
-                              if (selected == code && code != 'all') {
-                                Constants.setSelectedTopic('all');
-                              } else {
-                                Constants.setSelectedTopic(code);
-                              }
-                            },
-                          ),
+                  return ScrollConfiguration(
+                    behavior: const _HorizontalChipScrollBehavior(),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < visibleCodes.length; i++) ...[
+                            if (i > 0)
+                              SizedBox(width: showLabels ? 5 : 4),
+                            _TopicChipButton(
+                              topicCode: visibleCodes[i],
+                              selected: selected == visibleCodes[i],
+                              count: counts != null
+                                  ? counts[visibleCodes[i]]
+                                  : null,
+                              showLabel:
+                                  showLabels || visibleCodes[i] == 'all',
+                              onTap: () {
+                                final code = visibleCodes[i];
+                                if (selected == code && code != 'all') {
+                                  Constants.setSelectedTopic('all');
+                                } else {
+                                  Constants.setSelectedTopic(code);
+                                }
+                              },
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   );
                 },

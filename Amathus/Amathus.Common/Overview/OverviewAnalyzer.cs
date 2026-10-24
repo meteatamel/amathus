@@ -219,7 +219,7 @@ namespace Amathus.Common.Overview
                     .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
                     .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
                     .ThenByDescending(i => i.PublishDate)
-                    .Take(7)
+                    .Take(10)
                     .ToList();
 
                 foreach (var item in recent)
@@ -263,7 +263,7 @@ namespace Amathus.Common.Overview
             result = result
                 .OrderByDescending(c => c.GeoTier >= 3 ? 3 : c.GeoTier)
                 .ThenByDescending(c => c.Item.PublishDate)
-                .Take(190)
+                .Take(240)
                 .ToList();
 
             for (int i = 0; i < result.Count; i++)
@@ -342,6 +342,7 @@ namespace Amathus.Common.Overview
             }
 
             var stories = new List<OverviewStory>();
+            var usedCandidateIndices = new HashSet<int>();
             int rank = 1;
             foreach (var gs in parsed.Stories)
             {
@@ -353,6 +354,11 @@ namespace Amathus.Common.Overview
                 if (indices.Count == 0)
                 {
                     continue;
+                }
+
+                foreach (var idx in indices)
+                {
+                    usedCandidateIndices.Add(idx);
                 }
 
                 var matchedCandidates = indices.Select(idx => candidates[idx]).ToList();
@@ -421,6 +427,39 @@ namespace Amathus.Common.Overview
                     return x.story;
                 })
                 .ToList();
+
+            if (stories.Count < 40)
+            {
+                var remainingCandidates = candidates
+                    .Where(c => !usedCandidateIndices.Contains(c.Index))
+                    .ToList();
+                if (remainingCandidates.Count > 0)
+                {
+                    try
+                    {
+                        var needed = 40 - stories.Count;
+                        var extraOverview = await AnalyzeWithClusteringFallbackAsync(
+                            remainingCandidates,
+                            totalFeeds,
+                            totalArticles,
+                            minStories: Math.Min(needed, remainingCandidates.Count),
+                            maxStories: needed);
+                        if (extraOverview?.Stories != null)
+                        {
+                            foreach (var extra in extraOverview.Stories)
+                            {
+                                if (stories.Count >= 40) break;
+                                extra.Id = $"story-{stories.Count + 1}";
+                                stories.Add(extra);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning($"Failed to append extra clustered stories up to 40: {ex.Message}");
+                    }
+                }
+            }
 
             var currentEdition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
             var podcastTurns = new List<PodcastDialogueTurn>();
@@ -639,7 +678,9 @@ namespace Amathus.Common.Overview
         private async Task<NewsOverview> AnalyzeWithClusteringFallbackAsync(
             List<CandidateArticle> candidates,
             int totalFeeds,
-            int totalArticles)
+            int totalArticles,
+            int minStories = 36,
+            int maxStories = 40)
         {
             // Step 1: Translate candidate titles to English in parallel (using bounded concurrency) so we can cluster across TR/EL/EN
             using var semaphore = new SemaphoreSlim(10);
@@ -666,7 +707,7 @@ namespace Amathus.Common.Overview
             await Task.WhenAll(titleTasks);
 
             // Step 2: Group articles into story clusters based on token similarity across different newspapers
-            var clusters = BuildStoryClusters(candidates, minStories: 18, maxStories: 22);
+            var clusters = BuildStoryClusters(candidates, minStories: minStories, maxStories: maxStories);
 
             // Step 3: For each cluster, synthesize English, Turkish, and Greek titles and narratives
             var stories = new List<OverviewStory>();
@@ -863,7 +904,7 @@ namespace Amathus.Common.Overview
 
                 var langOrder = new[] { "tr", "el", "en" };
                 int pass = 0;
-                while (selected.Count < minStories && remainingSingle.Count > 0 && pass < 10)
+                while (selected.Count < minStories && remainingSingle.Count > 0 && pass < 20)
                 {
                     foreach (var lang in langOrder)
                     {

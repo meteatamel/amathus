@@ -59,6 +59,7 @@ namespace Amathus.Web.Controllers
                     var copy = existing.Copy();
                     EnsureStoryTopicsPopulated(copy);
                     PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                    _ = WarmupInitialPodcastTurnsAsync(copy);
                     return Ok(copy);
                 }
             }
@@ -74,6 +75,7 @@ namespace Amathus.Web.Controllers
                         var copy = existing.Copy();
                         EnsureStoryTopicsPopulated(copy);
                         PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                        _ = WarmupInitialPodcastTurnsAsync(copy);
                         return Ok(copy);
                     }
                 }
@@ -90,6 +92,7 @@ namespace Amathus.Web.Controllers
                 EnsureStoryTopicsPopulated(overview);
                 PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
                 await _feedStore.SaveOverviewAsync(overview);
+                _ = WarmupInitialPodcastTurnsAsync(overview);
                 return Ok(overview);
             }
             finally
@@ -123,6 +126,43 @@ namespace Amathus.Web.Controllers
                         firstSource?.Url?.AbsoluteUri);
                 }
                 story.Topic = normalized;
+            }
+        }
+
+        private static async Task WarmupInitialPodcastTurnsAsync(NewsOverview overview)
+        {
+            if (overview?.PodcastTurns == null || overview.PodcastTurns.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var turnsToWarm = overview.PodcastTurns.Take(2).ToList();
+                foreach (var lang in new[] { "en", "tr", "el" })
+                {
+                    foreach (var turn in turnsToWarm)
+                    {
+                        var text = lang switch
+                        {
+                            "tr" => turn.TextTr,
+                            "el" => turn.TextEl,
+                            _ => turn.TextEn
+                        };
+                        if (!string.IsNullOrWhiteSpace(text))
+                        {
+                            await PodcastTtsService.SynthesizeMp3Async(
+                                text,
+                                lang,
+                                turn.Speaker ?? "A",
+                                PodcastTtsService.DefaultVoicePreset);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Best-effort background cache warmup
             }
         }
 

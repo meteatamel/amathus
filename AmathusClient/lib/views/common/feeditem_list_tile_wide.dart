@@ -184,11 +184,26 @@ class FeedItemListTileWide extends StatelessWidget {
                   Row(
                     children: [
                       if (item.feed != null) ...[
-                        FeedImage(
-                          item: item.feed,
-                          width: 72,
-                          height: 28,
-                          compact: true,
+                        Tooltip(
+                          message: item.feed!.title,
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () => Constants.selectNewspaperFilter(
+                                item.feed!.id,
+                                isColumnist: item.isColumnist,
+                                toggleIfSame: true,
+                              ),
+                              child: FeedImage(
+                                item: item.feed,
+                                width: 72,
+                                height: 28,
+                                compact: true,
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 10),
                       ],

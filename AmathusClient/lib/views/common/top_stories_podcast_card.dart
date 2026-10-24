@@ -124,6 +124,7 @@ class PodcastPlaybackController extends ChangeNotifier {
         _defaultLanguage = newLang;
         _selectedLanguage = null;
         _stopAndReset();
+        _prefetchInitialTurns();
       }
     });
   }
@@ -160,9 +161,19 @@ class PodcastPlaybackController extends ChangeNotifier {
   }
 
   void _randomizeSessionPresets() {
-    _voicePreset = _pickDifferentRandom(voicePresetPool, _voicePreset);
+    _voicePreset = voicePresetPool.first;
     _musicPreset = _pickDifferentRandom(musicPresetPool, _musicPreset);
     _chimePreset = _pickDifferentRandom(chimePresetPool, _chimePreset);
+  }
+
+  void _prefetchInitialTurns() {
+    final list = turns;
+    if (list.isEmpty) return;
+    final lang = effectiveLanguage;
+    _player.prefetchUrl(_buildAudioUrl(list[0], lang));
+    if (list.length > 1) {
+      _player.prefetchUrl(_buildAudioUrl(list[1], lang));
+    }
   }
 
   void attachOverview(NewsOverview overview, String defaultLanguage) {
@@ -182,6 +193,8 @@ class PodcastPlaybackController extends ChangeNotifier {
       _selectedLanguage = null;
       _stopAndReset();
     }
+
+    _prefetchInitialTurns();
   }
 
   String get effectiveLanguage {
@@ -344,9 +357,13 @@ class PodcastPlaybackController extends ChangeNotifier {
     }
     if (_currentTurnIndex + 2 < list.length) {
       final afterNextTurn = list[_currentTurnIndex + 2];
-      Future.delayed(const Duration(milliseconds: 600), () {
+      _player.prefetchUrl(_buildAudioUrl(afterNextTurn, effectiveLanguage));
+    }
+    if (_currentTurnIndex + 3 < list.length) {
+      final thirdNextTurn = list[_currentTurnIndex + 3];
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (!_isPlaying || sessionId != _playSessionId) return;
-        _player.prefetchUrl(_buildAudioUrl(afterNextTurn, effectiveLanguage));
+        _player.prefetchUrl(_buildAudioUrl(thirdNextTurn, effectiveLanguage));
       });
     }
   }
@@ -376,9 +393,6 @@ class PodcastPlaybackController extends ChangeNotifier {
     } else {
       final startingFromBeginning =
           _currentTurnIndex == 0 && _withinTurnFraction < 0.05;
-      if (startingFromBeginning) {
-        _randomizeSessionPresets();
-      }
       _isPlaying = true;
       _isPaused = false;
       notifyListeners();
@@ -442,6 +456,7 @@ class PodcastPlaybackController extends ChangeNotifier {
     if (effectiveLanguage == lang) return;
     _selectedLanguage = lang;
     _stopAndReset();
+    _prefetchInitialTurns();
   }
 }
 
@@ -509,7 +524,6 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
         final lang = _controller.effectiveLanguage;
         final edition = _controller.effectiveEdition;
         final isPlayingNow = _controller.isPlaying && !_controller.isPaused;
-        final isLoadingAudio = _controller.isLoadingAudio;
 
         return Container(
           decoration: BoxDecoration(
@@ -602,23 +616,12 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                           ),
                         ),
                         onPressed: _controller.togglePlayPause,
-                        child: isLoadingAudio
-                            ? const SizedBox(
-                                width: 19,
-                                height: 19,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.3,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFFFBBF24),
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                isPlayingNow
-                                    ? Icons.pause_rounded
-                                    : Icons.play_arrow_rounded,
-                                size: 24,
-                              ),
+                        child: Icon(
+                          isPlayingNow
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                          size: 24,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

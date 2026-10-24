@@ -28,7 +28,7 @@ class FeedItemsList extends StatefulWidget {
     this.wideTile = false,
     this.bulkController,
     this.bannerText,
-    this.bannerEmoji = '⚡',
+    this.bannerEmoji = '📰',
     this.customFilter,
     this.extraListenable,
     this.columnistsOnly = false,
