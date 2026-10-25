@@ -60,6 +60,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.addReconnectListener(_onReconnected);
+    ConnectivityController.instance.syncBrowserStatus();
     loadCachedData();
     _loadInitialOverview();
   }

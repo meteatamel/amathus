@@ -56,6 +56,18 @@
       border-radius: 8px;
       object-fit: cover;
     }
+    #app-splash-offline {
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #FEE2E2;
+      border-bottom: 1px solid #FCA5A5;
+      color: #991B1B;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-align: center;
+      padding: 7px 14px;
+    }
     #app-splash-body {
       flex: 1;
       display: flex;
@@ -86,11 +98,22 @@
       <img src="icons/Icon-192.png" alt="" />
       <span>Cyprus Bicommunal News</span>
     </div>
+    <div id="app-splash-offline">Offline mode — showing cached news &amp; podcast</div>
     <div id="app-splash-body">
       <div class="splash-spinner"></div>
     </div>
   </div>
   <script>
+    function syncSplashOfflineBanner() {
+      var banner = document.getElementById('app-splash-offline');
+      if (!banner) return;
+      var isOffline = window.navigator && window.navigator.onLine === false;
+      banner.style.display = isOffline ? 'block' : 'none';
+    }
+    syncSplashOfflineBanner();
+    window.addEventListener('offline', syncSplashOfflineBanner);
+    window.addEventListener('online', syncSplashOfflineBanner);
+
     window.addEventListener('flutter-first-frame', function() {
       var splash = document.getElementById('app-splash');
       if (splash) {
@@ -100,6 +123,11 @@
             splash.parentNode.removeChild(splash);
           }
         }, 180);
+      }
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        try {
+          navigator.serviceWorker.controller.postMessage({ type: 'WARM_CACHE' });
+        } catch (_) {}
       }
     });
 

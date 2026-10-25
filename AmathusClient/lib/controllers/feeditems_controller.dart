@@ -73,10 +73,13 @@ class FeedItemsController {
   }
 
   Future<Feed?> readById(String feedId) async {
+    ConnectivityController.instance.syncBrowserStatus();
     final key = _normId(feedId);
     try {
-      final response =
-          await http.get(Uri.parse("${Constants.URL_FEED_ITEMS}/$feedId"));
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(
+        Uri.parse("${Constants.URL_FEED_ITEMS}/$feedId?_t=$ts"),
+      );
       if (response.statusCode == 200) {
         ConnectivityController.instance.reportOnline();
         final decoded =
@@ -111,9 +114,13 @@ class FeedItemsController {
   }
 
   Future<List<Feed>?> readRecent({int limit = 200}) async {
+    ConnectivityController.instance.syncBrowserStatus();
     try {
+      final ts = DateTime.now().millisecondsSinceEpoch;
       final response = await http.get(
-        Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=false&limit=$limit"),
+        Uri.parse(
+          "${Constants.URL_FEED_ITEMS}?columnists=false&limit=$limit&_t=$ts",
+        ),
       );
       if (response.statusCode == 200) {
         ConnectivityController.instance.reportOnline();
@@ -153,9 +160,13 @@ class FeedItemsController {
   }
 
   Future<List<Feed>?> readColumnists({int limit = 200}) async {
+    ConnectivityController.instance.syncBrowserStatus();
     try {
+      final ts = DateTime.now().millisecondsSinceEpoch;
       final response = await http.get(
-        Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=true&limit=$limit"),
+        Uri.parse(
+          "${Constants.URL_FEED_ITEMS}?columnists=true&limit=$limit&_t=$ts",
+        ),
       );
       if (response.statusCode == 200) {
         ConnectivityController.instance.reportOnline();

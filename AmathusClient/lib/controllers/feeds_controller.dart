@@ -20,8 +20,10 @@ class FeedsController {
   }
 
   Future<List<Feed>?> readAll() async {
+    ConnectivityController.instance.syncBrowserStatus();
     try {
-      final response = await http.get(Uri.parse(Constants.URL_FEEDS));
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(Uri.parse('${Constants.URL_FEEDS}?_t=$ts'));
       if (response.statusCode == 200) {
         ConnectivityController.instance.reportOnline();
         final decoded = json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;

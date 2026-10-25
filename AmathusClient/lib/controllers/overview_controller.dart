@@ -46,14 +46,14 @@ class OverviewController {
   }
 
   Future<NewsOverview?> read({bool refresh = false}) async {
+    ConnectivityController.instance.syncBrowserStatus();
     try {
       final queryParams = <String>[
         if (columnistsOnly) 'columnists=true',
         if (refresh) 'refresh=true',
+        '_t=${DateTime.now().millisecondsSinceEpoch}',
       ];
-      final url = queryParams.isEmpty
-          ? Constants.URL_OVERVIEW
-          : '${Constants.URL_OVERVIEW}?${queryParams.join('&')}';
+      final url = '${Constants.URL_OVERVIEW}?${queryParams.join('&')}';
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 40));
@@ -71,6 +71,8 @@ class OverviewController {
           await _storage.write(overview);
           return overview;
         }
+      } else {
+        ConnectivityController.instance.syncBrowserStatus();
       }
     } catch (_) {
       ConnectivityController.instance.reportOffline();

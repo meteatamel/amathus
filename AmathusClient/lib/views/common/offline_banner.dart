@@ -20,7 +20,13 @@ class ConnectivityController extends ChangeNotifier {
     });
   }
 
-  bool get isOffline => _isOffline;
+  bool get isOffline => _isOffline || !OfflineBridge.isBrowserOnline();
+
+  void syncBrowserStatus() {
+    if (!OfflineBridge.isBrowserOnline()) {
+      reportOffline();
+    }
+  }
 
   void addReconnectListener(VoidCallback callback) {
     _reconnectListeners.add(callback);

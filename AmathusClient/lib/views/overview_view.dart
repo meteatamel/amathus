@@ -60,6 +60,7 @@ class _OverviewViewState extends State<OverviewView> {
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.addReconnectListener(_onReconnected);
+    ConnectivityController.instance.syncBrowserStatus();
     _loadLatestCachedData();
     _loadInitial();
   }
