@@ -51,6 +51,12 @@ class _ColumnistsViewState extends State<ColumnistsView> {
   @override
   void initState() {
     super.initState();
+    if (widget.loadCachedOverviewCallback == null &&
+        _overviewController.memoryCached != null &&
+        _overviewController.memoryCached!.stories.isNotEmpty) {
+      _overview = _overviewController.memoryCached;
+      _isLoadingOverview = false;
+    }
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.addReconnectListener(_onReconnected);
@@ -78,6 +84,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
   }
 
   void _translateVisibleStoriesIfNeeded() {
+    if (ConnectivityController.instance.isOffline) return;
     final ov = _overview;
     final targetLang = Constants.overviewTranslateLanguageNotifier.value;
     if (ov == null || ov.stories.isEmpty || targetLang == null) return;

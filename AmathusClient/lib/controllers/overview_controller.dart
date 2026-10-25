@@ -24,6 +24,9 @@ class OverviewController {
     _cachedColumnistsOverview = null;
   }
 
+  NewsOverview? get memoryCached =>
+      columnistsOnly ? _cachedColumnistsOverview : _cachedOverview;
+
   Future<NewsOverview?> readStored() async {
     final memCached =
         columnistsOnly ? _cachedColumnistsOverview : _cachedOverview;

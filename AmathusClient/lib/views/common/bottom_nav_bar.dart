@@ -26,47 +26,54 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalizedIndex = selectedIndex <= 0 ? 0 : 1;
-    return Material(
-      color: Colors.white,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.center,
-            heightFactor: 1.0,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _BottomNavTabButton(
-                      emoji: '📰',
-                      label: Constants.NEWS,
-                      selected: normalizedIndex == 0,
-                      onTap: () => _navigateTo(context, 0, normalizedIndex),
-                    ),
+    return ValueListenableBuilder<String>(
+      valueListenable: Constants.languageNotifier,
+      builder: (context, _, __) {
+        return Material(
+          color: Colors.white,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                ),
+              ),
+              child: Align(
+                alignment: Alignment.center,
+                heightFactor: 1.0,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 860),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _BottomNavTabButton(
+                          emoji: '📰',
+                          label: Constants.NEWS,
+                          selected: normalizedIndex == 0,
+                          onTap: () =>
+                              _navigateTo(context, 0, normalizedIndex),
+                        ),
+                      ),
+                      Expanded(
+                        child: _BottomNavTabButton(
+                          emoji: '✍️',
+                          label: Constants.COLUMNISTS,
+                          selected: normalizedIndex == 1,
+                          onTap: () =>
+                              _navigateTo(context, 1, normalizedIndex),
+                        ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: _BottomNavTabButton(
-                      emoji: '✍️',
-                      label: Constants.COLUMNISTS,
-                      selected: normalizedIndex == 1,
-                      onTap: () => _navigateTo(context, 1, normalizedIndex),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

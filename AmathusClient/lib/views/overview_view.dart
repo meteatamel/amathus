@@ -51,6 +51,12 @@ class _OverviewViewState extends State<OverviewView> {
   @override
   void initState() {
     super.initState();
+    if (widget.loadCachedCallback == null &&
+        _controller.memoryCached != null &&
+        _controller.memoryCached!.stories.isNotEmpty) {
+      _overview = _controller.memoryCached;
+      _isLoading = false;
+    }
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.addReconnectListener(_onReconnected);
@@ -77,6 +83,7 @@ class _OverviewViewState extends State<OverviewView> {
   }
 
   void _translateVisibleStoriesIfNeeded() {
+    if (ConnectivityController.instance.isOffline) return;
     final ov = _overview;
     final targetLang = Constants.overviewTranslateLanguageNotifier.value;
     if (ov == null || ov.stories.isEmpty || targetLang == null) return;

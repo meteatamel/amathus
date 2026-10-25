@@ -5,6 +5,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="Cyprus Bicommunal News | Kıbrıs Haber | Ειδήσεις Κύπρου">
 
   <!-- iOS meta tags & icons -->
@@ -18,9 +19,90 @@
 
   <title>Cyprus Bicommunal News</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #F4F6F9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    #app-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background-color: #F4F6F9;
+      z-index: 99999;
+      transition: opacity 0.18s ease-out;
+    }
+    #app-splash-bar {
+      height: 56px;
+      background-color: #0F2942;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #FFFFFF;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      box-shadow: 0 1px 3px rgba(15, 41, 66, 0.15);
+    }
+    #app-splash-bar img {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    #app-splash-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: #475569;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .splash-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(15, 41, 66, 0.15);
+      border-top-color: #0F2942;
+      border-radius: 50%;
+      animation: amathus-spin 0.75s linear infinite;
+    }
+    @keyframes amathus-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <div id="app-splash">
+    <div id="app-splash-bar">
+      <img src="icons/Icon-192.png" alt="" />
+      <span>Cyprus Bicommunal News</span>
+    </div>
+    <div id="app-splash-body">
+      <div class="splash-spinner"></div>
+    </div>
+  </div>
   <script>
+    window.addEventListener('flutter-first-frame', function() {
+      var splash = document.getElementById('app-splash');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(function() {
+          if (splash && splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+          }
+        }, 180);
+      }
+    });
+
     window._deferredPwaPrompt = null;
     window._isPwaInstalled = false;
 

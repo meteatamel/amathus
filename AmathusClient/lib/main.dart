@@ -25,7 +25,6 @@ class AmathusApp extends StatelessWidget {
       valueListenable: Constants.languageNotifier,
       builder: (context, lang, _) {
         return MaterialApp(
-          key: ValueKey(lang),
           title: Constants.APP_NAME,
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
