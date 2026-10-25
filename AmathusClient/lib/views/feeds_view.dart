@@ -3,6 +3,7 @@ import 'package:amathus/models/feed.dart';
 import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeds_list.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:flutter/material.dart';
@@ -115,6 +116,7 @@ class _FeedsViewState extends State<FeedsView> {
           drawer: const AppDrawer(),
           body: Column(
             children: [
+              const OfflineBanner(),
               ListenableBuilder(
                 listenable: Listenable.merge([
                   Constants.hiddenFeedsNotifier,

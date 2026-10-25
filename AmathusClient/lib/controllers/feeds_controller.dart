@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:amathus/views/common/offline_banner.dart';
 
 import 'feeds_storage.dart';
 
@@ -22,6 +23,7 @@ class FeedsController {
     try {
       final response = await http.get(Uri.parse(Constants.URL_FEEDS));
       if (response.statusCode == 200) {
+        ConnectivityController.instance.reportOnline();
         final decoded = json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
         final receivedFeeds = decoded
             .map((i) => Feed.fromJson(i as Map<String, dynamic>))
@@ -30,7 +32,7 @@ class FeedsController {
         return orderedFeeds;
       }
     } catch (e) {
-      // Ignore network error and fall back to stored feeds
+      ConnectivityController.instance.reportOffline();
     }
 
     return _storedFeeds ?? await readAllStored();

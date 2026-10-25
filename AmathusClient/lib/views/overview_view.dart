@@ -8,6 +8,7 @@ import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feed_image.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
@@ -52,6 +53,7 @@ class _OverviewViewState extends State<OverviewView> {
     super.initState();
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
+    ConnectivityController.instance.addReconnectListener(_onReconnected);
     _loadLatestCachedData();
     _loadInitial();
   }
@@ -60,8 +62,14 @@ class _OverviewViewState extends State<OverviewView> {
   void dispose() {
     Constants.overviewTranslateLanguageNotifier
         .removeListener(_onTranslateLanguageChanged);
+    ConnectivityController.instance.removeReconnectListener(_onReconnected);
     _latestItemsNotifier.dispose();
     super.dispose();
+  }
+
+  void _onReconnected() {
+    _refreshFromServer(forceRefresh: false);
+    _loadLatestData();
   }
 
   void _onTranslateLanguageChanged() {
@@ -441,6 +449,7 @@ class _OverviewViewState extends State<OverviewView> {
           drawer: const AppDrawer(),
           body: Column(
             children: [
+              const OfflineBanner(),
               const PwaInstallBanner(),
               ListenableBuilder(
                 listenable: Listenable.merge([

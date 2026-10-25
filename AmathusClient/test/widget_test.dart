@@ -9,6 +9,7 @@ import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feeditems_list.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
@@ -27,6 +28,7 @@ void main() {
     Constants.setOverviewTranslateLanguage(null);
     Constants.newsViewModeNotifier.value = 'top';
     Constants.columnistsViewModeNotifier.value = 'top';
+    ConnectivityController.instance.setOfflineForTesting(false);
   });
 
   testWidgets(
@@ -492,6 +494,43 @@ void main() {
     expect(
       rebuiltTurns.first.textFor('tr').contains('Αστυνομία'),
       isFalse,
+    );
+  });
+
+  testWidgets(
+      'OfflineBanner appears when device is offline and disappears when device goes back online',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await Constants.initLanguage();
+    await Constants.setLanguage('en');
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: OfflineBanner(),
+        ),
+      ),
+    );
+
+    expect(
+      find.text('Offline mode — showing cached news & podcast'),
+      findsNothing,
+    );
+
+    ConnectivityController.instance.setOfflineForTesting(true);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Offline mode — showing cached news & podcast'),
+      findsOneWidget,
+    );
+
+    ConnectivityController.instance.setOfflineForTesting(false);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Offline mode — showing cached news & podcast'),
+      findsNothing,
     );
   });
 }

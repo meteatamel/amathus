@@ -715,6 +715,17 @@ String podcastSubtitleFor(String edition, String lang) {
   }
 }
 
+String podcastLastUpdatedLabelFor(String relativeTime, String lang) {
+  switch (lang.trim().toLowerCase()) {
+    case 'el':
+      return 'Ενημερώθηκε $relativeTime';
+    case 'tr':
+      return 'Son güncelleme: $relativeTime';
+    default:
+      return 'Updated $relativeTime';
+  }
+}
+
 String podcastListenButtonFor(String lang) {
   switch (lang.trim().toLowerCase()) {
     case 'el':
@@ -872,6 +883,11 @@ String get GOT_IT_BUTTON => _trElEn(
       "Anladım",
       "Εντάξει",
       "Got it",
+    );
+String get OFFLINE_BANNER_TEXT => _trElEn(
+      "Çevrimdışı mod — önbellekteki haberler ve podcast gösteriliyor",
+      "Εκτός σύνδεσης — εμφάνιση αποθηκευμένων ειδήσεων και podcast",
+      "Offline mode — showing cached news & podcast",
     );
 
 // settings_view

@@ -1,6 +1,7 @@
 import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/views/common/feed_image.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/share_iconbutton.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
@@ -158,13 +159,17 @@ class _FeedItemViewState extends State<FeedItemView> {
                   ? translated.title
                   : item.title;
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                children: [
+          return Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                      children: [
                   Card(
                     elevation: 0,
                     margin: EdgeInsets.zero,
@@ -277,9 +282,12 @@ class _FeedItemViewState extends State<FeedItemView> {
                       ),
                     ),
                   ),
-                ],
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           );
         },
       ),

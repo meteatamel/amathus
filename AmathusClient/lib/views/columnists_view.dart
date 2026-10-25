@@ -8,6 +8,7 @@ import 'package:amathus/views/common/bottom_nav_bar.dart';
 import 'package:amathus/views/common/drawer.dart';
 import 'package:amathus/views/common/feeditem_list_tile_wide.dart';
 import 'package:amathus/views/common/feeditems_list.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/common/source_language_filter_bar.dart';
@@ -52,6 +53,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
     super.initState();
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
+    ConnectivityController.instance.addReconnectListener(_onReconnected);
     loadCachedData();
     _loadInitialOverview();
   }
@@ -60,9 +62,15 @@ class _ColumnistsViewState extends State<ColumnistsView> {
   void dispose() {
     Constants.overviewTranslateLanguageNotifier
         .removeListener(_onTranslateLanguageChanged);
+    ConnectivityController.instance.removeReconnectListener(_onReconnected);
     _itemsNotifier.dispose();
     _columnistFeedIdsNotifier.dispose();
     super.dispose();
+  }
+
+  void _onReconnected() {
+    _refreshOverviewFromServer(forceRefresh: false);
+    loadData();
   }
 
   void _onTranslateLanguageChanged() {
@@ -411,6 +419,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
           drawer: const AppDrawer(),
           body: Column(
             children: [
+              const OfflineBanner(),
               const PwaInstallBanner(),
               ListenableBuilder(
                 listenable: Listenable.merge([

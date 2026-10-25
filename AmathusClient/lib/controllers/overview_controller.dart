@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:amathus/controllers/overview_storage.dart';
 import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:http/http.dart' as http;
 
 class OverviewController {
@@ -54,6 +55,7 @@ class OverviewController {
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 40));
       if (response.statusCode == 200) {
+        ConnectivityController.instance.reportOnline();
         final decoded =
             json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         final overview = NewsOverview.fromJson(decoded);
@@ -68,7 +70,7 @@ class OverviewController {
         }
       }
     } catch (_) {
-      // Ignore network error and fall back to cached overview
+      ConnectivityController.instance.reportOffline();
     }
 
     return await readStored();

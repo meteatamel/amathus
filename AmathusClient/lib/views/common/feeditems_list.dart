@@ -3,6 +3,7 @@ import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feeditem_list_tile.dart';
+import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
 import 'package:flutter/material.dart';
 
@@ -66,6 +67,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     Constants.selectedFeedIdNotifier.addListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.addListener(_onFilterChanged);
     widget.extraListenable?.addListener(_onFilterChanged);
+    ConnectivityController.instance.addReconnectListener(_loadDataAndUpdateState);
     _loadInitialData();
   }
 
@@ -77,6 +79,7 @@ class _FeedItemsListState extends State<FeedItemsList> {
     Constants.selectedFeedIdNotifier.removeListener(_onSelectedFeedChanged);
     Constants.hiddenFeedsNotifier.removeListener(_onFilterChanged);
     widget.extraListenable?.removeListener(_onFilterChanged);
+    ConnectivityController.instance.removeReconnectListener(_loadDataAndUpdateState);
     super.dispose();
   }
 

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:amathus/models/feed.dart';
 import 'package:amathus/models/feeditem.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
+import 'package:amathus/views/common/offline_banner.dart';
 
 import 'feeditems_storage.dart';
 
@@ -77,6 +78,7 @@ class FeedItemsController {
       final response =
           await http.get(Uri.parse("${Constants.URL_FEED_ITEMS}/$feedId"));
       if (response.statusCode == 200) {
+        ConnectivityController.instance.reportOnline();
         final decoded =
             json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         final feed = Feed.fromJson(decoded);
@@ -85,7 +87,7 @@ class FeedItemsController {
         return feed;
       }
     } catch (e) {
-      // Ignore network error and fall back to cached feed items
+      ConnectivityController.instance.reportOffline();
     }
 
     return await readByIdStored(feedId);
@@ -114,6 +116,7 @@ class FeedItemsController {
         Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=false&limit=$limit"),
       );
       if (response.statusCode == 200) {
+        ConnectivityController.instance.reportOnline();
         final decoded =
             json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
         final feeds = decoded
@@ -129,7 +132,7 @@ class FeedItemsController {
         }
       }
     } catch (e) {
-      // Ignore network error and fall back to cached recent feeds
+      ConnectivityController.instance.reportOffline();
     }
 
     return await readRecentStored();
@@ -155,6 +158,7 @@ class FeedItemsController {
         Uri.parse("${Constants.URL_FEED_ITEMS}?columnists=true&limit=$limit"),
       );
       if (response.statusCode == 200) {
+        ConnectivityController.instance.reportOnline();
         final decoded =
             json.decode(utf8.decode(response.bodyBytes)) as List<dynamic>;
         final feeds = decoded
@@ -167,7 +171,7 @@ class FeedItemsController {
         }
       }
     } catch (e) {
-      // Ignore network error and fall back to cached columnist feeds
+      ConnectivityController.instance.reportOffline();
     }
 
     return await readColumnistsStored();

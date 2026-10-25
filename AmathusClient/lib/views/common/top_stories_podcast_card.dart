@@ -5,6 +5,7 @@ import 'package:amathus/models/overview.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/podcast_audio_player.dart';
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class PageIntroBanner extends StatelessWidget {
   final String text;
@@ -550,6 +551,12 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
         final lang = _controller.effectiveLanguage;
         final edition = _controller.effectiveEdition;
         final isPlayingNow = _controller.isPlaying && !_controller.isPaused;
+        final updatedAgo = timeago.format(
+          widget.overview.generatedAt,
+          locale: lang,
+        );
+        final updatedLabel =
+            Constants.podcastLastUpdatedLabelFor(updatedAgo, lang);
 
         return Container(
           decoration: BoxDecoration(
@@ -620,6 +627,28 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF334155),
                             ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.schedule_rounded,
+                                size: 12.5,
+                                color: Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  updatedLabel,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

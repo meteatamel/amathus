@@ -92,18 +92,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (let name of names) {
-          caches.delete(name);
-        }
-      });
+      navigator.serviceWorker.register('offline_sw.js').catch(function() {});
     }
   </script>
   <script src="flutter_bootstrap.js" async></script>

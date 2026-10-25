@@ -195,6 +195,17 @@ class PodcastAudioPlayer {
       }
     }
 
+    if (resolvedSrc == null && html.window.navigator.onLine == false) {
+      onLoadingChanged?.call(false);
+      await _playSpeechSynthesisFallback(
+        token: token,
+        text: fallbackText,
+        lang: fallbackLang,
+        isHostA: isHostA,
+      );
+      return;
+    }
+
     final effectiveSrc = resolvedSrc ?? url;
     _hasActiveTurnAudio = true;
     element.pause();
@@ -250,7 +261,17 @@ class PodcastAudioPlayer {
     _errorSub = element.onError.listen((_) {
       if (token != _activePlayToken || !_hasActiveTurnAudio) return;
       onLoadingChanged?.call(false);
-      onError?.call();
+      if (fallbackText.trim().isNotEmpty) {
+        _hasActiveTurnAudio = false;
+        _playSpeechSynthesisFallback(
+          token: token,
+          text: fallbackText,
+          lang: fallbackLang,
+          isHostA: isHostA,
+        );
+      } else {
+        onError?.call();
+      }
     });
 
     try {
@@ -261,7 +282,57 @@ class PodcastAudioPlayer {
     } catch (_) {
       if (token != _activePlayToken) return;
       onLoadingChanged?.call(false);
+      if (fallbackText.trim().isNotEmpty) {
+        _hasActiveTurnAudio = false;
+        await _playSpeechSynthesisFallback(
+          token: token,
+          text: fallbackText,
+          lang: fallbackLang,
+          isHostA: isHostA,
+        );
+      } else {
+        onError?.call();
+      }
+    }
+  }
+
+  Future<void> _playSpeechSynthesisFallback({
+    required int token,
+    required String text,
+    required String lang,
+    required bool isHostA,
+  }) async {
+    final synth = html.window.speechSynthesis;
+    if (synth == null || text.trim().isEmpty) {
       onError?.call();
+      return;
+    }
+    try {
+      synth.cancel();
+      final utterance = html.SpeechSynthesisUtterance(text);
+      utterance.lang = lang == 'tr'
+          ? 'tr-TR'
+          : (lang == 'el' ? 'el-GR' : 'en-US');
+      utterance.rate = _playbackRate.clamp(0.75, 2.0);
+      utterance.pitch = isHostA ? 1.06 : 0.94;
+
+      final completer = Completer<void>();
+      utterance.addEventListener('end', (_) {
+        if (!completer.isCompleted) completer.complete();
+      });
+      utterance.addEventListener('error', (_) {
+        if (!completer.isCompleted) completer.complete();
+      });
+      synth.speak(utterance);
+      await completer.future;
+      if (token == _activePlayToken) {
+        onPositionFractionChanged?.call(1.0);
+        onEnded?.call();
+      }
+    } catch (_) {
+      if (token == _activePlayToken) {
+        onError?.call();
+      }
     }
   }
 
@@ -286,6 +357,9 @@ class PodcastAudioPlayer {
     _activePlayToken++;
     onLoadingChanged?.call(false);
     _sharedAudio?.pause();
+    try {
+      html.window.speechSynthesis?.cancel();
+    } catch (_) {}
   }
 
   Future<bool> resume() async {
@@ -334,6 +408,9 @@ class PodcastAudioPlayer {
         _sharedAudio!.pause();
       } catch (_) {}
     }
+    try {
+      html.window.speechSynthesis?.cancel();
+    } catch (_) {}
   }
 
   void dispose() {
