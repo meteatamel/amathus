@@ -512,7 +512,9 @@ class OverviewStory {
     if (_greekScriptRegex.hasMatch(trimmed)) {
       return true;
     }
-    if (tl == 'en' && _turkishSpecificRegex.hasMatch(trimmed)) {
+    if (tl == 'en' &&
+        _turkishSpecificRegex.hasMatch(trimmed) &&
+        !PodcastDialogueTurn._englishCommonWordsRegex.hasMatch(trimmed)) {
       return true;
     }
     if (sourceLang != null &&

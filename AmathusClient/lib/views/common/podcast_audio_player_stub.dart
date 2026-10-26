@@ -47,7 +47,11 @@ class PodcastAudioPlayer {
     onPositionFractionChanged?.call(fraction.clamp(0.0, 1.0));
   }
 
-  void prefetchUrl(String url) {}
+  bool isUrlCached(String url) => true;
+
+  void unlockAudio() {}
+
+  Future<void> prefetchUrl(String url) async {}
 
   void pause() {
     _isPaused = true;

@@ -31,6 +31,12 @@ class PodcastAudioPlayer {
 
   bool get hasActiveAudio => _hasActiveTurnAudio && _sharedAudio != null;
 
+  bool isUrlCached(String url) => _blobUrlCache.containsKey(url);
+
+  void unlockAudio() {
+    _unlockAudioSynchronously();
+  }
+
   html.AudioElement _ensureAudioElement() {
     return _sharedAudio ??= (html.AudioElement()..preload = 'auto');
   }
@@ -348,9 +354,9 @@ class PodcastAudioPlayer {
     }
   }
 
-  void prefetchUrl(String url) {
+  Future<void> prefetchUrl(String url) async {
     if (url.isEmpty) return;
-    _fetchBlobUrl(url);
+    await _fetchBlobUrl(url);
   }
 
   void pause() {

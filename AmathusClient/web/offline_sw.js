@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amathus-offline-v5';
+const CACHE_NAME = 'amathus-offline-v6';
 
 const ESSENTIAL_SHELL_URLS = [
   '/',

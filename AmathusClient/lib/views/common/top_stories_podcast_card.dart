@@ -172,7 +172,8 @@ class PodcastPlaybackController extends ChangeNotifier {
     final ov = _overview;
     if (ov == null) return;
     final lang = effectiveLanguage;
-    if (ov.stories.take(8).any((s) => s.needsTranslationFor(lang))) {
+    if (ov.podcastTurns.isEmpty &&
+        ov.stories.take(8).any((s) => s.needsTranslationFor(lang))) {
       return;
     }
     final list = turns;
@@ -322,7 +323,7 @@ class PodcastPlaybackController extends ChangeNotifier {
     final lang = effectiveLanguage;
 
     final ov = _overview;
-    if (ov != null) {
+    if (ov != null && ov.podcastTurns.isEmpty) {
       final top8 = ov.stories.take(8).toList();
       if (top8.any((s) => s.needsTranslationFor(lang))) {
         _isLoadingAudio = true;
@@ -343,10 +344,22 @@ class PodcastPlaybackController extends ChangeNotifier {
     final currentTurn = list[_currentTurnIndex];
     final url = _buildAudioUrl(currentTurn, lang);
 
-    // Immediately start downloading current turn and next turn in parallel
-    _player.prefetchUrl(url);
+    // Start prefetching next turn in parallel right away
     if (_currentTurnIndex + 1 < list.length) {
       _player.prefetchUrl(_buildAudioUrl(list[_currentTurnIndex + 1], lang));
+    }
+
+    // If the current turn audio is not cached yet, show the loading spinner
+    // while downloading so there is no silent gap after the intro jingle/chime.
+    if (!_player.isUrlCached(url)) {
+      _isLoadingAudio = true;
+      notifyListeners();
+      await _player.prefetchUrl(url);
+      if (!_isPlaying || _isPaused || sessionId != _playSessionId) {
+        return;
+      }
+      _isLoadingAudio = false;
+      notifyListeners();
     }
 
     if (withIntroJingle) {
@@ -418,6 +431,7 @@ class PodcastPlaybackController extends ChangeNotifier {
         });
       }
     } else {
+      _player.unlockAudio();
       final startingFromBeginning =
           _currentTurnIndex == 0 && _withinTurnFraction < 0.05;
       _isPlaying = true;
@@ -671,12 +685,23 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                           ),
                         ),
                         onPressed: _controller.togglePlayPause,
-                        child: Icon(
-                          isPlayingNow
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          size: 24,
-                        ),
+                        child: _controller.isLoadingAudio
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFFBBF24),
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                isPlayingNow
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                size: 24,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 8),
