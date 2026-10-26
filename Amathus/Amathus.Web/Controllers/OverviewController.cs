@@ -59,7 +59,7 @@ namespace Amathus.Web.Controllers
                     var copy = existing.Copy();
                     EnsureStoryTopicsPopulated(copy);
                     bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
-                    bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition, forceRebuild: storiesRepaired);
+                    bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
                     if (storiesRepaired || podcastRebuilt)
                     {
                         _ = _feedStore.SaveOverviewAsync(copy);
@@ -80,7 +80,7 @@ namespace Amathus.Web.Controllers
                         var copy = existing.Copy();
                         EnsureStoryTopicsPopulated(copy);
                         bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
-                        bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition, forceRebuild: storiesRepaired);
+                        bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
                         if (storiesRepaired || podcastRebuilt)
                         {
                             _ = _feedStore.SaveOverviewAsync(copy);
@@ -100,8 +100,8 @@ namespace Amathus.Web.Controllers
                 var overview = await _overviewAnalyzer.AnalyzeAsync(feeds, columnists);
                 overview.Id = overviewId;
                 EnsureStoryTopicsPopulated(overview);
-                bool storiesRepairedOnGen = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(overview);
-                PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition, forceRebuild: storiesRepairedOnGen);
+                await OverviewAnalyzer.EnsureStoriesTranslatedAsync(overview);
+                PodcastScriptBuilder.EnsurePodcastPopulated(overview, edition);
                 await _feedStore.SaveOverviewAsync(overview);
                 _ = WarmupInitialPodcastTurnsAsync(overview);
                 return Ok(overview);

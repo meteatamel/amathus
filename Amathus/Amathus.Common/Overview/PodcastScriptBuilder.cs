@@ -47,7 +47,9 @@ namespace Amathus.Common.Overview
 
         private static readonly Regex GreekScriptRegex = new(@"[\u0370-\u03FF\u1F00-\u1FFF]", RegexOptions.Compiled);
         private static readonly Regex TurkishSpecificRegex = new(@"[ğĞşŞıİ]", RegexOptions.Compiled);
-        private static readonly Regex LatinMultiWordRegex = new(@"[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}", RegexOptions.Compiled);
+        private static readonly Regex EnglishCommonWordsRegex = new(@"\b(the|and|to|of|in|is|are|was|were|for|with|on|that|this|we|our|from|as|at|by|about|into|over|after)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex LatinLongPhraseRegex = new(@"(?:[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{3,}\s+){5,}[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{3,}", RegexOptions.Compiled);
+        private static readonly Regex LegacyPhraseRegex = new(@"(Grab a coffee and settle in|Yeah,\s*totally|across the island right now)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public static bool HasMixedOrUntranslatedTurns(List<PodcastDialogueTurn> turns)
         {
@@ -78,17 +80,24 @@ namespace Amathus.Common.Overview
                     return true;
                 }
 
-                // English or Greek turns should never contain Turkish-specific letters
-                if (TurkishSpecificRegex.IsMatch(en) || TurkishSpecificRegex.IsMatch(el))
+                // English turns should only be rejected for Turkish characters if they lack English structure
+                // (proper nouns like "Erhan Arıklı" or "Lefkoşa" in English sentences are fine)
+                if (TurkishSpecificRegex.IsMatch(en) && !EnglishCommonWordsRegex.IsMatch(en))
                 {
                     return true;
                 }
 
-                // Greek turns should not contain multi-word Latin sentences
-                if (!GreekScriptRegex.IsMatch(el) || LatinMultiWordRegex.IsMatch(el))
+                // Greek turns must contain Greek script and not contain long untranslated Latin sentences
+                if (!GreekScriptRegex.IsMatch(el) || LatinLongPhraseRegex.IsMatch(el))
                 {
                     return true;
                 }
+            }
+
+            // Also rebuild if the script still uses legacy repetitive template phrases
+            if (turns.Any(t => t != null && LegacyPhraseRegex.IsMatch(t.TextEn ?? string.Empty)))
+            {
+                return true;
             }
 
             return false;
@@ -101,9 +110,13 @@ namespace Amathus.Common.Overview
                 return false;
             }
 
+            var previousEdition = overview.Edition?.Trim().ToLowerInvariant();
             var targetEdition = ResolveEdition(DateTime.UtcNow, requestedEdition);
+            bool editionChanged = !string.IsNullOrWhiteSpace(previousEdition) &&
+                                  !string.Equals(previousEdition, targetEdition, StringComparison.OrdinalIgnoreCase);
             overview.Edition = targetEdition;
             if (forceRebuild ||
+                editionChanged ||
                 overview.PodcastTurns == null ||
                 overview.PodcastTurns.Count < 6 ||
                 (overview.PodcastTurns.Count > 2 && string.IsNullOrWhiteSpace(overview.PodcastTurns[2]?.StoryId)) ||
@@ -149,8 +162,9 @@ namespace Amathus.Common.Overview
             }
 
             int turnIndex = 0;
+            int variant = Math.Abs((overview?.GeneratedAt.DayOfYear ?? 0) + stories.Count) % 3;
 
-            // Turn 0: Host A Opening Greeting & First Half of Quick Headline Rundown
+            // Turn 0: Host A Opening Greeting & Conversational Theme Intro
             turns.Add(new PodcastDialogueTurn
             {
                 Index = turnIndex++,
@@ -159,12 +173,12 @@ namespace Amathus.Common.Overview
                 SpeakerNameEl = string.Empty,
                 SpeakerNameTr = string.Empty,
                 SpeakerNameEn = string.Empty,
-                TextEl = BuildOpeningHostAEl(resolvedEdition, stories),
-                TextTr = BuildOpeningHostATr(resolvedEdition, stories),
-                TextEn = BuildOpeningHostAEn(resolvedEdition, stories)
+                TextEl = BuildOpeningHostAEl(resolvedEdition, overview, stories, variant),
+                TextTr = BuildOpeningHostATr(resolvedEdition, overview, stories, variant),
+                TextEn = BuildOpeningHostAEn(resolvedEdition, overview, stories, variant)
             });
 
-            // Turn 1: Host B Second Half of Quick Headline Rundown & Transition to Details
+            // Turn 1: Host B Conversational Follow-up & Transition to First Story
             turns.Add(new PodcastDialogueTurn
             {
                 Index = turnIndex++,
@@ -173,9 +187,9 @@ namespace Amathus.Common.Overview
                 SpeakerNameEl = string.Empty,
                 SpeakerNameTr = string.Empty,
                 SpeakerNameEn = string.Empty,
-                TextEl = BuildOpeningHostBEl(stories),
-                TextTr = BuildOpeningHostBTr(stories),
-                TextEn = BuildOpeningHostBEn(stories)
+                TextEl = BuildOpeningHostBEl(stories, variant),
+                TextTr = BuildOpeningHostBTr(stories, variant),
+                TextEn = BuildOpeningHostBEn(stories, variant)
             });
 
             // Story-by-story two-host conversation
@@ -244,7 +258,7 @@ namespace Amathus.Common.Overview
             return turns;
         }
 
-        private static string BuildOpeningHostAEl(string edition, List<OverviewStory> stories)
+        private static string BuildOpeningHostAEl(string edition, NewsOverview overview, List<OverviewStory> stories, int variant)
         {
             var title = edition switch
             {
@@ -252,15 +266,51 @@ namespace Amathus.Common.Overview
                 "midday" => "Δικοινοτικές Ειδήσεις Κύπρου - Μεσημέρι",
                 _ => "Δικοινοτικές Ειδήσεις Κύπρου - Βράδυ"
             };
-            var firstBatch = stories.Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEl ?? s.TitleEn)))
-                .Where(h => !string.IsNullOrWhiteSpace(h))
+
+            var greeting = edition switch
+            {
+                "morning" => variant switch
+                {
+                    0 => $"Καλημέρα σας και καλωσορίσατε στις {title}! Καθώς ξεκινά η μέρα μας, ελάτε να δούμε μαζί τις βασικές εξελίξεις που διαμορφώνουν τη σημερινή επικαιρότητα.",
+                    1 => $"Γεια σας φίλοι μας και καλωσορίσατε στις {title}! Πάρτε τον πρωινό σας καφέ κι ελάτε να συζητήσουμε όσα ξεχωρίζουν σήμερα στην επικαιρότητα.",
+                    _ => $"Καλημέρα σε όλους, είστε συντονισμένοι στις {title}! Ελάτε να κάνουμε μια πρώτη βόλτα στα θέματα που συζητιούνται περισσότερο σήμερα."
+                },
+                "midday" => variant switch
+                {
+                    0 => $"Γεια σας και καλωσορίσατε στις {title}! Ώρα για ένα μικρό μεσημεριανό διάλειμμα για να δούμε πώς εξελίσσονται τα σημαντικότερα θέματα της ημέρας.",
+                    1 => $"Καλό μεσημέρι φίλοι μας και καλωσορίσατε στις {title}! Η επικαιρότητα τρέχει από το πρωί, οπότε ελάτε να δούμε τι βρίσκεται στο προσκήνιο αυτή την ώρα.",
+                    _ => $"Χαίρετε και καλωσορίσατε στις {title}! Στη μέση της ημέρας, ας ρίξουμε μια ματιά στις βασικές εξελίξεις που απασχολούν την ειδησεογραφία."
+                },
+                _ => variant switch
+                {
+                    0 => $"Καλησπέρα σας και καλωσορίσατε στις {title}! Καθώς κλείνει η μέρα, ελάτε να δούμε μαζί τις πιο σημαντικές εξελίξεις που ξεχώρισαν σήμερα.",
+                    1 => $"Γεια σας φίλοι μας και καλωσορίσατε στις {title}! Στο τέλος μιας γεμάτης ημέρας, ας συζητήσουμε τα θέματα που άφησαν το αποτύπωμά τους.",
+                    _ => $"Καλησπέρα σε όλους και καλωσορίσατε στις {title}! Ελάτε να κάνουμε έναν χαλαρό απολογισμό με τις κυριότερες ιστορίες της σημερινής ημέρας."
+                }
+            };
+
+            var summary = CleanForSpeech(overview?.SummaryEl);
+            if (!string.IsNullOrWhiteSpace(summary) && GreekScriptRegex.IsMatch(summary))
+            {
+                return $"{greeting} {EnsureEndPunctuation(summary)}";
+            }
+
+            var clauses = stories.Take(2)
+                .Select(s => ToConversationalClause(s.TitleEl ?? s.TitleEn))
+                .Where(c => !string.IsNullOrWhiteSpace(c))
                 .ToList();
-            var rundown = string.Join(" ", firstBatch);
-            return $"Γεια σας φίλοι μας και καλωσορίσατε στις {title}! Πάρτε τον καφέ σας κι ελάτε να δούμε μαζί τι συζητιέται σήμερα σε όλο το νησί. Ξεκινάμε με μια γρήγορη ματιά στους πρώτους τίτλους: {rundown}";
+            if (clauses.Count == 2)
+            {
+                return $"{greeting} Σήμερα η συζήτηση περιστρέφεται γύρω από {clauses[0]}, αλλά και {clauses[1]}.";
+            }
+            if (clauses.Count == 1)
+            {
+                return $"{greeting} Σήμερα η συζήτηση επικεντρώνεται σε {clauses[0]}.";
+            }
+            return greeting;
         }
 
-        private static string BuildOpeningHostATr(string edition, List<OverviewStory> stories)
+        private static string BuildOpeningHostATr(string edition, NewsOverview overview, List<OverviewStory> stories, int variant)
         {
             var title = edition switch
             {
@@ -268,15 +318,51 @@ namespace Amathus.Common.Overview
                 "midday" => "Kıbrıs İki Toplumlu Haberler - Öğle",
                 _ => "Kıbrıs İki Toplumlu Haberler - Akşam"
             };
-            var firstBatch = stories.Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleTr ?? s.TitleEn)))
-                .Where(h => !string.IsNullOrWhiteSpace(h))
+
+            var greeting = edition switch
+            {
+                "morning" => variant switch
+                {
+                    0 => $"Günaydın, {title} bültenimize hoş geldiniz! Güne başlarken bugünün gündemini şekillendiren gelişmeleri gelin birlikte konuşalım.",
+                    1 => $"Herkese merhaba ve günaydın! {title} bültenindeyiz. Sabah kahveniz hazırsa bugünün öne çıkan konularına birlikte göz atalım.",
+                    _ => $"Selamlar, {title} yayınına hoş geldiniz! Yeni günde nelerin konuşulduğunu ve hangi gelişmelerin öne çıktığını birlikte değerlendirelim."
+                },
+                "midday" => variant switch
+                {
+                    0 => $"Herkese merhaba, {title} bültenimize hoş geldiniz! Gün ortasında kısa bir mola verip şu ana kadar öne çıkan gelişmeleri birlikte ele alalım.",
+                    1 => $"İyi günler! {title} yayınındayız. Sabahtan bu yana oldukça hareketli bir gündem var; gelin detaylara birlikte bakalım.",
+                    _ => $"Selamlar ve iyi öğleden sonralar! {title} bülteninde günün bu saatine kadar yaşanan önemli gelişmeleri konuşacağız."
+                },
+                _ => variant switch
+                {
+                    0 => $"İyi akşamlar, {title} bültenimize hoş geldiniz! Günü tamamlarken bugün en çok konuşulan gelişmeleri gelin birlikte değerlendirelim.",
+                    1 => $"Herkese merhaba ve iyi akşamlar! {title} yayınındayız. Yoğun geçen günün ardından öne çıkan haberlerin detaylarına birlikte bakalım.",
+                    _ => $"Selamlar, {title} bültenine hoş geldiniz! Günün yorgunluğunu atarken bugüne damga vuran konuları sohbet havasında ele alalım."
+                }
+            };
+
+            var summary = CleanForSpeech(overview?.SummaryTr);
+            if (!string.IsNullOrWhiteSpace(summary) && !GreekScriptRegex.IsMatch(summary))
+            {
+                return $"{greeting} {EnsureEndPunctuation(summary)}";
+            }
+
+            var clauses = stories.Take(2)
+                .Select(s => ToConversationalClause(s.TitleTr ?? s.TitleEn))
+                .Where(c => !string.IsNullOrWhiteSpace(c))
                 .ToList();
-            var rundown = string.Join(" ", firstBatch);
-            return $"Herkese merhaba! {title} bültenimize hoş geldiniz. Kahvenizi alın, gelin bugün adanın iki yakasında neler konuşuluyor hızlıca bir bakalım: {rundown}";
+            if (clauses.Count == 2)
+            {
+                return $"{greeting} Bugün özellikle {clauses[0]} konusu ve bunun yanı sıra {clauses[1]} gündemin ilk sıralarında yer alıyor.";
+            }
+            if (clauses.Count == 1)
+            {
+                return $"{greeting} Bugün özellikle {clauses[0]} konusu gündemin ilk sırasında yer alıyor.";
+            }
+            return greeting;
         }
 
-        private static string BuildOpeningHostAEn(string edition, List<OverviewStory> stories)
+        private static string BuildOpeningHostAEn(string edition, NewsOverview overview, List<OverviewStory> stories, int variant)
         {
             var title = edition switch
             {
@@ -284,68 +370,123 @@ namespace Amathus.Common.Overview
                 "midday" => "Cyprus Bicommunal News - Mid-Day",
                 _ => "Cyprus Bicommunal News - Evening"
             };
-            var firstBatch = stories.Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEn ?? s.TitleTr)))
-                .Where(h => !string.IsNullOrWhiteSpace(h))
+
+            var greeting = edition switch
+            {
+                "morning" => variant switch
+                {
+                    0 => $"Good morning and welcome to {title}! As you're getting your day started, let's walk through the key stories shaping today's agenda.",
+                    1 => $"Hey everyone, welcome back to {title}! If you have your morning coffee handy, settle in as we talk through what's making news early today.",
+                    _ => $"Hello and welcome to {title}! Great to have you with us this morning as we get you caught up on today's biggest developments."
+                },
+                "midday" => variant switch
+                {
+                    0 => $"Hello and welcome to {title}! Hope your day is going well — if you're taking a midday break, let's catch up on how today's big stories are unfolding.",
+                    1 => $"Hey everyone, welcome back to {title}! Plenty has been developing since this morning, so let's take a few minutes to talk through what's in focus right now.",
+                    _ => $"Welcome to {title}! As we hit the middle of the day, let's get you up to speed on the major conversations and developments so far."
+                },
+                _ => variant switch
+                {
+                    0 => $"Good evening and welcome to {title}! As you wind down for the day, let's look back at the major stories and developments that shaped today's news.",
+                    1 => $"Hey everyone, welcome back to {title}! Thanks for spending part of your evening with us as we unpack the biggest topics from today.",
+                    _ => $"Hello and welcome to {title}! As the day wraps up, let's talk through the key developments and stories everyone has been following today."
+                }
+            };
+
+            var summary = CleanForSpeech(overview?.SummaryEn);
+            if (!string.IsNullOrWhiteSpace(summary) && EnglishCommonWordsRegex.IsMatch(summary))
+            {
+                return $"{greeting} {EnsureEndPunctuation(summary)}";
+            }
+
+            var clauses = stories.Take(2)
+                .Select(s => ToConversationalClauseEn(s.TitleEn ?? s.TitleTr))
+                .Where(c => !string.IsNullOrWhiteSpace(c))
                 .ToList();
-            var rundown = string.Join(" ", firstBatch);
-            return $"Hey everyone, welcome back to {title}! Grab a coffee and settle in — here is a quick look at what is everyone talking about across the island right now: {rundown}";
+            if (clauses.Count == 2)
+            {
+                return $"{greeting} Today we're following {clauses[0]}, along with {clauses[1]}.";
+            }
+            if (clauses.Count == 1)
+            {
+                return $"{greeting} Leading our conversation today is {clauses[0]}.";
+            }
+            return greeting;
         }
 
-        private static string BuildOpeningHostBEl(List<OverviewStory> stories)
+        private static string BuildOpeningHostBEl(List<OverviewStory> stories, int variant)
         {
-            var secondBatch = stories.Skip(3).Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEl ?? s.TitleEn)))
+            var extraClauses = stories.Skip(2).Take(2)
+                .Select(s => ToConversationalClause(s.TitleEl ?? s.TitleEn))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
-            if (secondBatch.Count > 0)
+
+            if (extraClauses.Count == 2)
             {
-                var rundown = string.Join(" ", secondBatch);
-                return $"Και δεν είναι μόνο αυτά! Στην επικαιρότητα ξεχωρίζουν επίσης: {rundown} Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.";
+                return $"Πραγματικά έχουμε πολλά να συζητήσουμε σήμερα. Παράλληλα θα δούμε τι συμβαίνει με {extraClauses[0]}, καθώς και {extraClauses[1]}. Πάμε λοιπόν να τα πάρουμε από την αρχή.";
             }
-            return "Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.";
+            if (extraClauses.Count == 1)
+            {
+                return $"Πραγματικά έχουμε πολλά να πούμε σήμερα, ενώ θα σταθούμε επίσης σε {extraClauses[0]}. Πάμε λοιπόν να ξεκινήσουμε με το πρώτο μας θέμα.";
+            }
+            return "Πάμε λοιπόν να δούμε αναλυτικά όλες τις εξελίξεις, ξεκινώντας από το πρώτο μας θέμα.";
         }
 
-        private static string BuildOpeningHostBTr(List<OverviewStory> stories)
+        private static string BuildOpeningHostBTr(List<OverviewStory> stories, int variant)
         {
-            var secondBatch = stories.Skip(3).Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleTr ?? s.TitleEn)))
+            var extraClauses = stories.Skip(2).Take(2)
+                .Select(s => ToConversationalClause(s.TitleTr ?? s.TitleEn))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
-            if (secondBatch.Count > 0)
+
+            if (extraClauses.Count == 2)
             {
-                var rundown = string.Join(" ", secondBatch);
-                return $"Aynen öyle, gündem bugün oldukça hareketli! Öne çıkan diğer başlıklarda ise şunlar var: {rundown} Hadi gelin ilk haberimizle sohbete başlayalım.";
+                return $"Kesinlikle, bugün konuşacak çok şey var. Ayrıca {extraClauses[0]} ile ilgili gelişmeleri ve {extraClauses[1]} konusunu da ele alacağız. Hadi ilk konuyla sohbete başlayalım.";
             }
-            return "Hadi gelin ilk haberimizle sohbete başlayalım.";
+            if (extraClauses.Count == 1)
+            {
+                return $"Kesinlikle, gündem oldukça yoğun. Bu arada {extraClauses[0]} konusuna da değineceğiz. Hadi ilk gelişmeyle başlayalım.";
+            }
+            return "Hadi gelin öne çıkan gelişmeleri tek tek konuşmaya başlayalım.";
         }
 
-        private static string BuildOpeningHostBEn(List<OverviewStory> stories)
+        private static string BuildOpeningHostBEn(List<OverviewStory> stories, int variant)
         {
-            var secondBatch = stories.Skip(3).Take(3)
-                .Select(s => EnsureEndPunctuation(CleanForSpeech(s.TitleEn ?? s.TitleTr)))
+            var extraClauses = stories.Skip(2).Take(2)
+                .Select(s => ToConversationalClauseEn(s.TitleEn ?? s.TitleTr))
                 .Where(h => !string.IsNullOrWhiteSpace(h))
                 .ToList();
-            if (secondBatch.Count > 0)
+
+            var leadIn = variant switch
             {
-                var rundown = string.Join(" ", secondBatch);
-                return $"Yeah, plenty happening today! Also catching our eye right now: {rundown} Let's jump right in and unpack each story one by one.";
+                0 => "There is plenty to unpack today.",
+                1 => "It's a busy news cycle for sure.",
+                _ => "Lots of important developments to get through."
+            };
+
+            if (extraClauses.Count == 2)
+            {
+                return $"{leadIn} We'll also be looking into {extraClauses[0]}, as well as {extraClauses[1]}. Let's dive right in and take them one by one.";
             }
-            return "Let's jump right in and unpack each story one by one.";
+            if (extraClauses.Count == 1)
+            {
+                return $"{leadIn} We'll also touch on {extraClauses[0]}. Let's dive right in and unpack the details.";
+            }
+            return $"{leadIn} Let's dive right in and unpack each story one by one.";
         }
 
         private static string BuildStoryLeadEl(OverviewStory story, int index)
         {
             var transitions = new[]
             {
-                "Λοιπόν, ας ξεκινήσουμε με το θέμα που βρίσκεται στην πρώτη γραμμή σήμερα:",
-                "Πάμε τώρα στο επόμενο θέμα που συζητιέται πολύ:",
-                "Και περνώντας σε κάτι που επίσης τραβάει τα βλέμματα σήμερα:",
-                "Συνεχίζοντας την κουβέντα μας, ας δούμε κι αυτή την εξέλιξη:",
-                "Ένα άλλο θέμα που απασχολεί έντονα τις εφημερίδες στο νησί είναι το εξής:",
-                "Ας ρίξουμε τώρα μια ματιά στην επόμενη ιστορία της ημέρας:",
-                "Παράλληλα, έχουμε και μια ακόμη ενδιαφέρουσα είδηση:",
-                "Και για το κλείσιμο της σημερινής μας βόλτας στις ειδήσεις:"
+                "Ας ξεκινήσουμε λοιπόν με το θέμα που βρίσκεται στην πρώτη γραμμή σήμερα.",
+                "Περνώντας τώρα στο επόμενο θέμα, έχουμε μια εξέλιξη που συζητιέται έντονα.",
+                "Ας δούμε τώρα τι συμβαίνει σε ένα άλλο μέτωπο της επικαιρότητας.",
+                "Συνεχίζοντας την κουβέντα μας, υπάρχει μια ακόμη υπόθεση που ξεχωρίζει.",
+                "Ένα άλλο ζήτημα που απασχολεί τις σημερινές συζητήσεις έχει επίσης μεγάλο ενδιαφέρον.",
+                "Ας στρέψουμε τώρα την προσοχή μας στην επόμενη ιστορία της ημέρας.",
+                "Παράλληλα, αξίζει να σταθούμε σε μια ακόμη εξέλιξη.",
+                "Και για το κλείσιμο της σημερινής μας ανασκόπησης, ας δούμε το τελευταίο μας θέμα."
             };
 
             var intro = transitions[Math.Min(index, transitions.Length - 1)];
@@ -354,23 +495,23 @@ namespace Amathus.Common.Overview
 
             if (!string.IsNullOrWhiteSpace(firstPart))
             {
-                return $"{intro} {title} {firstPart}";
+                return $"{intro} {firstPart}";
             }
-            return $"{intro} {title}";
+            return $"{intro} {EnsureEndPunctuation(ToConversationalClause(title))}";
         }
 
         private static string BuildStoryLeadTr(OverviewStory story, int index)
         {
             var transitions = new[]
             {
-                "İlk olarak bugün herkesin konuştuğu şu gelişmeyle başlayalım:",
-                "Şimdi geçelim gündemde çok konuşulan bir diğer konuya:",
-                "Bu arada gazetelerde dikkat çeken bir başka önemli başlık da şu:",
-                "Sohbetimize sıradaki gelişmeyle devam edelim:",
-                "Ada genelinde merakla takip edilen bir diğer haber ise şöyle:",
-                "Gelin şimdi bugünün bir diğer önemli başlığına bakalım:",
-                "Öte yandan gözden kaçmaması gereken bir gelişme daha var:",
-                "Ve bugünkü haber turumuzun son başlığına gelirken:"
+                "İlk olarak bugün gündemin ilk sırasındaki gelişmeyle başlayalım.",
+                "Şimdi geçelim bugün çok konuşulan bir diğer önemli konuya.",
+                "Bu arada gündemin bir başka dikkat çeken başlığına da değinelim.",
+                "Sohbetimize sıradaki önemli gelişmeyle devam edelim.",
+                "Bugün yakından takip edilen bir diğer konu da oldukça dikkat çekici.",
+                "Gelin şimdi bir diğer önemli gelişmenin detaylarına bakalım.",
+                "Öte yandan gözden kaçmaması gereken bir haber daha var.",
+                "Ve bugünkü turumuzun son konusuna gelirken şu gelişmeye de bakalım."
             };
 
             var intro = transitions[Math.Min(index, transitions.Length - 1)];
@@ -379,23 +520,23 @@ namespace Amathus.Common.Overview
 
             if (!string.IsNullOrWhiteSpace(firstPart))
             {
-                return $"{intro} {title} {firstPart}";
+                return $"{intro} {firstPart}";
             }
-            return $"{intro} {title}";
+            return $"{intro} {EnsureEndPunctuation(ToConversationalClause(title))}";
         }
 
         private static string BuildStoryLeadEn(OverviewStory story, int index)
         {
             var transitions = new[]
             {
-                "So kicking things off today, let's talk about our top story:",
-                "Now, shifting gears to another big story everyone's talking about:",
-                "Meanwhile, here's another headline catching plenty of attention today:",
-                "Moving along, let's check out what's happening with our next story:",
-                "Another topic making waves across the island's papers today is this one:",
-                "Next up, let's take a look at another development worth watching:",
-                "On another note, here's a story that's also drawing focus today:",
-                "And wrapping up our rundown with one final story:"
+                "Let's start with the biggest development leading the agenda today.",
+                "Turning to our next topic, there's another major story unfolding.",
+                "Meanwhile, another issue is drawing quite a bit of discussion today.",
+                "Shifting gears a bit, let's look at what's happening on another front.",
+                "Moving along, there is another important development making news today.",
+                "Next up, let's take a look at a story that has been building up recently.",
+                "On another note, here is a development that's also getting attention.",
+                "And to wrap up our main stories today, let's look at this final development."
             };
 
             var intro = transitions[Math.Min(index, transitions.Length - 1)];
@@ -404,117 +545,120 @@ namespace Amathus.Common.Overview
 
             if (!string.IsNullOrWhiteSpace(firstPart))
             {
-                return $"{intro} {title} {firstPart}";
+                return $"{intro} {firstPart}";
             }
-            return $"{intro} {title}";
+            return $"{intro} {EnsureEndPunctuation(ToConversationalClauseEn(title))}";
         }
 
         private static string BuildStoryFollowUpEl(OverviewStory story, int index)
         {
             var reactions = new[]
             {
-                "Έτσι ακριβώς, κι αυτό που έχει ιδιαίτερο ενδιαφέρον εδώ είναι το παρασκήνιο.",
-                "Πραγματικά, και αξίζει να δούμε πώς αποτυπώνεται αυτό στον Τύπο.",
-                "Πολύ σωστά, γιατί οι λεπτομέρειες κάνουν τη διαφορά.",
-                "Ακριβώς, πρόκειται για ένα θέμα που αγγίζει πολύ κόσμο.",
-                "Ναι, κι εδώ φαίνεται ξεκάθαρα γιατί το θέμα συζητιέται τόσο έντονα.",
-                "Σωστά, κι αν δούμε τη συνολική εικόνα, έχει μεγάλη σημασία."
+                "Κι αν δούμε πιο προσεκτικά το παρασκήνιο, καταλαβαίνουμε γιατί προκαλεί τόσες αντιδράσεις.",
+                "Πράγματι, και αξίζει να δούμε πώς αποτυπώνεται αυτό στα σημερινά ρεπορτάζ.",
+                "Εδώ ακριβώς είναι που οι λεπτομέρειες κάνουν όλη τη διαφορά.",
+                "Πρόκειται άλλωστε για ένα ζήτημα με άμεσο αντίκτυπο στην καθημερινότητα.",
+                "Και βλέποντας τις αντιδράσεις, φαίνεται ξεκάθαρα πόσο κρίσιμο είναι το θέμα.",
+                "Αυτό που έχει ιδιαίτερη σημασία εδώ είναι η συνέχεια της υπόθεσης.",
+                "Τα επιπλέον στοιχεία βοηθούν πολύ στο να δούμε τη συνολική εικόνα.",
+                "Είναι σίγουρα μια εξέλιξη που δείχνει πώς διαμορφώνεται το κλίμα."
             };
             var reaction = reactions[index % reactions.Length];
 
             var title = CleanForSpeech(story.TitleEl ?? story.TitleEn);
             var (_, secondPart) = SplitNarrative(story.NarrativeEl ?? story.NarrativeEn, title);
-            var sourcesSummary = BuildSourcesCommentaryEl(story);
 
             if (!string.IsNullOrWhiteSpace(secondPart))
             {
-                return $"{reaction} {secondPart} {sourcesSummary}".Trim();
+                return $"{reaction} {secondPart}".Trim();
             }
-            return $"{reaction} {sourcesSummary}".Trim();
+            return $"{reaction} {BuildSourcesCommentaryEl(story, index)}".Trim();
         }
 
         private static string BuildStoryFollowUpTr(OverviewStory story, int index)
         {
             var reactions = new[]
             {
-                "Kesinlikle, işin en dikkat çekici tarafı da zaten burası.",
-                "Çok doğru, üstelik basındaki yansımalarına baktığımızda tablo daha da netleşiyor.",
-                "Tam da öyle, detaylar gerçekten çok önemli.",
-                "Gerçekten de bugün üzerinde en çok durulan konulardan biri bu.",
-                "Evet, burada altı çizilmesi gereken çok önemli bir nokta var.",
-                "Aynen öyle, büyük resme baktığımızda etkisi oldukça geniş."
+                "İşin arka planına baktığımızda neden bu kadar yankı uyandırdığını görmek zor değil.",
+                "Üstelik basındaki yansımalarına baktığımızda tablo daha da netleşiyor.",
+                "Buradaki detaylar sürecin nereye evrileceğini anlamak açısından çok önemli.",
+                "Doğrusu bu gelişme pek çok kesimi yakından ilgilendiriyor.",
+                "Gelen tepkilere bakılırsa bu tartışma daha epey sürecek gibi görünüyor.",
+                "Burada asıl dikkat çeken nokta ise bundan sonra atılacak adımlar.",
+                "Paylaşılan ek ayrıntılar konunun çerçevesini çok daha iyi ortaya koyuyor.",
+                "Bu durum gündemdeki dengelerin nasıl şekillendiğini de gösteriyor."
             };
             var reaction = reactions[index % reactions.Length];
 
             var title = CleanForSpeech(story.TitleTr ?? story.TitleEn);
             var (_, secondPart) = SplitNarrative(story.NarrativeTr ?? story.NarrativeEn, title);
-            var sourcesSummary = BuildSourcesCommentaryTr(story);
 
             if (!string.IsNullOrWhiteSpace(secondPart))
             {
-                return $"{reaction} {secondPart} {sourcesSummary}".Trim();
+                return $"{reaction} {secondPart}".Trim();
             }
-            return $"{reaction} {sourcesSummary}".Trim();
+            return $"{reaction} {BuildSourcesCommentaryTr(story, index)}".Trim();
         }
 
         private static string BuildStoryFollowUpEn(OverviewStory story, int index)
         {
             var reactions = new[]
             {
-                "Yeah, totally — and what really stands out here is the bigger picture.",
-                "Right, and when you look at how the papers are covering it, there's a lot to unpack.",
-                "Spot on, the details behind this one really matter.",
-                "Exactly, it's definitely one of those stories everyone is keeping an eye on.",
-                "For sure, and there's an interesting angle to highlight here too.",
-                "Yeah, that's such a key point."
+                "And when you look closer at the details, you can see why this is drawing so much reaction.",
+                "Right, and the broader context in today's reporting really explains what is at stake.",
+                "That context really matters, especially when you look at how the situation is unfolding.",
+                "Indeed, and there's more to unpack when we look at the reactions coming in.",
+                "And looking at the fallout from this, the implications go even further.",
+                "What makes this particularly notable is where things could head next.",
+                "The follow-up details here really help put the whole issue into perspective.",
+                "It really highlights how closely this issue is being followed right now."
             };
             var reaction = reactions[index % reactions.Length];
 
             var title = CleanForSpeech(story.TitleEn ?? story.TitleTr);
             var (_, secondPart) = SplitNarrative(story.NarrativeEn, title);
-            var sourcesSummary = BuildSourcesCommentaryEn(story);
 
             if (!string.IsNullOrWhiteSpace(secondPart))
             {
-                return $"{reaction} {secondPart} {sourcesSummary}".Trim();
+                return $"{reaction} {secondPart}".Trim();
             }
-            return $"{reaction} {sourcesSummary}".Trim();
+            return $"{reaction} {BuildSourcesCommentaryEn(story, index)}".Trim();
         }
 
-        private static string BuildSourcesCommentaryEl(OverviewStory story)
+        private static string BuildSourcesCommentaryEl(OverviewStory story, int index = 0)
         {
-            var sources = story.Sources ?? new List<OverviewStorySource>();
-            var langs = sources.Select(s => (s.FeedLanguage ?? "").ToLowerInvariant()).Distinct().ToList();
-
-            if (langs.Count >= 2)
+            var fallbacks = new[]
             {
-                return "Είναι μάλιστα χαρακτηριστικό ότι το θέμα απασχολεί έντονα και τις δύο κοινότητες σε ολόκληρο το νησί.";
-            }
-            return "Θα έχει σίγουρα μεγάλο ενδιαφέρον να δούμε πώς θα εξελιχθεί τις επόμενες μέρες.";
+                "Το θέμα παρακολουθείται στενά από τον Τύπο και αναμένονται νεότερα σύντομα.",
+                "Οι επόμενες κινήσεις γύρω από αυτή την υπόθεση θα έχουν ιδιαίτερο ενδιαφέρον.",
+                "Πρόκειται για μια εξέλιξη που απασχολεί έντονα τη δημόσια συζήτηση σήμερα.",
+                "Θα δούμε πώς θα εξελιχθούν τα πράγματα τις αμέσως επόμενες μέρες."
+            };
+            return fallbacks[index % fallbacks.Length];
         }
 
-        private static string BuildSourcesCommentaryTr(OverviewStory story)
+        private static string BuildSourcesCommentaryTr(OverviewStory story, int index = 0)
         {
-            var sources = story.Sources ?? new List<OverviewStorySource>();
-            var langs = sources.Select(s => (s.FeedLanguage ?? "").ToLowerInvariant()).Distinct().ToList();
-
-            if (langs.Count >= 2)
+            var fallbacks = new[]
             {
-                return "Üstelik bu konunun adanın her iki kesiminde de yakından takip edilmesi ne kadar önemli olduğunu gösteriyor.";
-            }
-            return "Önümüzdeki günlerde bu başlığın nasıl şekilleneceğini hep birlikte göreceğiz.";
+                "Basında geniş yer bulan bu konuyla ilgili yeni gelişmeler bekleniyor.",
+                "Bu başlıkta atılacak bir sonraki adımlar merakla takip ediliyor.",
+                "Kamuoyunda geniş yankı bulan bu gelişmenin etkileri sürecek gibi görünüyor.",
+                "Önümüzdeki günlerde sürecin nasıl şekilleneceğini birlikte göreceğiz."
+            };
+            return fallbacks[index % fallbacks.Length];
         }
 
-        private static string BuildSourcesCommentaryEn(OverviewStory story)
+        private static string BuildSourcesCommentaryEn(OverviewStory story, int index = 0)
         {
-            var sources = story.Sources ?? new List<OverviewStorySource>();
-            var langs = sources.Select(s => (s.FeedLanguage ?? "").ToLowerInvariant()).Distinct().ToList();
-
-            if (langs.Count >= 2)
+            var fallbacks = new[]
             {
-                return "It's getting strong attention across both communities too, which really shows how much it matters island-wide.";
-            }
-            return "Definitely a story we'll be watching closely as things develop over the coming days.";
+                "It's a developing situation with plenty of attention on what happens next.",
+                "The next steps here will be key to watch as more details emerge.",
+                "It has sparked plenty of debate in today's coverage.",
+                "We will see how this plays out over the next few days."
+            };
+            return fallbacks[index % fallbacks.Length];
         }
 
         private static string BuildClosingHostAEl()
@@ -643,6 +787,63 @@ namespace Amathus.Common.Overview
                 @"^[^:\.]{2,35}\s+(reports|αναφέρει|bildiriyor|haberi)\s*:\s*",
                 "",
                 RegexOptions.IgnoreCase).Trim();
+        }
+
+        private static string ToConversationalClause(string rawTitle)
+        {
+            var cleaned = CleanForSpeech(rawTitle);
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                return string.Empty;
+            }
+            cleaned = cleaned.Trim().TrimEnd('.', '!', '?', ';', ':');
+            cleaned = Regex.Replace(cleaned, @"\s*:\s*", " — ");
+            return cleaned;
+        }
+
+        private static readonly HashSet<string> PreserveCapitalizedWordsEn = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Cyprus", "Cypriot", "Cypriots", "Nicosia", "Lefkosa", "Lefkoşa", "Limassol", "Larnaca", "Paphos",
+            "Famagusta", "Kyrenia", "Morphou", "Guzelyurt", "Güzelyurt", "Iskele", "İskele", "Karpas",
+            "Greek", "Turkish", "Turkey", "Greece", "Athens", "Ankara", "London", "Brussels", "Geneva",
+            "New", "York", "European", "Union", "United", "Nations", "Britain", "British", "Israel", "Lebanon",
+            "Christodoulides", "Tatar", "Erhurman", "Erhürman", "Arikli", "Arıklı", "Ustel", "Üstel",
+            "Ozgurguc", "Atun", "avrupa", "Politis", "Phileleftheros", "Kibris", "Kıbrıs", "Cronos", "Aphrodite",
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        };
+
+        private static string ToConversationalClauseEn(string rawTitle)
+        {
+            var cleaned = CleanForSpeech(rawTitle);
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                return string.Empty;
+            }
+            cleaned = cleaned.Trim().TrimEnd('.', '!', '?', ';', ':');
+            cleaned = Regex.Replace(cleaned, @"\s*:\s*", " and ");
+
+            var words = cleaned.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < words.Length; i++)
+            {
+                var w = words[i];
+                var stripped = Regex.Replace(w, @"[^\p{L}]", "");
+                if (string.IsNullOrEmpty(stripped))
+                {
+                    continue;
+                }
+                // Keep all-caps acronyms (UBP, YDP, EU, UN, etc.) and known proper nouns capitalized
+                if (stripped.Length >= 2 && stripped.All(char.IsUpper))
+                {
+                    continue;
+                }
+                if (PreserveCapitalizedWordsEn.Contains(stripped))
+                {
+                    continue;
+                }
+                words[i] = w.ToLowerInvariant();
+            }
+
+            return string.Join(" ", words);
         }
 
         private static string EnsureEndPunctuation(string text)

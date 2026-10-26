@@ -109,8 +109,16 @@ class NewsOverview {
 class PodcastDialogueTurn {
   static final RegExp _greekScriptRegex = RegExp(r'[\u0370-\u03FF\u1F00-\u1FFF]');
   static final RegExp _turkishSpecificRegex = RegExp(r'[ğĞşŞıİ]');
-  static final RegExp _latinMultiWordRegex = RegExp(
-    r'[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}\s+[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{4,}',
+  static final RegExp _englishCommonWordsRegex = RegExp(
+    r'\b(the|and|to|of|in|is|are|was|were|for|with|on|that|this|we|our|from|as|at|by|about|into|over|after)\b',
+    caseSensitive: false,
+  );
+  static final RegExp _latinLongPhraseRegex = RegExp(
+    r'(?:[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{3,}\s+){5,}[A-Za-zÀ-ÖØ-öø-ÿğĞşŞıİçÇöÖüÜ]{3,}',
+  );
+  static final RegExp _legacyPhraseRegex = RegExp(
+    r'(Grab a coffee and settle in|Yeah,\s*totally|across the island right now)',
+    caseSensitive: false,
   );
 
   static bool hasMixedOrUntranslatedTurns(List<PodcastDialogueTurn> turns) {
@@ -123,11 +131,14 @@ class PodcastDialogueTurn {
       if (_greekScriptRegex.hasMatch(tr) || _greekScriptRegex.hasMatch(en)) {
         return true;
       }
-      if (_turkishSpecificRegex.hasMatch(en) ||
-          _turkishSpecificRegex.hasMatch(el)) {
+      if (_turkishSpecificRegex.hasMatch(en) &&
+          !_englishCommonWordsRegex.hasMatch(en)) {
         return true;
       }
-      if (!_greekScriptRegex.hasMatch(el) || _latinMultiWordRegex.hasMatch(el)) {
+      if (!_greekScriptRegex.hasMatch(el) || _latinLongPhraseRegex.hasMatch(el)) {
+        return true;
+      }
+      if (_legacyPhraseRegex.hasMatch(en)) {
         return true;
       }
     }
@@ -222,32 +233,30 @@ class PodcastDialogueTurn {
     final turns = <PodcastDialogueTurn>[];
     var idx = 0;
 
+    final normEdition = edition.trim().toLowerCase();
     final titleEl = Constants.podcastEditionTitleFor(edition, 'el');
     final titleTr = Constants.podcastEditionTitleFor(edition, 'tr');
     final titleEn = Constants.podcastEditionTitleFor(edition, 'en');
 
-    final rundownFirstEl =
-        topStories.take(3).map((s) => '${s.titleFor('el')}.').join(' ');
-    final rundownFirstTr =
-        topStories.take(3).map((s) => '${s.titleFor('tr')}.').join(' ');
-    final rundownFirstEn =
-        topStories.take(3).map((s) => '${s.titleFor('en')}.').join(' ');
+    final summaryEl = overview.summaryFor('el').trim();
+    final summaryTr = overview.summaryFor('tr').trim();
+    final summaryEn = overview.summaryFor('en').trim();
 
-    final rundownSecondEl = topStories
-        .skip(3)
-        .take(3)
-        .map((s) => '${s.titleFor('el')}.')
-        .join(' ');
-    final rundownSecondTr = topStories
-        .skip(3)
-        .take(3)
-        .map((s) => '${s.titleFor('tr')}.')
-        .join(' ');
-    final rundownSecondEn = topStories
-        .skip(3)
-        .take(3)
-        .map((s) => '${s.titleFor('en')}.')
-        .join(' ');
+    final greetingEl = normEdition == 'morning'
+        ? 'Καλημέρα σας και καλωσορίσατε στις $titleEl! Καθώς ξεκινά η μέρα μας, ελάτε να δούμε μαζί τις βασικές εξελίξεις που διαμορφώνουν τη σημερινή επικαιρότητα.'
+        : (normEdition == 'midday'
+            ? 'Γεια σας και καλωσορίσατε στις $titleEl! Ώρα για ένα μικρό μεσημεριανό διάλειμμα για να δούμε πώς εξελίσσονται τα σημαντικότερα θέματα της ημέρας.'
+            : 'Καλησπέρα σας και καλωσορίσατε στις $titleEl! Καθώς κλείνει η μέρα, ελάτε να δούμε μαζί τις πιο σημαντικές εξελίξεις που ξεχώρισαν σήμερα.');
+    final greetingTr = normEdition == 'morning'
+        ? 'Günaydın, $titleTr bültenimize hoş geldiniz! Güne başlarken bugünün gündemini şekillendiren gelişmeleri gelin birlikte konuşalım.'
+        : (normEdition == 'midday'
+            ? 'Herkese merhaba, $titleTr bültenimize hoş geldiniz! Gün ortasında kısa bir mola verip şu ana kadar öne çıkan gelişmeleri birlikte ele alalım.'
+            : 'İyi akşamlar, $titleTr bültenimize hoş geldiniz! Günü tamamlarken bugün en çok konuşulan gelişmeleri gelin birlikte değerlendirelim.');
+    final greetingEn = normEdition == 'morning'
+        ? 'Good morning and welcome to $titleEn! As you\'re getting your day started, let\'s walk through the key stories shaping today\'s agenda.'
+        : (normEdition == 'midday'
+            ? 'Hello and welcome to $titleEn! Hope your day is going well — if you\'re taking a midday break, let\'s catch up on how today\'s big stories are unfolding.'
+            : 'Good evening and welcome to $titleEn! As you wind down for the day, let\'s look back at the major stories and developments that shaped today\'s news.');
 
     turns.add(PodcastDialogueTurn(
       index: idx++,
@@ -256,12 +265,9 @@ class PodcastDialogueTurn {
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
-      textEl:
-          'Γεια σας φίλοι μας και καλωσορίσατε στις $titleEl! Πάρτε τον καφέ σας κι ελάτε να δούμε μαζί τι συζητιέται σήμερα σε όλο το νησί. Ξεκινάμε με μια γρήγορη ματιά στους πρώτους τίτλους: $rundownFirstEl',
-      textTr:
-          'Herkese merhaba! $titleTr bültenimize hoş geldiniz. Kahvenizi alın, gelin bugün adanın iki yakasında neler konuşuluyor hızlıca bir bakalım: $rundownFirstTr',
-      textEn:
-          'Hey everyone, welcome back to $titleEn! Grab a coffee and settle in — here is a quick look at what everyone is talking about across the island right now: $rundownFirstEn',
+      textEl: summaryEl.isNotEmpty ? '$greetingEl $summaryEl' : greetingEl,
+      textTr: summaryTr.isNotEmpty ? '$greetingTr $summaryTr' : greetingTr,
+      textEn: summaryEn.isNotEmpty ? '$greetingEn $summaryEn' : greetingEn,
     ));
 
     turns.add(PodcastDialogueTurn(
@@ -271,20 +277,86 @@ class PodcastDialogueTurn {
       speakerNameEl: '',
       speakerNameTr: '',
       speakerNameEn: '',
-      textEl: rundownSecondEl.isNotEmpty
-          ? 'Και δεν είναι μόνο αυτά! Στην επικαιρότητα ξεχωρίζουν επίσης: $rundownSecondEl Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.'
-          : 'Πάμε λοιπόν να τα δούμε ένα-ένα πιο χαλαρά και αναλυτικά, ξεκινώντας από το πρώτο μας θέμα.',
-      textTr: rundownSecondTr.isNotEmpty
-          ? 'Aynen öyle, gündem bugün oldukça hareketli! Öne çıkan diğer başlıklarda ise şunlar var: $rundownSecondTr Hadi gelin ilk haberimizle sohbete başlayalım.'
-          : 'Hadi gelin ilk haberimizle sohbete başlayalım.',
-      textEn: rundownSecondEn.isNotEmpty
-          ? 'Yeah, plenty happening today! Also catching our eye right now: $rundownSecondEn Let\'s jump right in and unpack each story one by one.'
-          : 'Let\'s jump right in and unpack each story one by one.',
+      textEl:
+          'Πραγματικά έχουμε πολλά να συζητήσουμε σήμερα, με εξελίξεις στην πολιτική, την οικονομία και την κοινωνία. Πάμε λοιπόν να τα πάρουμε από την αρχή, ξεκινώντας από το πρώτο μας θέμα.',
+      textTr:
+          'Kesinlikle, bugün konuşacak çok önemli başlıklar ve gelişmeler var. Hadi gelin öne çıkan konuları tek tek ele almaya başlayalım.',
+      textEn:
+          'There is plenty to unpack today, with several key developments worth a closer look. Let\'s dive right in and take them one by one.',
     ));
+
+    const leadTransitionsEl = [
+      'Ας ξεκινήσουμε λοιπόν με το θέμα που βρίσκεται στην πρώτη γραμμή σήμερα.',
+      'Περνώντας τώρα στο επόμενο θέμα, έχουμε μια εξέλιξη που συζητιέται έντονα.',
+      'Ας δούμε τώρα τι συμβαίνει σε ένα άλλο μέτωπο της επικαιρότητας.',
+      'Συνεχίζοντας την κουβέντα μας, υπάρχει μια ακόμη υπόθεση που ξεχωρίζει.',
+      'Ένα άλλο ζήτημα που απασχολεί τις σημερινές συζητήσεις έχει επίσης μεγάλο ενδιαφέρον.',
+      'Ας στρέψουμε τώρα την προσοχή μας στην επόμενη ιστορία της ημέρας.',
+      'Παράλληλα, αξίζει να σταθούμε σε μια ακόμη εξέλιξη.',
+      'Και για το κλείσιμο της σημερινής μας ανασκόπησης, ας δούμε το τελευταίο μας θέμα.',
+    ];
+    const leadTransitionsTr = [
+      'İlk olarak bugün gündemin ilk sırasındaki gelişmeyle başlayalım.',
+      'Şimdi geçelim bugün çok konuşulan bir diğer önemli konuya.',
+      'Bu arada gündemin bir başka dikkat çeken başlığına da değinelim.',
+      'Sohbetimize sıradaki önemli gelişmeyle devam edelim.',
+      'Bugün yakından takip edilen bir diğer konu da oldukça dikkat çekici.',
+      'Gelin şimdi bir diğer önemli gelişmenin detaylarına bakalım.',
+      'Öte yandan gözden kaçmaması gereken bir haber daha var.',
+      'Ve bugünkü turumuzun son konusuna gelirken şu gelişmeye de bakalım.',
+    ];
+    const leadTransitionsEn = [
+      'Let\'s start with the biggest development leading the agenda today.',
+      'Turning to our next topic, there\'s another major story unfolding.',
+      'Meanwhile, another issue is drawing quite a bit of discussion today.',
+      'Shifting gears a bit, let\'s look at what\'s happening on another front.',
+      'Moving along, there is another important development making news today.',
+      'Next up, let\'s take a look at a story that has been building up recently.',
+      'On another note, here is a development that\'s also getting attention.',
+      'And to wrap up our main stories today, let\'s look at this final development.',
+    ];
+
+    const reactionsEl = [
+      'Κι αν δούμε πιο προσεκτικά το παρασκήνιο, καταλαβαίνουμε γιατί προκαλεί τόσες αντιδράσεις.',
+      'Πράγματι, και αξίζει να δούμε πώς αποτυπώνεται αυτό στα σημερινά ρεπορτάζ.',
+      'Εδώ ακριβώς είναι που οι λεπτομέρειες κάνουν όλη τη διαφορά.',
+      'Πρόκειται άλλωστε για ένα ζήτημα με άμεσο αντίκτυπο στην καθημερινότητα.',
+      'Και βλέποντας τις αντιδράσεις, φαίνεται ξεκάθαρα πόσο κρίσιμο είναι το θέμα.',
+      'Αυτό που έχει ιδιαίτερη σημασία εδώ είναι η συνέχεια της υπόθεσης.',
+      'Τα επιπλέον στοιχεία βοηθούν πολύ στο να δούμε τη συνολική εικόνα.',
+      'Είναι σίγουρα μια εξέλιξη που δείχνει πώς διαμορφώνεται το κλίμα.',
+    ];
+    const reactionsTr = [
+      'İşin arka planına baktığımızda neden bu kadar yankı uyandırdığını görmek zor değil.',
+      'Üstelik basındaki yansımalarına baktığımızda tablo daha da netleşiyor.',
+      'Buradaki detaylar sürecin nereye evrileceğini anlamak açısından çok önemli.',
+      'Doğrusu bu gelişme pek çok kesimi yakından ilgilendiriyor.',
+      'Gelen tepkilere bakılırsa bu tartışma daha epey sürecek gibi görünüyor.',
+      'Burada asıl dikkat çeken nokta ise bundan sonra atılacak adımlar.',
+      'Paylaşılan ek ayrıntılar konunun çerçevesini çok daha iyi ortaya koyuyor.',
+      'Bu durum gündemdeki dengelerin nasıl şekillendiğini de gösteriyor.',
+    ];
+    const reactionsEn = [
+      'And when you look closer at the details, you can see why this is drawing so much reaction.',
+      'Right, and the broader context in today\'s reporting really explains what is at stake.',
+      'That context really matters, especially when you look at how the situation is unfolding.',
+      'Indeed, and there\'s more to unpack when we look at the reactions coming in.',
+      'And looking at the fallout from this, the implications go even further.',
+      'What makes this particularly notable is where things could head next.',
+      'The follow-up details here really help put the whole issue into perspective.',
+      'It really highlights how closely this issue is being followed right now.',
+    ];
 
     for (var i = 0; i < topStories.length; i++) {
       final s = topStories[i];
       final hostALeads = i.isEven;
+      final splitEl = _splitNarrativeSentences(s.narrativeFor('el'));
+      final splitTr = _splitNarrativeSentences(s.narrativeFor('tr'));
+      final splitEn = _splitNarrativeSentences(s.narrativeFor('en'));
+
+      final leadEl = splitEl.$1.isNotEmpty ? splitEl.$1 : s.titleFor('el');
+      final leadTr = splitTr.$1.isNotEmpty ? splitTr.$1 : s.titleFor('tr');
+      final leadEn = splitEn.$1.isNotEmpty ? splitEn.$1 : s.titleFor('en');
 
       turns.add(PodcastDialogueTurn(
         index: idx++,
@@ -293,10 +365,20 @@ class PodcastDialogueTurn {
         speakerNameEl: '',
         speakerNameTr: '',
         speakerNameEn: '',
-        textEl: '${s.titleFor('el')}. ${s.narrativeFor('el')}',
-        textTr: '${s.titleFor('tr')}. ${s.narrativeFor('tr')}',
-        textEn: '${s.titleFor('en')}. ${s.narrativeFor('en')}',
+        textEl: '${leadTransitionsEl[i % leadTransitionsEl.length]} $leadEl',
+        textTr: '${leadTransitionsTr[i % leadTransitionsTr.length]} $leadTr',
+        textEn: '${leadTransitionsEn[i % leadTransitionsEn.length]} $leadEn',
       ));
+
+      final followEl = splitEl.$2.isNotEmpty
+          ? '${reactionsEl[i % reactionsEl.length]} ${splitEl.$2}'
+          : reactionsEl[i % reactionsEl.length];
+      final followTr = splitTr.$2.isNotEmpty
+          ? '${reactionsTr[i % reactionsTr.length]} ${splitTr.$2}'
+          : reactionsTr[i % reactionsTr.length];
+      final followEn = splitEn.$2.isNotEmpty
+          ? '${reactionsEn[i % reactionsEn.length]} ${splitEn.$2}'
+          : reactionsEn[i % reactionsEn.length];
 
       turns.add(PodcastDialogueTurn(
         index: idx++,
@@ -305,12 +387,9 @@ class PodcastDialogueTurn {
         speakerNameEl: '',
         speakerNameTr: '',
         speakerNameEn: '',
-        textEl:
-            'Έτσι ακριβώς. Είναι ένα θέμα που συζητιέται έντονα σήμερα και θα έχει μεγάλο ενδιαφέρον να δούμε πώς θα εξελιχθεί.',
-        textTr:
-            'Kesinlikle. Bu gelişme bugün ada gündeminde en çok konuşulan başlıklar arasında yer alıyor.',
-        textEn:
-            'Yeah, totally — this is definitely one of those stories everyone across the island is keeping a close eye on today.',
+        textEl: followEl,
+        textTr: followTr,
+        textEn: followEn,
       ));
     }
 
@@ -329,7 +408,6 @@ class PodcastDialogueTurn {
           'And that brings us to the end of today\'s roundup! If any story caught your ear, just tap on its card right below to read the full coverage.',
     ));
 
-    final normEdition = edition.trim().toLowerCase();
     final closingEl = normEdition == 'morning'
         ? 'Σας ευχαριστούμε πολύ για την παρέα! Τα λέμε ξανά στη Μεσημεριανή μας έκδοση — να έχετε ένα υπέροχο πρωινό!'
         : (normEdition == 'midday'
@@ -359,6 +437,19 @@ class PodcastDialogueTurn {
     ));
 
     return turns;
+  }
+
+  static (String, String) _splitNarrativeSentences(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return ('', '');
+    final parts = trimmed
+        .split(RegExp(r'(?<=[\.\!\?])\s+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return ('', '');
+    if (parts.length == 1) return (parts.first, '');
+    return (parts.first, parts.skip(1).take(2).join(' '));
   }
 }
 

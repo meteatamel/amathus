@@ -671,12 +671,21 @@ namespace Amathus.Common.Overview
             sb.AppendLine("- Provide topic: one of \"politics\", \"society\", \"economy\", \"sports\", \"culture\", or \"world\".");
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
             sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
+            var editionToneHint = edition switch
+            {
+                "morning" => "This is the Morning edition — use a fresh start-of-the-day tone (you may occasionally mention morning coffee, but vary your morning greetings).",
+                "midday" => "This is the Mid-Day edition — use a midday catch-up / afternoon break tone. NEVER say 'grab a coffee' or use morning clichés.",
+                _ => "This is the Evening edition — use a warm evening wind-down / end-of-day reflection tone. NEVER say 'grab a coffee' or use morning clichés."
+            };
+
             sb.AppendLine("3. Also generate a ~5-minute two-host casual, conversational daily podcast script (podcastTurns, 20 alternating turns between Speaker \"A\" and Speaker \"B\") in English (textEn), Turkish (textTr), and Greek (textEl):");
-            sb.AppendLine("- TONE & STYLE: Warm, casual, friendly, and engaging — like two smart, approachable co-hosts chatting over coffee (similar to NotebookLM Audio Overviews or Morning Brew Daily). Avoid stiff newsreader clichés; use natural spoken phrasing, contractions, and conversational transitions in English, Turkish, and Greek.");
-            sb.AppendLine($"- Turn 0 (speaker \"A\") MUST warmly welcome listeners to \"{editionEn}\" (in Turkish: \"{editionTr}\", in Greek: \"{editionEl}\"), explicitly mentioning that this is the Morning, Mid-Day, or Evening edition, and casually share the first half of a quick headline preview.");
-            sb.AppendLine("- Turn 1 (speaker \"B\") MUST complete the quick headline preview and casually transition into unpacking the top stories one by one.");
-            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces the story in a natural, conversational way, and the second speaker reacts naturally and adds context, why it matters, and cross-community perspective without repeating the first speaker.");
-            sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST warmly wrap up this edition (\"{editionEn}\") and invite listeners to hang out again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
+            sb.AppendLine($"- EDITION & OPENING TONE: {editionToneHint}");
+            sb.AppendLine("- NATURAL CONVERSATION (DO NOT READ HEADLINES): Never simply read or list news titles/headlines out loud — neither in the opening intro (Turns 0 and 1) nor when introducing each story (Turns 2–17). Instead, talk through the themes and stories naturally in complete, flowing spoken sentences, as two smart, approachable co-hosts having an authentic conversation.");
+            sb.AppendLine("- Turn 0 (speaker \"A\") MUST warmly welcome listeners to \"" + editionEn + "\" (in Turkish: \"" + editionTr + "\", in Greek: \"" + editionEl + "\") with a time-appropriate greeting and naturally talk through a couple of the biggest themes shaping today's news without reciting headline titles.");
+            sb.AppendLine("- Turn 1 (speaker \"B\") MUST build on that naturally, mention one or two other interesting angles coming up in conversational phrasing (not headline lists), and transition smoothly into the first story.");
+            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces what is happening in the story in a natural, conversational way (never reading a headline title), and the second speaker reacts naturally and adds context, why it matters, and cross-community perspective without repeating the first speaker.");
+            sb.AppendLine("- AVOID REPETITIVE FILLERS: Do NOT overuse phrases like \"Yeah, totally\", \"Totally\", \"across the island\", \"island-wide\", or \"Definitely a story we'll be watching closely\". Vary reactions, openings, and transitions on every turn so no two turns sound templated or start the same way.");
+            sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST warmly wrap up this edition (\"{editionEn}\") and invite listeners to join again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
             sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two podcast hosts. Do NOT mention the number of stories/columns, the number of newspapers/news sources, or the number of articles analyzed.");
             sb.AppendLine("Return strictly valid JSON with schema:");
             sb.AppendLine(@"{
@@ -1071,7 +1080,15 @@ namespace Amathus.Common.Overview
 
             if (tl == "en" && TurkishSpecificRegex.IsMatch(text))
             {
-                return true;
+                // Proper nouns like "Erhan Arıklı" or "Lefkoşa" in an English sentence should not trigger re-translation
+                bool hasEnglishWords = Regex.IsMatch(
+                    text,
+                    @"\b(the|and|to|of|in|is|are|was|were|for|with|on|that|this|from|as|at|by|after|over)\b",
+                    RegexOptions.IgnoreCase);
+                if (!hasEnglishWords)
+                {
+                    return true;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(majoritySourceLang) &&
