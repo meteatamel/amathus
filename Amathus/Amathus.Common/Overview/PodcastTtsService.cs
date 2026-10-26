@@ -114,6 +114,10 @@ namespace Amathus.Common.Overview
 
             var persona = isHostB ? personaB : personaA;
             var style = isHostB ? styleB : styleA;
+            if (lang == "el")
+            {
+                style += "; articulate Greek words clearly, pronouncing 'Δι-κοινοτικές' / 'δι-κοινοτικά' (bicommunal, from κοινότητα) distinctly and never as 'δικομματικές'";
+            }
             return (locale, persona, $"{locale}-Chirp3-HD-{persona}", style);
         }
 
@@ -208,7 +212,8 @@ namespace Amathus.Common.Overview
                 ? $"edge:{edgeVoiceName}"
                 : $"gemini38:{lang}:{personaName}";
 
-            var cacheKey = $"{effectiveVoiceId}:{cleanedText}";
+            var ttsText = PrepareTextForTts(cleanedText, lang);
+            var cacheKey = $"v2:{effectiveVoiceId}:{ttsText}";
             if (AudioCache.TryGetValue(cacheKey, out var cached) && cached != null && cached.Length > 0)
             {
                 return cached;
@@ -217,7 +222,7 @@ namespace Amathus.Common.Overview
             if (normalizedPreset != "edge_neural")
             {
                 var gemini38Bytes = await TrySynthesizeGemini38TtsAsync(
-                    cleanedText,
+                    ttsText,
                     lang,
                     speaker,
                     normalizedPreset,
@@ -234,7 +239,7 @@ namespace Amathus.Common.Overview
                 }
 
                 var gcpBytes = await TrySynthesizeGoogleCloudTtsAsync(
-                    cleanedText,
+                    ttsText,
                     lang,
                     speaker,
                     normalizedPreset,
@@ -252,7 +257,25 @@ namespace Amathus.Common.Overview
             }
 
             // Fallback (or explicit edge_neural selection) via Microsoft Edge Neural TTS
-            return await SynthesizeEdgeNeuralAsync(cleanedText, lang, speaker, cacheKey, cancellationToken);
+            return await SynthesizeEdgeNeuralAsync(ttsText, lang, speaker, cacheKey, cancellationToken);
+        }
+
+        private static string PrepareTextForTts(string text, string lang)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            if (lang == "el")
+            {
+                // Hyphenate Δι-κοινοτικές / δι-κοινοτικά so Greek TTS models articulate "κοινοτικές" (communal)
+                // clearly instead of slurring or autocorrecting toward the more common "δικομματικές" (bipartisan).
+                text = Regex.Replace(text, @"Δικοινοτικ", "Δι-κοινοτικ");
+                text = Regex.Replace(text, @"δικοινοτικ", "δι-κοινοτικ");
+            }
+
+            return text;
         }
 
         private static async Task<string> GetGoogleAccessTokenAsync(CancellationToken cancellationToken)
