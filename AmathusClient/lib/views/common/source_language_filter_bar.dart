@@ -26,16 +26,20 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
   final ValueNotifier<String> modeNotifier;
   final String topLabel;
   final String latestLabel;
-  final String topEmoji;
-  final String latestEmoji;
+  final IconData topIcon;
+  final IconData topActiveIcon;
+  final IconData latestIcon;
+  final IconData latestActiveIcon;
 
   const AppBarModeTabs({
     super.key,
     required this.modeNotifier,
     required this.topLabel,
     required this.latestLabel,
-    this.topEmoji = '✨',
-    this.latestEmoji = '📰',
+    this.topIcon = Icons.auto_awesome_outlined,
+    this.topActiveIcon = Icons.auto_awesome_rounded,
+    this.latestIcon = Icons.schedule_outlined,
+    this.latestActiveIcon = Icons.schedule_rounded,
   });
 
   @override
@@ -65,7 +69,7 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   Expanded(
                     child: _AppBarModeTabButton(
-                      emoji: topEmoji,
+                      icon: isTop ? topActiveIcon : topIcon,
                       label: topLabel,
                       selected: isTop,
                       onTap: () => modeNotifier.value = 'top',
@@ -73,7 +77,7 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   Expanded(
                     child: _AppBarModeTabButton(
-                      emoji: latestEmoji,
+                      icon: !isTop ? latestActiveIcon : latestIcon,
                       label: latestLabel,
                       selected: !isTop,
                       onTap: () => modeNotifier.value = 'latest',
@@ -90,13 +94,13 @@ class AppBarModeTabs extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _AppBarModeTabButton extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _AppBarModeTabButton({
-    required this.emoji,
+    required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -106,6 +110,7 @@ class _AppBarModeTabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     const activeColor = Color(0xFFFBBF24);
     final inactiveColor = Colors.white.withValues(alpha: 0.74);
+    final effectiveColor = selected ? activeColor : inactiveColor;
 
     return InkWell(
       onTap: onTap,
@@ -123,12 +128,10 @@ class _AppBarModeTabButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              emoji,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.0,
-              ),
+            Icon(
+              icon,
+              size: 16.5,
+              color: effectiveColor,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -139,7 +142,7 @@ class _AppBarModeTabButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-                  color: selected ? activeColor : inactiveColor,
+                  color: effectiveColor,
                 ),
               ),
             ),
@@ -174,13 +177,14 @@ class SourceLanguageFilterBar extends StatelessWidget {
     this.countsByNewspaper,
   });
 
-  Widget _leadingFor(String code) {
+  Widget _leadingFor(String code, {required bool selected}) {
     if (code == 'tr' || code == 'el' || code == 'en') {
       return FlagIcon(languageCode: code, width: 17, height: 12);
     }
-    return const Text(
-      '🌍',
-      style: TextStyle(fontSize: 13, height: 1.0),
+    return Icon(
+      Icons.public_rounded,
+      size: 14.5,
+      color: selected ? Colors.white : const Color(0xFF334155),
     );
   }
 
@@ -327,7 +331,7 @@ class SourceLanguageFilterBar extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _leadingFor(code),
+                _leadingFor(code, selected: selected),
                 if (showLabel) ...[
                   const SizedBox(width: 5),
                   Text(
@@ -394,9 +398,12 @@ class ViewModeDropdownSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '✨',
-                    style: TextStyle(fontSize: 16, height: 1.0),
+                  Icon(
+                    isTop
+                        ? Icons.auto_awesome_rounded
+                        : Icons.auto_awesome_outlined,
+                    size: 18,
+                    color: const Color(0xFF0F2942),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -425,9 +432,10 @@ class ViewModeDropdownSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '📰',
-                    style: TextStyle(fontSize: 16, height: 1.0),
+                  Icon(
+                    !isTop ? Icons.schedule_rounded : Icons.schedule_outlined,
+                    size: 18,
+                    color: const Color(0xFF0F2942),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -462,9 +470,10 @@ class ViewModeDropdownSelector extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  isTop ? '✨' : '📰',
-                  style: const TextStyle(fontSize: 14, height: 1.0),
+                Icon(
+                  isTop ? Icons.auto_awesome_rounded : Icons.schedule_rounded,
+                  size: 15.5,
+                  color: const Color(0xFF0F2942),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -674,9 +683,10 @@ class _NewspaperFilterChipBarState extends State<NewspaperFilterChipBar> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  '📰',
-                  style: TextStyle(fontSize: 13, height: 1.0),
+                Icon(
+                  selected ? Icons.newspaper_rounded : Icons.newspaper_outlined,
+                  size: 14.5,
+                  color: selected ? Colors.white : const Color(0xFF334155),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -758,9 +768,12 @@ class _NewspaperFilterChipBarState extends State<NewspaperFilterChipBar> {
                   ),
                   const SizedBox(width: 5),
                 ] else ...[
-                  const Text(
-                    '📰',
-                    style: TextStyle(fontSize: 12.5, height: 1.0),
+                  Icon(
+                    selected
+                        ? Icons.newspaper_rounded
+                        : Icons.newspaper_outlined,
+                    size: 14,
+                    color: selected ? Colors.white : const Color(0xFF334155),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -890,9 +903,10 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '📰',
-                    style: TextStyle(fontSize: 16, height: 1.0),
+                  const Icon(
+                    Icons.newspaper_rounded,
+                    size: 18,
+                    color: Color(0xFF0F2942),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -988,9 +1002,10 @@ class _NewspaperDropdownSelectorState extends State<NewspaperDropdownSelector> {
                   ),
                   const SizedBox(width: 6),
                 ] else ...[
-                  const Text(
-                    '📰',
-                    style: TextStyle(fontSize: 14, height: 1.0),
+                  const Icon(
+                    Icons.newspaper_rounded,
+                    size: 15.5,
+                    color: Color(0xFF0F2942),
                   ),
                   const SizedBox(width: 5),
                 ],
@@ -1127,9 +1142,10 @@ class ColumnistDropdownSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    '✍️',
-                    style: TextStyle(fontSize: 16, height: 1.0),
+                  const Icon(
+                    Icons.edit_note_rounded,
+                    size: 18,
+                    color: Color(0xFF0F2942),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1218,9 +1234,10 @@ class ColumnistDropdownSelector extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  '✍️',
-                  style: TextStyle(fontSize: 14, height: 1.0),
+                const Icon(
+                  Icons.edit_note_rounded,
+                  size: 16,
+                  color: Color(0xFF0F2942),
                 ),
                 const SizedBox(width: 4),
                 ConstrainedBox(
@@ -1251,22 +1268,30 @@ class ColumnistDropdownSelector extends StatelessWidget {
   }
 }
 
-String topicEmojiFor(String topicCode) {
+IconData topicIconFor(String topicCode, {bool selected = false}) {
   switch (topicCode.trim().toLowerCase()) {
+    case 'all':
+      return Icons.apps_rounded;
     case 'politics':
-      return '🏛️';
+      return selected
+          ? Icons.account_balance_rounded
+          : Icons.account_balance_outlined;
     case 'society':
-      return '⚖️';
+      return selected ? Icons.groups_rounded : Icons.groups_outlined;
     case 'economy':
-      return '📈';
+      return Icons.trending_up_rounded;
     case 'sports':
-      return '⚽';
+      return selected
+          ? Icons.sports_soccer_rounded
+          : Icons.sports_soccer_outlined;
     case 'culture':
-      return '🎭';
+      return selected
+          ? Icons.theater_comedy_rounded
+          : Icons.theater_comedy_outlined;
     case 'world':
-      return '🌍';
+      return selected ? Icons.public_rounded : Icons.public_outlined;
     default:
-      return '🏷️';
+      return selected ? Icons.label_rounded : Icons.label_outline_rounded;
   }
 }
 
@@ -1339,7 +1364,7 @@ class TopicFilterChipBar extends StatelessWidget {
         return Container(
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xFFF8FAFC),
             border: Border(
               bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
             ),
@@ -1426,7 +1451,8 @@ class _TopicChipButton extends StatelessWidget {
     const activeNavy = Color(0xFF0F2942);
     final fullLabel = Constants.topicLabelFor(topicCode);
     final shortLabel = Constants.topicShortLabelFor(topicCode);
-    final emoji = topicEmojiFor(topicCode);
+    final iconData = topicIconFor(topicCode, selected: selected);
+    final accentColor = topicColorsFor(topicCode).$2;
     final tooltipText =
         count != null ? '$fullLabel ($count)' : fullLabel;
 
@@ -1453,15 +1479,13 @@ class _TopicChipButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  emoji,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.0,
-                  ),
+                Icon(
+                  iconData,
+                  size: 14.5,
+                  color: selected ? Colors.white : accentColor,
                 ),
                 if (showLabel) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 4.5),
                   Text(
                     shortLabel,
                     style: TextStyle(
@@ -1513,7 +1537,7 @@ class TopicBadgePill extends StatelessWidget {
         final isSelected = Constants.selectedTopicNotifier.value == norm;
         final (bg, fg, border) = topicColorsFor(norm);
         final label = Constants.topicLabelFor(norm);
-        final emoji = topicEmojiFor(norm);
+        final iconData = topicIconFor(norm, selected: true);
 
         return Material(
           color: Colors.transparent,
@@ -1539,12 +1563,10 @@ class TopicBadgePill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    emoji,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      height: 1.0,
-                    ),
+                  Icon(
+                    iconData,
+                    size: 13.5,
+                    color: fg,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1592,12 +1614,10 @@ class ColumnistBadgePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            '✍️',
-            style: TextStyle(
-              fontSize: 11.5,
-              height: 1.0,
-            ),
+          const Icon(
+            Icons.edit_note_rounded,
+            size: 14,
+            color: Color(0xFF92400E),
           ),
           const SizedBox(width: 4),
           Flexible(

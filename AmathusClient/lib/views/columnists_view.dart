@@ -456,7 +456,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                         wideTile: true,
                         bulkController: _bulkTranslateController,
                         bannerText: Constants.COLUMNISTS_BANNER,
-                        bannerEmoji: '📰',
+                        bannerIcon: Icons.edit_note_rounded,
                         columnistsOnly: true,
                       ),
               ),
@@ -574,7 +574,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                     if (index == 0) {
                       return PageIntroBanner(
                         text: Constants.TOP_COLUMNS_BANNER,
-                        emoji: '✨',
+                        icon: Icons.auto_awesome_rounded,
                       );
                     }
                     final storyIdx = index - 1;

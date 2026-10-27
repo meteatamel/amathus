@@ -9,18 +9,18 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class PageIntroBanner extends StatelessWidget {
   final String text;
-  final String emoji;
+  final IconData icon;
 
   const PageIntroBanner({
     super.key,
     required this.text,
-    this.emoji = '✨',
+    this.icon = Icons.auto_awesome_rounded,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
@@ -32,11 +32,18 @@ class PageIntroBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(
-              fontSize: 18,
-              height: 1.0,
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBBF24).withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 19,
+              color: const Color(0xFFFBBF24),
             ),
           ),
           const SizedBox(width: 12),
@@ -540,14 +547,17 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
     }
   }
 
-  String _editionEmoji(String edition) {
+  IconData _editionIcon(String edition, {required bool isPlaying}) {
+    if (isPlaying) {
+      return Icons.graphic_eq_rounded;
+    }
     switch (edition) {
       case 'morning':
-        return '☀️';
+        return Icons.wb_sunny_rounded;
       case 'midday':
-        return '🌤️';
+        return Icons.light_mode_rounded;
       default:
-        return '🌙';
+        return Icons.nights_stay_rounded;
     }
   }
 
@@ -601,18 +611,18 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF59E0B)
                             .withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(11),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        _editionEmoji(edition),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          height: 1.0,
-                        ),
+                      child: Icon(
+                        _editionIcon(edition, isPlaying: isPlayingNow),
+                        size: 20,
+                        color: const Color(0xFF0F2942),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -733,7 +743,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                     ),
                     const SizedBox(width: 6),
                     InkWell(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       onTap: _controller.cycleSpeed,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -743,15 +753,30 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                         decoration: BoxDecoration(
                           color:
                               const Color(0xFF0F2942).withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${_controller.playbackRate}x',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F2942),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFF0F2942)
+                                .withValues(alpha: 0.16),
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.speed_rounded,
+                              size: 13.5,
+                              color: Color(0xFF0F2942),
+                            ),
+                            const SizedBox(width: 3.5),
+                            Text(
+                              '${_controller.playbackRate}x',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F2942),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

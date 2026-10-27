@@ -619,7 +619,7 @@ class _OverviewViewState extends State<OverviewView> {
                     if (index == 0) {
                       return PageIntroBanner(
                         text: Constants.TOP_STORIES_BANNER,
-                        emoji: '✨',
+                        icon: Icons.auto_awesome_rounded,
                       );
                     }
                     if (index == 1) {
@@ -781,18 +781,36 @@ class OverviewStoryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TopicBadgePill(
+                    topicCode: story.effectiveTopic,
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 13,
+                    color: Colors.blueGrey.shade500,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blueGrey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: TopicBadgePill(
-                            topicCode: story.effectiveTopic,
-                          ),
-                        ),
                         Text(
                           title,
                           style: const TextStyle(
@@ -863,17 +881,6 @@ class OverviewStoryCard extends StatelessWidget {
                         ),
                         for (final source in sources)
                           _NewspaperStoryChip(source: source),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Text(
-                            time,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blueGrey.shade600,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),

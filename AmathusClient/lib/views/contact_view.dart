@@ -84,9 +84,18 @@ class _ContactFormState extends State<ContactForm> {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        '🕊️',
-                        style: TextStyle(fontSize: 20, height: 1.0),
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBBF24)
+                              .withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.handshake_outlined,
+                          size: 19,
+                          color: Color(0xFFFBBF24),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -153,9 +162,10 @@ class _ContactFormState extends State<ContactForm> {
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Text(
-                        '✉️',
-                        style: TextStyle(fontSize: 20, height: 1.0),
+                      leading: const Icon(
+                        Icons.mail_outline_rounded,
+                        color: Color(0xFF0F172A),
+                        size: 21,
                       ),
                       title: Linkify(
                         onOpen: (link) => _launchURL(link.url, context),

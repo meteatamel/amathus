@@ -83,7 +83,7 @@ class AppDrawer extends StatelessWidget {
               children: [
                 _buildDrawerItem(
                   context,
-                  emoji: '📰',
+                  icon: Icons.newspaper_rounded,
                   title: Constants.NEWS,
                   onTap: () => Navigator.pushReplacement(
                     context,
@@ -94,7 +94,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  emoji: '✍️',
+                  icon: Icons.edit_note_rounded,
                   title: Constants.COLUMNISTS,
                   onTap: () => Navigator.pushReplacement(
                     context,
@@ -109,7 +109,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  emoji: '⚙️',
+                  icon: Icons.tune_rounded,
                   title: Constants.SETTINGS,
                   onTap: () {
                     Navigator.pop(context);
@@ -121,7 +121,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
-                  emoji: '🕊️',
+                  icon: Icons.mail_outline_rounded,
                   title: Constants.CONTACT,
                   onTap: () {
                     Navigator.pop(context);
@@ -142,7 +142,7 @@ class AppDrawer extends StatelessWidget {
                     }
                     return _buildDrawerItem(
                       context,
-                      emoji: '📲',
+                      icon: Icons.install_mobile_rounded,
                       title: Constants.INSTALL_APP_TITLE,
                       onTap: () {
                         final navContext = Navigator.of(context).context;
@@ -178,14 +178,19 @@ class AppDrawer extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
-                        child: Text(
-                          '🕊️',
-                          style: TextStyle(fontSize: 16, height: 1.0),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F2942).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.handshake_outlined,
+                          size: 16,
+                          color: Color(0xFF0F2942),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           Constants.ABOUT_BODY,
@@ -210,15 +215,26 @@ class AppDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(
     BuildContext context, {
-    required String emoji,
+    required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Text(
-        emoji,
-        style: const TextStyle(fontSize: 20, height: 1.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      leading: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F2942).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: const Color(0xFF0F2942),
+        ),
       ),
       title: Text(
         title,

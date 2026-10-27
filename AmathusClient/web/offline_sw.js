@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amathus-offline-v6';
+const CACHE_NAME = 'amathus-offline-v9';
 
 const ESSENTIAL_SHELL_URLS = [
   '/',
@@ -60,7 +60,7 @@ function precacheAll() {
             if (existing) {
               return;
             }
-            const response = await fetch(url);
+            const response = await fetch(url, { cache: 'no-cache' });
             if (response && response.status === 200) {
               await putInCacheWithPathnameAlias(cache, url, response);
             }
@@ -81,7 +81,7 @@ self.addEventListener('install', (event) => {
       await Promise.all(
         ESSENTIAL_SHELL_URLS.map(async (url) => {
           try {
-            const response = await fetch(url);
+            const response = await fetch(url, { cache: 'no-cache' });
             if (response && response.status === 200) {
               await putInCacheWithPathnameAlias(cache, url, response);
             }
@@ -105,7 +105,12 @@ self.addEventListener('activate', (event) => {
           for (const req of oldReqs) {
             try {
               const u = new URL(req.url);
-              if (isDataApiRequest(u.pathname)) continue;
+              // Only carry over cached podcast audio & imageproxy across version bumps;
+              // never copy old JS bundles or tree-shaken icon fonts.
+              const isMediaCache =
+                u.pathname.startsWith('/api/v1/overview/podcast/audio') ||
+                u.pathname.startsWith('/api/v1/imageproxy');
+              if (!isMediaCache) continue;
               const already = await newCache.match(req);
               if (!already) {
                 const oldRes = await oldCache.match(req);
@@ -134,8 +139,6 @@ function isCacheFirstStaticAsset(pathname) {
   return (
     pathname.startsWith('/canvaskit/') ||
     pathname.startsWith('/icons/') ||
-    pathname.startsWith('/assets/fonts/') ||
-    pathname.startsWith('/assets/packages/') ||
     pathname.startsWith('/assets/shaders/')
   );
 }
@@ -238,9 +241,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for app shell (index.html, main.dart.js, etc.) and media
+  // Network-first for app shell (index.html, main.dart.js, fonts, etc.) and media
+  const fetchOpts = url.origin === self.location.origin ? { cache: 'no-cache' } : {};
   event.respondWith(
-    fetch(req)
+    fetch(req, fetchOpts)
       .then((res) => {
         if (res && (res.status === 200 || res.type === 'opaque')) {
           const copy = res.clone();

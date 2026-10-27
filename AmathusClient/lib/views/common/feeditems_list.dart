@@ -5,6 +5,7 @@ import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/common/feeditem_list_tile.dart';
 import 'package:amathus/views/common/offline_banner.dart';
 import 'package:amathus/views/common/progress_indicator.dart';
+import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:flutter/material.dart';
 
 import 'feeditem_list_tile_wide.dart';
@@ -17,7 +18,7 @@ class FeedItemsList extends StatefulWidget {
   final bool wideTile;
   final BulkTranslateController? bulkController;
   final String? bannerText;
-  final String bannerEmoji;
+  final IconData? bannerIcon;
   final bool Function(FeedItem)? customFilter;
   final Listenable? extraListenable;
   final bool columnistsOnly;
@@ -29,7 +30,7 @@ class FeedItemsList extends StatefulWidget {
     this.wideTile = false,
     this.bulkController,
     this.bannerText,
-    this.bannerEmoji = '📰',
+    this.bannerIcon,
     this.customFilter,
     this.extraListenable,
     this.columnistsOnly = false,
@@ -239,43 +240,12 @@ class _FeedItemsListState extends State<FeedItemsList> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     if (hasBanner && index == 0) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              widget.bannerEmoji,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.0,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                banner,
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.45,
-                                  color: Colors.white.withValues(alpha: 0.94),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      return PageIntroBanner(
+                        text: banner,
+                        icon: widget.bannerIcon ??
+                            (widget.columnistsOnly
+                                ? Icons.edit_note_rounded
+                                : Icons.schedule_rounded),
                       );
                     }
                     final itemIndex = hasBanner ? index - 1 : index;

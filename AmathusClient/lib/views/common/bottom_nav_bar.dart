@@ -50,7 +50,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _BottomNavTabButton(
-                          emoji: '📰',
+                          icon: Icons.newspaper_outlined,
+                          activeIcon: Icons.newspaper_rounded,
                           label: Constants.NEWS,
                           selected: normalizedIndex == 0,
                           onTap: () =>
@@ -59,7 +60,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                       ),
                       Expanded(
                         child: _BottomNavTabButton(
-                          emoji: '✍️',
+                          icon: Icons.edit_note_outlined,
+                          activeIcon: Icons.edit_note_rounded,
                           label: Constants.COLUMNISTS,
                           selected: normalizedIndex == 1,
                           onTap: () =>
@@ -79,13 +81,15 @@ class AppBottomNavigationBar extends StatelessWidget {
 }
 
 class _BottomNavTabButton extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _BottomNavTabButton({
-    required this.emoji,
+    required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -94,49 +98,49 @@ class _BottomNavTabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const activeNavy = Color(0xFF0F2942);
-    const inactiveSlate = Color(0xFF334155);
+    const inactiveSlate = Color(0xFF475569);
 
     return InkWell(
       onTap: onTap,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: selected
-              ? activeNavy.withValues(alpha: 0.05)
-              : Colors.transparent,
-          border: Border(
-            top: BorderSide(
-              color: selected ? activeNavy : Colors.transparent,
-              width: 3,
+      child: SizedBox(
+        height: 58,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? activeNavy.withValues(alpha: 0.10)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  selected ? activeIcon : icon,
+                  size: 20,
+                  color: selected ? activeNavy : inactiveSlate,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: selected ? activeNavy : inactiveSlate,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(
-                fontSize: 17,
-                height: 1.0,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  color: selected ? activeNavy : inactiveSlate,
-                  letterSpacing: -0.1,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

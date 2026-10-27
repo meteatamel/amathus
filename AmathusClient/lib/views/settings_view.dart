@@ -102,11 +102,20 @@ class _ReorderableFeedListState extends State<_ReorderableFeedList> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          '📰',
-                          style: TextStyle(fontSize: 19, height: 1.0),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F2942)
+                                .withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: const Icon(
+                            Icons.newspaper_rounded,
+                            size: 19,
+                            color: Color(0xFF0F2942),
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             Constants.REORDER_NEWS,

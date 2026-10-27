@@ -61,13 +61,22 @@ class ShareIconButton extends StatelessWidget {
     return IconButton(
       tooltip: Constants.SHARE,
       visualDensity: compact ? VisualDensity.compact : null,
-      padding: compact ? const EdgeInsets.all(4) : null,
-      constraints:
-          compact ? const BoxConstraints(minWidth: 30, minHeight: 30) : null,
+      style: compact
+          ? IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF1F5F9),
+              foregroundColor: const Color(0xFF0F2942),
+              padding: const EdgeInsets.all(6),
+              minimumSize: const Size(30, 30),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9),
+              ),
+            )
+          : null,
       icon: Icon(
-        Icons.share_outlined,
-        size: compact ? 18 : 20,
-        color: const Color(0xFF2563EB),
+        Icons.share_rounded,
+        size: compact ? 16 : 20,
+        color: compact ? const Color(0xFF0F2942) : const Color(0xFF2563EB),
       ),
       onPressed: () async =>
           await _socialShare(context, item.title, item.url ?? ''),
