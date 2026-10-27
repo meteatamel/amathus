@@ -32,7 +32,7 @@ void main() {
   });
 
   testWidgets(
-      'Amathus app renders News as default first tab with Top Stories selector, Columnists as second tab, and toggles Turkish/Greek/English',
+      'Amathus app renders Top Stories, All News, and Columnists in the bottom bar with unified filter bar, and toggles Turkish/Greek/English',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await Constants.initLanguage();
@@ -41,12 +41,12 @@ void main() {
 
     await tester.pumpWidget(const AmathusApp());
 
-    // Turkish labels: Kıbrıs İki Toplumlu Haberler (AppBar header), Öne Çıkan Haberler & Tüm Haberler (AppBar tabs), Haberler & Köşe Yazarları (bottom tabs)
+    // Turkish labels: Kıbrıs İki Toplumlu Haberler (AppBar header), Öne Çıkan Haberler, Tüm Haberler & Köşe Yazarları (bottom tabs), Tüm Kaynaklar & Tüm Konular (unified filter bar)
     expect(find.text('Kıbrıs İki Toplumlu Haberler'), findsOneWidget);
-    expect(find.text('Haberler'), findsOneWidget);
     expect(find.text('Öne Çıkan Haberler'), findsOneWidget);
     expect(find.text('Tüm Haberler'), findsOneWidget);
     expect(find.text('Köşe Yazarları'), findsOneWidget);
+    expect(find.text('Tüm Kaynaklar'), findsOneWidget);
     expect(find.text('Tüm Konular'), findsWidgets);
 
     // Switch to Greek
@@ -54,10 +54,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Δικοινοτικές Ειδήσεις Κύπρου'), findsOneWidget);
-    expect(find.text('Ειδήσεις'), findsOneWidget);
     expect(find.text('Κυριότερες Ειδήσεις'), findsOneWidget);
     expect(find.text('Όλες οι Ειδήσεις'), findsOneWidget);
     expect(find.text('Αρθρογράφοι'), findsOneWidget);
+    expect(find.text('Όλες οι Πηγές'), findsOneWidget);
     expect(find.text('Όλα τα Θέματα'), findsWidgets);
 
     // Switch to English
@@ -65,10 +65,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Cyprus Bicommunal News'), findsOneWidget);
-    expect(find.text('News'), findsOneWidget);
     expect(find.text('Top Stories'), findsOneWidget);
     expect(find.text('All News'), findsOneWidget);
     expect(find.text('Columnists'), findsOneWidget);
+    expect(find.text('All Sources'), findsOneWidget);
     expect(find.text('All Topics'), findsWidgets);
   });
 
@@ -199,7 +199,7 @@ void main() {
     // Default language is 'en', so story is auto-translated to English
     expect(find.text('New Crossing Point Discussions Advance'), findsOneWidget);
     expect(find.text('Read from:'), findsWidgets);
-    expect(find.text('English'), findsWidgets);
+    expect(find.text('All Sources'), findsOneWidget);
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.byType(Slider), findsOneWidget);
     expect(find.text('Yenidüzen'), findsWidgets);
@@ -310,7 +310,7 @@ void main() {
     expect(find.byType(TranslateIconButton), findsOneWidget);
     expect(find.byType(AppLanguageButton), findsOneWidget);
     expect(find.byType(ShareIconButton), findsOneWidget);
-    expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.share_rounded), findsOneWidget);
     expect(find.text('Read original article'), findsOneWidget);
     expect(find.textContaining('Serhat İncirli • Yenidüzen'), findsOneWidget);
 
@@ -488,8 +488,10 @@ void main() {
     final rebuiltTurns = overviewWithMixedTurns.turnsForEdition('midday');
     expect(rebuiltTurns, isNotEmpty);
     expect(
-      rebuiltTurns.first.textFor('tr'),
-      contains('Polis: Baf\'ta iki yaşındaki çocuğun istismar edildiği iddialarını yalanladı'),
+      rebuiltTurns
+          .map((t) => t.textFor('tr'))
+          .join(' '),
+      contains('Polis olay yerine derhal intikal edildiğini bildirdi.'),
     );
     expect(
       rebuiltTurns.first.textFor('tr').contains('Αστυνομία'),

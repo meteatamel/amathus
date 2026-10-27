@@ -448,11 +448,6 @@ class _OverviewViewState extends State<OverviewView> {
                 ),
               ),
             ],
-            bottom: AppBarModeTabs(
-              modeNotifier: Constants.newsViewModeNotifier,
-              topLabel: Constants.OVERVIEW,
-              latestLabel: Constants.RECENT_NEWS,
-            ),
           ),
           drawer: const AppDrawer(),
           body: Column(
@@ -467,21 +462,11 @@ class _OverviewViewState extends State<OverviewView> {
                   Constants.selectedTopicNotifier,
                   _latestItemsNotifier,
                 ]),
-                builder: (context, _) => SourceLanguageFilterBar(
+                builder: (context, _) => UnifiedNewsFilterBar(
                   showNewspaperSelector: !isTopMode,
                   countsBySource: _computeSourceCounts(isTopMode),
                   countsByNewspaper:
                       !isTopMode ? _computeNewspaperCounts() : null,
-                ),
-              ),
-              ListenableBuilder(
-                listenable: Listenable.merge([
-                  Constants.sourceLanguageNotifier,
-                  Constants.selectedFeedIdNotifier,
-                  Constants.hiddenFeedsNotifier,
-                  _latestItemsNotifier,
-                ]),
-                builder: (context, _) => TopicFilterChipBar(
                   countsByTopic: _computeTopicCounts(isTopMode),
                 ),
               ),

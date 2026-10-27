@@ -8,10 +8,26 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   const AppBottomNavigationBar({super.key, required this.selectedIndex});
 
-  void _navigateTo(BuildContext context, int index, int currentIndex) {
-    if (index == currentIndex) return;
-    final Widget destination =
-        index == 0 ? const OverviewView() : const ColumnistsView();
+  void _onTapTab(BuildContext context, int targetTab, int activeTab) {
+    final isOnColumnsView = selectedIndex == 2;
+    if (targetTab == 0) {
+      Constants.newsViewModeNotifier.value = 'top';
+      if (isOnColumnsView) {
+        _replaceWith(context, const OverviewView());
+      }
+    } else if (targetTab == 1) {
+      Constants.newsViewModeNotifier.value = 'latest';
+      if (isOnColumnsView) {
+        _replaceWith(context, const OverviewView());
+      }
+    } else if (targetTab == 2) {
+      if (!isOnColumnsView) {
+        _replaceWith(context, const ColumnistsView());
+      }
+    }
+  }
+
+  void _replaceWith(BuildContext context, Widget destination) {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
@@ -25,18 +41,28 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalizedIndex = selectedIndex <= 0 ? 0 : 1;
-    return ValueListenableBuilder<String>(
-      valueListenable: Constants.languageNotifier,
-      builder: (context, _, __) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Constants.languageNotifier,
+        Constants.newsViewModeNotifier,
+      ]),
+      builder: (context, _) {
+        final int activeTab;
+        if (selectedIndex == 2) {
+          activeTab = 2;
+        } else {
+          activeTab =
+              Constants.newsViewModeNotifier.value == 'latest' ? 1 : 0;
+        }
+
         return Material(
-          color: Colors.white,
+          color: const Color(0xFFF8FAFC),
           child: SafeArea(
             top: false,
             child: Container(
               width: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8FAFC),
                 border: Border(
                   top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                 ),
@@ -50,12 +76,20 @@ class AppBottomNavigationBar extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _BottomNavTabButton(
-                          icon: Icons.newspaper_outlined,
-                          activeIcon: Icons.newspaper_rounded,
-                          label: Constants.NEWS,
-                          selected: normalizedIndex == 0,
-                          onTap: () =>
-                              _navigateTo(context, 0, normalizedIndex),
+                          icon: Icons.auto_awesome_outlined,
+                          activeIcon: Icons.auto_awesome_rounded,
+                          label: Constants.OVERVIEW,
+                          selected: activeTab == 0,
+                          onTap: () => _onTapTab(context, 0, activeTab),
+                        ),
+                      ),
+                      Expanded(
+                        child: _BottomNavTabButton(
+                          icon: Icons.schedule_outlined,
+                          activeIcon: Icons.schedule_rounded,
+                          label: Constants.RECENT_NEWS,
+                          selected: activeTab == 1,
+                          onTap: () => _onTapTab(context, 1, activeTab),
                         ),
                       ),
                       Expanded(
@@ -63,9 +97,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                           icon: Icons.edit_note_outlined,
                           activeIcon: Icons.edit_note_rounded,
                           label: Constants.COLUMNISTS,
-                          selected: normalizedIndex == 1,
-                          onTap: () =>
-                              _navigateTo(context, 1, normalizedIndex),
+                          selected: activeTab == 2,
+                          onTap: () => _onTapTab(context, 2, activeTab),
                         ),
                       ),
                     ],
@@ -98,49 +131,49 @@ class _BottomNavTabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const activeNavy = Color(0xFF0F2942);
-    const inactiveSlate = Color(0xFF475569);
+    const inactiveSlate = Color(0xFF64748B);
 
     return InkWell(
       onTap: onTap,
       child: SizedBox(
-        height: 58,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            decoration: BoxDecoration(
-              color: selected
-                  ? activeNavy.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(999),
+        height: 62,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              width: 56,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? activeNavy.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Icon(
+                selected ? activeIcon : icon,
+                size: 20,
+                color: selected ? activeNavy : inactiveSlate,
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  selected ? activeIcon : icon,
-                  size: 20,
+            const SizedBox(height: 3),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   color: selected ? activeNavy : inactiveSlate,
+                  letterSpacing: -0.1,
                 ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                      color: selected ? activeNavy : inactiveSlate,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

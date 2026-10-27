@@ -83,14 +83,31 @@ class AppDrawer extends StatelessWidget {
               children: [
                 _buildDrawerItem(
                   context,
-                  icon: Icons.newspaper_rounded,
-                  title: Constants.NEWS,
-                  onTap: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const OverviewView(),
-                    ),
-                  ),
+                  icon: Icons.auto_awesome_rounded,
+                  title: Constants.OVERVIEW,
+                  onTap: () {
+                    Constants.newsViewModeNotifier.value = 'top';
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OverviewView(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.schedule_rounded,
+                  title: Constants.RECENT_NEWS,
+                  onTap: () {
+                    Constants.newsViewModeNotifier.value = 'latest';
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OverviewView(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   context,

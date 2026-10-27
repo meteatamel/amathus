@@ -560,6 +560,36 @@ String get SOURCE_FILTER_ALL => _trElEn(
       "Όλες οι Πηγές",
       "All Sources",
     );
+String get FILTER_SHEET_TITLE => _trElEn(
+      "Kaynak ve Konu Filtresi",
+      "Φίλτρο Πηγών & Θεμάτων",
+      "Filter Sources & Topics",
+    );
+String get RESET_FILTERS => _trElEn(
+      "Sıfırla",
+      "Επαναφορά",
+      "Reset",
+    );
+String get DONE_BUTTON => _trElEn(
+      "Tamam",
+      "Τέλος",
+      "Done",
+    );
+String get TOPICS_SECTION_TITLE => _trElEn(
+      "Konular",
+      "Θέματα",
+      "Topics",
+    );
+String get TOP_COLUMNS_SHORT => _trElEn(
+      "Öne Çıkan",
+      "Κυριότερα",
+      "Top",
+    );
+String get LATEST_COLUMNS_SHORT => _trElEn(
+      "Tümü",
+      "Όλα",
+      "All",
+    );
 String get ALL_NEWSPAPERS => _trElEn(
       "Tüm Gazeteler",
       "Όλες οι Εφημερίδες",

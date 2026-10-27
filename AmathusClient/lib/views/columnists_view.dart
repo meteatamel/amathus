@@ -418,11 +418,6 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                 ),
               ),
             ],
-            bottom: AppBarModeTabs(
-              modeNotifier: Constants.columnistsViewModeNotifier,
-              topLabel: Constants.TOP_COLUMNS,
-              latestLabel: Constants.LATEST_COLUMNS,
-            ),
           ),
           drawer: const AppDrawer(),
           body: Column(
@@ -436,7 +431,8 @@ class _ColumnistsViewState extends State<ColumnistsView> {
                   Constants.hiddenFeedsNotifier,
                   _itemsNotifier,
                 ]),
-                builder: (context, _) => SourceLanguageFilterBar(
+                builder: (context, _) => UnifiedColumnsFilterBar(
+                  modeNotifier: Constants.columnistsViewModeNotifier,
                   showNewspaperSelector: !isTopMode,
                   allowedNewspaperIdsListenable:
                       !isTopMode ? _columnistFeedIdsNotifier : null,
@@ -462,7 +458,7 @@ class _ColumnistsViewState extends State<ColumnistsView> {
               ),
             ],
           ),
-          bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 1),
+          bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 2),
         );
       },
     );
