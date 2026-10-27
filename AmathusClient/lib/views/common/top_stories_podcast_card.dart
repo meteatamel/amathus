@@ -327,6 +327,10 @@ class PodcastPlaybackController extends ChangeNotifier {
   }) async {
     final sessionId = ++_playSessionId;
     _needsReloadOnResume = false;
+    _withinTurnFraction = initialSeekFraction.clamp(0.0, 0.98);
+    // Stop any previous turn audio immediately so it doesn't keep playing or
+    // firing timeupdate/ended events while the new turn loads.
+    _player.stop();
     final lang = effectiveLanguage;
 
     final ov = _overview;
@@ -350,11 +354,6 @@ class PodcastPlaybackController extends ChangeNotifier {
 
     final currentTurn = list[_currentTurnIndex];
     final url = _buildAudioUrl(currentTurn, lang);
-
-    // Start prefetching next turn in parallel right away
-    if (_currentTurnIndex + 1 < list.length) {
-      _player.prefetchUrl(_buildAudioUrl(list[_currentTurnIndex + 1], lang));
-    }
 
     // If the current turn audio is not cached yet, show the loading spinner
     // while downloading so there is no silent gap after the intro jingle/chime.
@@ -387,6 +386,10 @@ class PodcastPlaybackController extends ChangeNotifier {
       }
     }
 
+    // Kick off sequential prefetching of upcoming turns in the background
+    // as soon as the current turn begins playing.
+    _prefetchUpcomingTurns(sessionId, _currentTurnIndex + 1, lang);
+
     await _player.playUrl(
       url,
       playbackRate: _playbackRate,
@@ -395,23 +398,21 @@ class PodcastPlaybackController extends ChangeNotifier {
       isHostA: currentTurn.isHostA,
       initialSeekFraction: initialSeekFraction,
     );
+  }
 
-    if (!_isPlaying || sessionId != _playSessionId) return;
-
-    if (_currentTurnIndex + 1 < list.length) {
-      final nextTurn = list[_currentTurnIndex + 1];
-      _player.prefetchUrl(_buildAudioUrl(nextTurn, effectiveLanguage));
-    }
-    if (_currentTurnIndex + 2 < list.length) {
-      final afterNextTurn = list[_currentTurnIndex + 2];
-      _player.prefetchUrl(_buildAudioUrl(afterNextTurn, effectiveLanguage));
-    }
-    if (_currentTurnIndex + 3 < list.length) {
-      final thirdNextTurn = list[_currentTurnIndex + 3];
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!_isPlaying || sessionId != _playSessionId) return;
-        _player.prefetchUrl(_buildAudioUrl(thirdNextTurn, effectiveLanguage));
-      });
+  Future<void> _prefetchUpcomingTurns(
+    int sessionId,
+    int startIndex,
+    String lang,
+  ) async {
+    final list = turns;
+    final endIndex = math.min(list.length, startIndex + 6);
+    for (var i = startIndex; i < endIndex; i++) {
+      if (!_isPlaying || sessionId != _playSessionId) return;
+      final turnUrl = _buildAudioUrl(list[i], lang);
+      if (!_player.isUrlCached(turnUrl)) {
+        await _player.prefetchUrl(turnUrl);
+      }
     }
   }
 
@@ -431,6 +432,12 @@ class PodcastPlaybackController extends ChangeNotifier {
       if (_needsReloadOnResume || !_player.hasActiveAudio) {
         _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
       } else {
+        final sessionId = ++_playSessionId;
+        _prefetchUpcomingTurns(
+          sessionId,
+          _currentTurnIndex + 1,
+          effectiveLanguage,
+        );
         _player.resume().then((resumed) {
           if (!resumed && _isPlaying && !_isPaused) {
             _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
@@ -452,7 +459,7 @@ class PodcastPlaybackController extends ChangeNotifier {
   }
 
   void setDraggingFraction(double value) {
-    _draggingOverallFraction = value;
+    _draggingOverallFraction = value.clamp(0.0, 1.0);
     notifyListeners();
   }
 
@@ -472,17 +479,19 @@ class PodcastPlaybackController extends ChangeNotifier {
     notifyListeners();
 
     if (_isPlaying && !_isPaused) {
-      if (sameTurn && _player.hasActiveAudio) {
+      if (sameTurn && _player.hasActiveAudio && !_isLoadingAudio) {
         _player.seekWithinTurn(targetWithinTurn);
       } else {
         _playCurrentTurn(initialSeekFraction: targetWithinTurn);
       }
     } else if (_isPlaying && _isPaused) {
-      if (sameTurn && _player.hasActiveAudio) {
+      if (sameTurn && _player.hasActiveAudio && !_isLoadingAudio) {
         _player.seekWithinTurn(targetWithinTurn);
       } else {
         _needsReloadOnResume = true;
         _player.stop();
+        final turn = list[targetTurn];
+        _player.prefetchUrl(_buildAudioUrl(turn, effectiveLanguage));
       }
     } else {
       _needsReloadOnResume = true;

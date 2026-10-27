@@ -66,19 +66,41 @@ class PodcastAudioPlayer {
     }
 
     final future = () async {
-      try {
-        final req = await html.HttpRequest.request(
-          url,
-          method: 'GET',
-          responseType: 'blob',
-        );
-        final blob = req.response as html.Blob?;
-        if (blob != null && blob.size > 0) {
-          final objectUrl = html.Url.createObjectUrlFromBlob(blob);
-          _blobUrlCache[url] = objectUrl;
-          return objectUrl;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        if (attempt > 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 350));
         }
-      } catch (_) {}
+        try {
+          final completer = Completer<html.Blob?>();
+          final req = html.HttpRequest()
+            ..open('GET', url, async: true)
+            ..responseType = 'blob'
+            ..timeout = 15000;
+          req.onLoad.listen((_) {
+            if (!completer.isCompleted) {
+              if (req.status != null && req.status! >= 200 && req.status! < 300) {
+                completer.complete(req.response as html.Blob?);
+              } else {
+                completer.complete(null);
+              }
+            }
+          });
+          req.onError.listen((_) {
+            if (!completer.isCompleted) completer.complete(null);
+          });
+          req.onTimeout.listen((_) {
+            if (!completer.isCompleted) completer.complete(null);
+          });
+          req.send();
+
+          final blob = await completer.future;
+          if (blob != null && blob.size > 0) {
+            final objectUrl = html.Url.createObjectUrlFromBlob(blob);
+            _blobUrlCache[url] = objectUrl;
+            return objectUrl;
+          }
+        } catch (_) {}
+      }
       return null;
     }();
 
@@ -216,25 +238,32 @@ class PodcastAudioPlayer {
     _hasActiveTurnAudio = true;
     element.pause();
     element.src = effectiveSrc;
+    element.load();
     element.playbackRate = _playbackRate;
     element.defaultPlaybackRate = _playbackRate;
 
-    void applyInitialSeek() {
-      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
-      final dur = element.duration;
-      if (dur.isFinite && dur > 0) {
-        try {
-          element.currentTime = (dur * initialSeekFraction.clamp(0.0, 0.98));
-        } catch (_) {}
+    if (element.readyState < 1) {
+      try {
+        await Future.any([
+          element.onLoadedMetadata.first,
+          element.onError.first,
+          Future<void>.delayed(const Duration(milliseconds: 2500)),
+        ]);
+      } catch (_) {}
+      if (token != _activePlayToken) {
+        return;
       }
     }
 
-    if (initialSeekFraction > 0.01) {
-      if (element.readyState >= 1) {
-        applyInitialSeek();
-      } else {
-        element.onLoadedMetadata.first.then((_) => applyInitialSeek());
+    final clampedSeek = initialSeekFraction.clamp(0.0, 0.98);
+    if (clampedSeek > 0.005) {
+      final dur = element.duration;
+      if (dur.isFinite && dur > 0) {
+        try {
+          element.currentTime = dur * clampedSeek;
+        } catch (_) {}
       }
+      onPositionFractionChanged?.call(clampedSeek);
     }
 
     _playingSub = element.onPlaying.listen((_) {
@@ -267,7 +296,8 @@ class PodcastAudioPlayer {
     _errorSub = element.onError.listen((_) {
       if (token != _activePlayToken || !_hasActiveTurnAudio) return;
       onLoadingChanged?.call(false);
-      if (fallbackText.trim().isNotEmpty) {
+      if (html.window.navigator.onLine == false &&
+          fallbackText.trim().isNotEmpty) {
         _hasActiveTurnAudio = false;
         _playSpeechSynthesisFallback(
           token: token,
@@ -276,28 +306,42 @@ class PodcastAudioPlayer {
           isHostA: isHostA,
         );
       } else {
-        onError?.call();
+        onEnded?.call();
       }
     });
 
     try {
       await element.play();
       if (token == _activePlayToken) {
+        element.playbackRate = _playbackRate;
         onLoadingChanged?.call(false);
       }
     } catch (_) {
       if (token != _activePlayToken) return;
-      onLoadingChanged?.call(false);
-      if (fallbackText.trim().isNotEmpty) {
-        _hasActiveTurnAudio = false;
-        await _playSpeechSynthesisFallback(
-          token: token,
-          text: fallbackText,
-          lang: fallbackLang,
-          isHostA: isHostA,
-        );
-      } else {
-        onError?.call();
+      // Retry once after a short delay in case a previous pause()/load() caused an AbortError
+      await Future<void>.delayed(const Duration(milliseconds: 140));
+      if (token != _activePlayToken) return;
+      try {
+        await element.play();
+        if (token == _activePlayToken) {
+          element.playbackRate = _playbackRate;
+          onLoadingChanged?.call(false);
+        }
+      } catch (_) {
+        if (token != _activePlayToken) return;
+        onLoadingChanged?.call(false);
+        if (html.window.navigator.onLine == false &&
+            fallbackText.trim().isNotEmpty) {
+          _hasActiveTurnAudio = false;
+          await _playSpeechSynthesisFallback(
+            token: token,
+            text: fallbackText,
+            lang: fallbackLang,
+            isHostA: isHostA,
+          );
+        } else {
+          onError?.call();
+        }
       }
     }
   }
@@ -330,7 +374,10 @@ class PodcastAudioPlayer {
         if (!completer.isCompleted) completer.complete();
       });
       synth.speak(utterance);
-      await completer.future;
+      await completer.future.timeout(
+        const Duration(seconds: 25),
+        onTimeout: () {},
+      );
       if (token == _activePlayToken) {
         onPositionFractionChanged?.call(1.0);
         onEnded?.call();
@@ -345,12 +392,23 @@ class PodcastAudioPlayer {
   void seekWithinTurn(double fraction) {
     final element = _sharedAudio;
     if (element == null || !_hasActiveTurnAudio) return;
+    final clamped = fraction.clamp(0.0, 0.98);
+    onPositionFractionChanged?.call(clamped);
     final dur = element.duration;
-    if (dur.isFinite && dur > 0) {
+    if (element.readyState >= 1 && dur.isFinite && dur > 0) {
       try {
-        element.currentTime = dur * fraction.clamp(0.0, 0.99);
-        onPositionFractionChanged?.call(fraction.clamp(0.0, 1.0));
+        element.currentTime = dur * clamped;
       } catch (_) {}
+    } else {
+      element.onLoadedMetadata.first.then((_) {
+        if (!_hasActiveTurnAudio) return;
+        final loadedDur = element.duration;
+        if (loadedDur.isFinite && loadedDur > 0) {
+          try {
+            element.currentTime = loadedDur * clamped;
+          } catch (_) {}
+        }
+      });
     }
   }
 
@@ -360,7 +418,13 @@ class PodcastAudioPlayer {
   }
 
   void pause() {
-    _activePlayToken++;
+    // Only invalidate _activePlayToken if no active turn audio is attached yet
+    // (e.g., during intro jingle or initial download). Keeping _activePlayToken
+    // intact when _hasActiveTurnAudio is true ensures _timeUpdateSub and
+    // _endedSub continue working when resume() is called!
+    if (!_hasActiveTurnAudio) {
+      _activePlayToken++;
+    }
     onLoadingChanged?.call(false);
     _sharedAudio?.pause();
     try {
@@ -370,7 +434,7 @@ class PodcastAudioPlayer {
 
   Future<bool> resume() async {
     final element = _sharedAudio;
-    if (element != null && _hasActiveTurnAudio) {
+    if (element != null && _hasActiveTurnAudio && element.ended != true) {
       try {
         element.playbackRate = _playbackRate;
         await element.play();
