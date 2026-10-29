@@ -138,6 +138,11 @@ namespace Amathus.Web.Controllers
                 }
                 story.Topic = normalized;
             }
+
+            if (!string.Equals(overview.Id, "latest_columnists", System.StringComparison.OrdinalIgnoreCase))
+            {
+                overview.Stories = OverviewAnalyzer.OrderCyprusFirstThenWorld(overview.Stories);
+            }
         }
 
         private static async Task WarmupInitialPodcastTurnsAsync(NewsOverview overview)

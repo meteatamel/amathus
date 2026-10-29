@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:js' as js;
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
@@ -10,8 +11,16 @@ class PodcastAudioPlayer {
   VoidCallback? onError;
   ValueChanged<double>? onPositionFractionChanged;
   ValueChanged<bool>? onLoadingChanged;
+  VoidCallback? onRemotePlay;
+  VoidCallback? onRemotePause;
+  VoidCallback? onRemoteNext;
+  VoidCallback? onRemotePrevious;
 
   html.AudioElement? _sharedAudio;
+  html.AudioElement? _keepAliveAudio;
+  Object? _wakeLockSentinel;
+  bool _keepAliveActive = false;
+  bool _mediaSessionHandlersRegistered = false;
   bool _isAudioUnlocked = false;
   bool _hasActiveTurnAudio = false;
   int _activePlayToken = 0;
@@ -20,6 +29,8 @@ class PodcastAudioPlayer {
   StreamSubscription<html.Event>? _timeUpdateSub;
   StreamSubscription<html.Event>? _playingSub;
   StreamSubscription<html.Event>? _waitingSub;
+  StreamSubscription<html.Event>? _visibilitySub;
+  Timer? _progressTimer;
   double _playbackRate = 1.0;
 
   static final Map<String, String> _cachedJingleUris = <String, String>{};
@@ -28,17 +39,180 @@ class PodcastAudioPlayer {
   static final Map<String, Future<String?>> _inFlightBlobDownloads =
       <String, Future<String?>>{};
   static String? _silentWavDataUri;
+  static String? _keepAliveWavDataUri;
 
   bool get hasActiveAudio => _hasActiveTurnAudio && _sharedAudio != null;
+
+  bool get isInBackground => html.document.hidden == true;
 
   bool isUrlCached(String url) => _blobUrlCache.containsKey(url);
 
   void unlockAudio() {
     _unlockAudioSynchronously();
+    startKeepAlive();
   }
 
   html.AudioElement _ensureAudioElement() {
-    return _sharedAudio ??= (html.AudioElement()..preload = 'auto');
+    final el = _sharedAudio ??= (html.AudioElement()..preload = 'auto');
+    el.setAttribute('playsinline', 'true');
+    el.setAttribute('webkit-playsinline', 'true');
+    return el;
+  }
+
+  html.AudioElement _ensureKeepAliveAudioElement() {
+    if (_keepAliveAudio != null) return _keepAliveAudio!;
+    final uri = _keepAliveWavDataUri ??= _encodeSamplesToWavDataUri(
+      Float64List(22050), // 1.0s silent WAV
+      22050,
+    );
+    final el = html.AudioElement()
+      ..src = uri
+      ..loop = true
+      ..volume = 0.01
+      ..preload = 'auto';
+    el.setAttribute('playsinline', 'true');
+    el.setAttribute('webkit-playsinline', 'true');
+    _keepAliveAudio = el;
+    return el;
+  }
+
+  void startKeepAlive() {
+    _keepAliveActive = true;
+    try {
+      final keepAlive = _ensureKeepAliveAudioElement();
+      if (keepAlive.paused) {
+        keepAlive.play();
+      }
+    } catch (_) {}
+    _requestWakeLock();
+    _ensureVisibilityListener();
+    _registerMediaSessionHandlers();
+  }
+
+  void stopKeepAlive() {
+    _keepAliveActive = false;
+    try {
+      _keepAliveAudio?.pause();
+    } catch (_) {}
+    _releaseWakeLock();
+  }
+
+  void _ensureVisibilityListener() {
+    if (_visibilitySub != null) return;
+    _visibilitySub = html.document.onVisibilityChange.listen((_) {
+      if (!_keepAliveActive) return;
+      if (html.document.hidden == false) {
+        _requestWakeLock();
+      }
+      try {
+        final keepAlive = _keepAliveAudio;
+        if (keepAlive != null && keepAlive.paused) {
+          keepAlive.play();
+        }
+      } catch (_) {}
+      try {
+        final element = _sharedAudio;
+        if (element != null &&
+            _hasActiveTurnAudio &&
+            element.paused &&
+            element.ended != true) {
+          element.playbackRate = _playbackRate;
+          element.play();
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _requestWakeLock() {
+    try {
+      final nav = js.JsObject.fromBrowserObject(html.window.navigator);
+      if (!nav.hasProperty('wakeLock')) return;
+      final wakeLock = nav['wakeLock'];
+      if (wakeLock is js.JsObject) {
+        final promise = wakeLock.callMethod('request', <Object>['screen']);
+        if (promise is js.JsObject) {
+          promise.callMethod('then', <Object>[
+            (Object? sentinel) {
+              _wakeLockSentinel = sentinel;
+            },
+            (Object? _) {},
+          ]);
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _releaseWakeLock() {
+    final sentinel = _wakeLockSentinel;
+    _wakeLockSentinel = null;
+    if (sentinel is js.JsObject) {
+      try {
+        sentinel.callMethod('release', const <Object>[]);
+      } catch (_) {}
+    }
+  }
+
+  void _registerMediaSessionHandlers() {
+    if (_mediaSessionHandlersRegistered) return;
+    try {
+      final nav = js.JsObject.fromBrowserObject(html.window.navigator);
+      if (!nav.hasProperty('mediaSession')) return;
+      final mediaSession = nav['mediaSession'];
+      if (mediaSession is! js.JsObject) return;
+      _mediaSessionHandlersRegistered = true;
+
+      void setHandler(String action, VoidCallback callback) {
+        try {
+          mediaSession.callMethod(
+            'setActionHandler',
+            <Object>[
+              action,
+              ([Object? _]) => callback(),
+            ],
+          );
+        } catch (_) {}
+      }
+
+      setHandler('play', () => onRemotePlay?.call());
+      setHandler('pause', () => onRemotePause?.call());
+      setHandler('previoustrack', () => onRemotePrevious?.call());
+      setHandler('nexttrack', () => onRemoteNext?.call());
+      setHandler('seekbackward', () => onRemotePrevious?.call());
+      setHandler('seekforward', () => onRemoteNext?.call());
+    } catch (_) {}
+  }
+
+  void updateMediaSession({
+    required String title,
+    required String subtitle,
+    required bool isPlaying,
+  }) {
+    _registerMediaSessionHandlers();
+    try {
+      final nav = js.JsObject.fromBrowserObject(html.window.navigator);
+      if (!nav.hasProperty('mediaSession')) return;
+      final mediaSession = nav['mediaSession'];
+      if (mediaSession is! js.JsObject) return;
+
+      mediaSession['playbackState'] = isPlaying ? 'playing' : 'paused';
+
+      if (js.context.hasProperty('MediaMetadata')) {
+        final metadataCtor = js.context['MediaMetadata'];
+        if (metadataCtor is js.JsFunction) {
+          final metadata = js.JsObject(
+            metadataCtor,
+            <Object>[
+              js.JsObject.jsify(<String, Object>{
+                'title': title,
+                'artist': subtitle,
+                'album': 'Cyprus Bicommunal News',
+              }),
+            ],
+          );
+          mediaSession['metadata'] = metadata;
+        }
+      }
+    } catch (_) {}
   }
 
   void _unlockAudioSynchronously() {
@@ -236,27 +410,28 @@ class PodcastAudioPlayer {
 
     final effectiveSrc = resolvedSrc ?? url;
     _hasActiveTurnAudio = true;
-    element.pause();
+    final clampedSeek = initialSeekFraction.clamp(0.0, 0.98);
     element.src = effectiveSrc;
-    element.load();
     element.playbackRate = _playbackRate;
     element.defaultPlaybackRate = _playbackRate;
 
-    if (element.readyState < 1) {
-      try {
-        await Future.any([
-          element.onLoadedMetadata.first,
-          element.onError.first,
-          Future<void>.delayed(const Duration(milliseconds: 2500)),
-        ]);
-      } catch (_) {}
-      if (token != _activePlayToken) {
-        return;
-      }
-    }
-
-    final clampedSeek = initialSeekFraction.clamp(0.0, 0.98);
+    // Only await metadata before play() when seeking into the middle of a turn.
+    // On normal turn transitions (clampedSeek == 0), calling play() immediately
+    // without an async gap preserves mobile background audio sessions!
     if (clampedSeek > 0.005) {
+      element.load();
+      if (element.readyState < 1) {
+        try {
+          await Future.any([
+            element.onLoadedMetadata.first,
+            element.onError.first,
+            Future<void>.delayed(const Duration(milliseconds: 2500)),
+          ]);
+        } catch (_) {}
+        if (token != _activePlayToken) {
+          return;
+        }
+      }
       final dur = element.duration;
       if (dur.isFinite && dur > 0) {
         try {
@@ -264,6 +439,16 @@ class PodcastAudioPlayer {
         } catch (_) {}
       }
       onPositionFractionChanged?.call(clampedSeek);
+    }
+
+    void emitProgress() {
+      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
+      final dur = element.duration;
+      final cur = element.currentTime;
+      if (dur.isFinite && dur > 0) {
+        onLoadingChanged?.call(false);
+        onPositionFractionChanged?.call((cur / dur).clamp(0.0, 1.0));
+      }
     }
 
     _playingSub = element.onPlaying.listen((_) {
@@ -276,15 +461,16 @@ class PodcastAudioPlayer {
       onLoadingChanged?.call(true);
     });
 
-    _timeUpdateSub = element.onTimeUpdate.listen((_) {
-      if (token != _activePlayToken || !_hasActiveTurnAudio) return;
-      final dur = element.duration;
-      final cur = element.currentTime;
-      if (dur.isFinite && dur > 0) {
-        onLoadingChanged?.call(false);
-        onPositionFractionChanged?.call((cur / dur).clamp(0.0, 1.0));
-      }
-    });
+    _timeUpdateSub = element.onTimeUpdate.listen((_) => emitProgress());
+
+    _progressTimer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) {
+        if (!element.paused && element.ended != true) {
+          emitProgress();
+        }
+      },
+    );
 
     _endedSub = element.onEnded.listen((_) {
       if (token != _activePlayToken || !_hasActiveTurnAudio) return;
@@ -425,6 +611,7 @@ class PodcastAudioPlayer {
     if (!_hasActiveTurnAudio) {
       _activePlayToken++;
     }
+    stopKeepAlive();
     onLoadingChanged?.call(false);
     _sharedAudio?.pause();
     try {
@@ -436,6 +623,7 @@ class PodcastAudioPlayer {
     final element = _sharedAudio;
     if (element != null && _hasActiveTurnAudio && element.ended != true) {
       try {
+        startKeepAlive();
         element.playbackRate = _playbackRate;
         await element.play();
         onLoadingChanged?.call(false);
@@ -456,6 +644,8 @@ class PodcastAudioPlayer {
   }
 
   void _cancelSubscriptions() {
+    _progressTimer?.cancel();
+    _progressTimer = null;
     _endedSub?.cancel();
     _endedSub = null;
     _errorSub?.cancel();
@@ -484,6 +674,7 @@ class PodcastAudioPlayer {
   }
 
   void dispose() {
+    stopKeepAlive();
     stop();
   }
 

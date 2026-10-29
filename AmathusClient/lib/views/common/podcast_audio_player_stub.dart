@@ -6,8 +6,24 @@ class PodcastAudioPlayer {
   VoidCallback? onError;
   ValueChanged<double>? onPositionFractionChanged;
   ValueChanged<bool>? onLoadingChanged;
+  VoidCallback? onRemotePlay;
+  VoidCallback? onRemotePause;
+  VoidCallback? onRemoteNext;
+  VoidCallback? onRemotePrevious;
   Timer? _simulatedTimer;
   bool _isPaused = false;
+
+  bool get isInBackground => false;
+
+  void startKeepAlive() {}
+
+  void stopKeepAlive() {}
+
+  void updateMediaSession({
+    required String title,
+    required String subtitle,
+    required bool isPlaying,
+  }) {}
 
   Future<void> playIntroJingle({
     double playbackRate = 1.0,

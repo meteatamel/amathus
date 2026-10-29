@@ -103,12 +103,63 @@ namespace Amathus.Common.Overview
             return false;
         }
 
+        public static List<OverviewStory> SelectPodcastStories(List<OverviewStory> stories, bool columnistsOnly = false)
+        {
+            if (stories == null || stories.Count == 0)
+            {
+                return new List<OverviewStory>();
+            }
+
+            if (columnistsOnly)
+            {
+                return stories.Take(8).ToList();
+            }
+
+            var cyprusStories = stories
+                .Where(s => !string.Equals(s?.Topic, "world", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var worldStories = stories
+                .Where(s => string.Equals(s?.Topic, "world", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (worldStories.Count == 0)
+            {
+                return stories.Take(8).ToList();
+            }
+
+            var selected = new List<OverviewStory>();
+            selected.AddRange(cyprusStories.Take(6));
+            int worldTarget = Math.Clamp(8 - selected.Count, 2, 8);
+            selected.AddRange(worldStories.Take(worldTarget));
+
+            if (selected.Count < 8)
+            {
+                foreach (var s in stories)
+                {
+                    if (selected.Count >= 8) break;
+                    if (!selected.Contains(s))
+                    {
+                        selected.Add(s);
+                    }
+                }
+            }
+
+            return selected.Take(8).ToList();
+        }
+
         public static bool EnsurePodcastPopulated(NewsOverview overview, string requestedEdition = null, bool forceRebuild = false)
         {
             if (overview == null || overview.Stories == null || overview.Stories.Count == 0)
             {
                 return false;
             }
+
+            bool isColumnists = string.Equals(overview.Id, "latest_columnists", StringComparison.OrdinalIgnoreCase);
+            var topStories = SelectPodcastStories(overview.Stories, isColumnists);
+            var worldIds = topStories
+                .Where(s => string.Equals(s?.Topic, "world", StringComparison.OrdinalIgnoreCase))
+                .Select(s => s.Id)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var previousEdition = overview.Edition?.Trim().ToLowerInvariant();
             var targetEdition = ResolveEdition(DateTime.UtcNow, requestedEdition);
@@ -127,7 +178,6 @@ namespace Amathus.Common.Overview
             }
 
             // Ensure StoryId is populated on story turns (turns 2 .. N-3)
-            var topStories = overview.Stories.Take(8).ToList();
             for (int i = 0; i < overview.PodcastTurns.Count; i++)
             {
                 var turn = overview.PodcastTurns[i];
@@ -151,9 +201,8 @@ namespace Amathus.Common.Overview
         public static List<PodcastDialogueTurn> BuildTurns(NewsOverview overview, string edition = null)
         {
             var resolvedEdition = ResolveEdition(overview?.GeneratedAt, edition);
-            var stories = (overview?.Stories ?? new List<OverviewStory>())
-                .Take(8)
-                .ToList();
+            bool isColumnists = string.Equals(overview?.Id, "latest_columnists", StringComparison.OrdinalIgnoreCase);
+            var stories = SelectPodcastStories(overview?.Stories ?? new List<OverviewStory>(), isColumnists);
 
             var turns = new List<PodcastDialogueTurn>();
             if (stories.Count == 0)
@@ -485,7 +534,7 @@ namespace Amathus.Common.Overview
                 "Συνεχίζοντας την κουβέντα μας, υπάρχει μια ακόμη υπόθεση που ξεχωρίζει.",
                 "Ένα άλλο ζήτημα που απασχολεί τις σημερινές συζητήσεις έχει επίσης μεγάλο ενδιαφέρον.",
                 "Ας στρέψουμε τώρα την προσοχή μας στην επόμενη ιστορία της ημέρας.",
-                "Παράλληλα, αξίζει να σταθούμε σε μια ακόμη εξέλιξη.",
+                "Περνώντας τώρα στη διεθνή επικαιρότητα, ας δούμε μια εξέλιξη που ξεχωρίζει στον κόσμο σήμερα.",
                 "Και για το κλείσιμο της σημερινής μας ανασκόπησης, ας δούμε το τελευταίο μας θέμα."
             };
 
@@ -510,7 +559,7 @@ namespace Amathus.Common.Overview
                 "Sohbetimize sıradaki önemli gelişmeyle devam edelim.",
                 "Bugün yakından takip edilen bir diğer konu da oldukça dikkat çekici.",
                 "Gelin şimdi bir diğer önemli gelişmenin detaylarına bakalım.",
-                "Öte yandan gözden kaçmaması gereken bir haber daha var.",
+                "Şimdi de Kıbrıs gündeminin ardından dünyada öne çıkan gelişmelere göz atalım.",
                 "Ve bugünkü turumuzun son konusuna gelirken şu gelişmeye de bakalım."
             };
 
@@ -535,7 +584,7 @@ namespace Amathus.Common.Overview
                 "Shifting gears a bit, let's look at what's happening on another front.",
                 "Moving along, there is another important development making news today.",
                 "Next up, let's take a look at a story that has been building up recently.",
-                "On another note, here is a development that's also getting attention.",
+                "Turning now from Cyprus to international news making headlines around the world today.",
                 "And to wrap up our main stories today, let's look at this final development."
             };
 

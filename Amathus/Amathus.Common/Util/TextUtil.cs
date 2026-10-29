@@ -244,7 +244,7 @@ namespace Amathus.Common.Util
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Regex TopicWorldRegex = new Regex(
-            @"(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|ukraine|russia|moscow|gaza|palestin|west\s+bank|israel|france|paris|spain|britain|london|\busa\b)",
+            @"(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ουάσιγκτον|κίνα|πεκίνο|γερμανί|βερολίνο|ιταλί|ρώμη|λιβάν|βυρητ|συρία|δαμασκ|αιγυπτ|κάιρο|ευρωπαϊκή\s+ένωση|βρυξέλλες|\bνατο\b|ελλάδ|αθήνα|θεσσαλονίκ|μητσοτάκ|τουρκί|άγκυρα|κωνσταντινούπολ|ερντογάν|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|vaşington|washington|\bçin\b|pekin|almanya|berlin|italya|roma|lübnan|beyrut|suriye|şam|mısır|kahire|avrupa\s+birliği|brüksel|\bnato\b|yunanistan|atina|selanik|miçotakis|türkiye|ankara|istanbul|erdoğan|erdogan|ukraine|russia|moscow|zelensky|gaza|palestin|west\s+bank|israel|tehran|lebanon|beirut|syria|damascus|egypt|cairo|france|paris|spain|britain|united\s+kingdom|london|\busa\b|united\s+states|white\s+house|china|beijing|germany|berlin|italy|rome|brussels|\bnato\b|greece|athens|mitsotakis|turkey|ankara|istanbul|world|international|global)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public static string NormalizeTopic(string raw)
@@ -309,6 +309,18 @@ namespace Amathus.Common.Util
                 rx.Matches(safeDetail).Count +
                 rx.Matches(safeUrl).Count * 2;
 
+            var combined = $"{safeTitle} {safeSummary} {safeDetail} {safeUrl}";
+            bool hasCyprus = CyprusRegex.IsMatch(combined);
+            int worldScore = Score(TopicWorldRegex);
+            if (!hasCyprus && worldScore > 0)
+            {
+                worldScore += 6;
+            }
+            else if (hasCyprus && worldScore > 0)
+            {
+                worldScore = Math.Max(0, worldScore - 4);
+            }
+
             var scores = new (string topic, int score)[]
             {
                 ("sports", Score(TopicSportsRegex)),
@@ -316,7 +328,7 @@ namespace Amathus.Common.Util
                 ("culture", Score(TopicCultureRegex)),
                 ("society", Score(TopicSocietyRegex)),
                 ("politics", Score(TopicPoliticsRegex)),
-                ("world", Score(TopicWorldRegex))
+                ("world", worldScore)
             };
 
             string bestTopic = "society";

@@ -127,6 +127,30 @@ class PodcastPlaybackController extends ChangeNotifier {
       _withinTurnFraction = fraction.clamp(0.0, 1.0);
       notifyListeners();
     };
+    _player.onRemotePlay = () {
+      if (!_isPlaying || _isPaused) {
+        togglePlayPause();
+      }
+    };
+    _player.onRemotePause = () {
+      if (_isPlaying && !_isPaused) {
+        togglePlayPause();
+      }
+    };
+    _player.onRemoteNext = () {
+      final list = turns;
+      if (list.isEmpty) return;
+      final nextIdx = (_currentTurnIndex + 1).clamp(0, list.length - 1);
+      seekToOverallFraction(nextIdx / list.length);
+    };
+    _player.onRemotePrevious = () {
+      final list = turns;
+      if (list.isEmpty) return;
+      final prevIdx = _withinTurnFraction > 0.25
+          ? _currentTurnIndex
+          : (_currentTurnIndex - 1).clamp(0, list.length - 1);
+      seekToOverallFraction(prevIdx / list.length);
+    };
     Constants.languageNotifier.addListener(() {
       final newLang = Constants.languageNotifier.value;
       if (newLang != _defaultLanguage || _selectedLanguage != null) {
@@ -138,8 +162,21 @@ class PodcastPlaybackController extends ChangeNotifier {
     });
   }
 
+  void _syncMediaSession() {
+    final lang = effectiveLanguage;
+    final edition = effectiveEdition;
+    final title = Constants.podcastEditionTitleFor(edition, lang);
+    final subtitle = Constants.podcastSubtitleFor(edition, lang);
+    _player.updateMediaSession(
+      title: title,
+      subtitle: subtitle,
+      isPlaying: _isPlaying && !_isPaused,
+    );
+  }
+
   void _stopAndReset() {
     _playSessionId++;
+    _player.stopKeepAlive();
     _player.stop();
     _isPlaying = false;
     _isPaused = false;
@@ -148,6 +185,7 @@ class PodcastPlaybackController extends ChangeNotifier {
     _currentTurnIndex = 0;
     _withinTurnFraction = 0.0;
     _draggingOverallFraction = null;
+    _syncMediaSession();
     notifyListeners();
   }
 
@@ -180,7 +218,7 @@ class PodcastPlaybackController extends ChangeNotifier {
     if (ov == null) return;
     final lang = effectiveLanguage;
     if (ov.podcastTurns.isEmpty &&
-        ov.stories.take(8).any((s) => s.needsTranslationFor(lang))) {
+        ov.podcastStories.any((s) => s.needsTranslationFor(lang))) {
       return;
     }
     final list = turns;
@@ -248,6 +286,43 @@ class PodcastPlaybackController extends ChangeNotifier {
         .clamp(0.0, 1.0);
   }
 
+  double _estimateTurnDurationSeconds(PodcastDialogueTurn turn, String lang) {
+    final text = turn.textFor(lang).trim();
+    if (text.isEmpty) return 5.0;
+    return (text.length / 14.5).clamp(4.0, 26.0);
+  }
+
+  int get remainingSeconds {
+    final list = turns;
+    if (list.isEmpty) return 0;
+    final lang = effectiveLanguage;
+    final progress = overallProgress.clamp(0.0, 1.0);
+    final scaled = progress * list.length;
+    final activeTurnIdx = scaled.floor().clamp(0, list.length - 1);
+    final activeWithinTurn = (scaled - activeTurnIdx).clamp(0.0, 1.0);
+
+    var remaining = 0.0;
+    for (var i = activeTurnIdx; i < list.length; i++) {
+      final turnSeconds = _estimateTurnDurationSeconds(list[i], lang);
+      if (i == activeTurnIdx) {
+        remaining += turnSeconds * (1.0 - activeWithinTurn);
+      } else {
+        remaining += turnSeconds + 0.35;
+      }
+    }
+    final adjusted = remaining / (_playbackRate <= 0 ? 1.0 : _playbackRate);
+    return adjusted.ceil().clamp(0, 3599);
+  }
+
+  String get formattedRemainingTime {
+    final totalSec = remainingSeconds;
+    final mins = totalSec ~/ 60;
+    final secs = totalSec % 60;
+    final mm = mins.toString().padLeft(2, '0');
+    final ss = secs.toString().padLeft(2, '0');
+    return '-$mm:$ss';
+  }
+
   String _buildAudioUrl(PodcastDialogueTurn turn, String lang) {
     final text = turn.textFor(lang);
     final speaker = turn.isHostA ? 'A' : 'B';
@@ -299,24 +374,30 @@ class PodcastPlaybackController extends ChangeNotifier {
       notifyListeners();
       await _playCurrentTurn(withStoryChime: playChime);
     } else {
-      await _player.playOutroJingle(
-        playbackRate: _playbackRate,
-        style: _musicPreset,
-      );
+      if (!_player.isInBackground) {
+        await _player.playOutroJingle(
+          playbackRate: _playbackRate,
+          style: _musicPreset,
+        );
+      }
+      _player.stopKeepAlive();
       _isPlaying = false;
       _isPaused = false;
       _isLoadingAudio = false;
       _currentTurnIndex = 0;
       _withinTurnFraction = 0.0;
       _randomizeSessionPresets();
+      _syncMediaSession();
       notifyListeners();
     }
   }
 
   void _handleTurnError() {
+    _player.stopKeepAlive();
     _isPlaying = false;
     _isPaused = false;
     _isLoadingAudio = false;
+    _syncMediaSession();
     notifyListeners();
   }
 
@@ -328,14 +409,19 @@ class PodcastPlaybackController extends ChangeNotifier {
     final sessionId = ++_playSessionId;
     _needsReloadOnResume = false;
     _withinTurnFraction = initialSeekFraction.clamp(0.0, 0.98);
-    // Stop any previous turn audio immediately so it doesn't keep playing or
-    // firing timeupdate/ended events while the new turn loads.
-    _player.stop();
+    // Only stop if audio is currently active; when transitioning naturally on
+    // `ended`, the element is already paused at the end of the track, and
+    // calling stop() needlessly resets the element before playUrl swaps src.
+    if (_player.hasActiveAudio) {
+      _player.stop();
+    }
+    _player.startKeepAlive();
+    _syncMediaSession();
     final lang = effectiveLanguage;
 
     final ov = _overview;
-    if (ov != null && ov.podcastTurns.isEmpty) {
-      final top8 = ov.stories.take(8).toList();
+    if (ov != null) {
+      final top8 = ov.podcastStories;
       if (top8.any((s) => s.needsTranslationFor(lang))) {
         _isLoadingAudio = true;
         notifyListeners();
@@ -368,7 +454,10 @@ class PodcastPlaybackController extends ChangeNotifier {
       notifyListeners();
     }
 
-    if (withIntroJingle) {
+    // Skip synthesized jingle/chime when the browser tab is in the background
+    // or the device screen is locked, so the main <audio> element transitions
+    // directly from turn N to turn N+1 without any timer delay.
+    if (withIntroJingle && !_player.isInBackground) {
       await _player.playIntroJingle(
         playbackRate: _playbackRate,
         style: _musicPreset,
@@ -376,7 +465,7 @@ class PodcastPlaybackController extends ChangeNotifier {
       if (!_isPlaying || _isPaused || sessionId != _playSessionId) {
         return;
       }
-    } else if (withStoryChime) {
+    } else if (withStoryChime && !_player.isInBackground) {
       await _player.playStoryChime(
         playbackRate: _playbackRate,
         style: _chimePreset,
@@ -386,8 +475,8 @@ class PodcastPlaybackController extends ChangeNotifier {
       }
     }
 
-    // Kick off sequential prefetching of upcoming turns in the background
-    // as soon as the current turn begins playing.
+    // Kick off sequential prefetching of all remaining turns in the background
+    // so the entire episode is cached in memory before the device sleeps.
     _prefetchUpcomingTurns(sessionId, _currentTurnIndex + 1, lang);
 
     await _player.playUrl(
@@ -406,8 +495,7 @@ class PodcastPlaybackController extends ChangeNotifier {
     String lang,
   ) async {
     final list = turns;
-    final endIndex = math.min(list.length, startIndex + 6);
-    for (var i = startIndex; i < endIndex; i++) {
+    for (var i = startIndex; i < list.length; i++) {
       if (!_isPlaying || sessionId != _playSessionId) return;
       final turnUrl = _buildAudioUrl(list[i], lang);
       if (!_player.isUrlCached(turnUrl)) {
@@ -422,12 +510,17 @@ class PodcastPlaybackController extends ChangeNotifier {
 
     if (_isPlaying && !_isPaused) {
       _playSessionId++;
+      _player.stopKeepAlive();
       _player.pause();
       _isPaused = true;
       _isLoadingAudio = false;
+      _syncMediaSession();
       notifyListeners();
     } else if (_isPlaying && _isPaused) {
+      _player.unlockAudio();
+      _player.startKeepAlive();
       _isPaused = false;
+      _syncMediaSession();
       notifyListeners();
       if (_needsReloadOnResume || !_player.hasActiveAudio) {
         _playCurrentTurn(initialSeekFraction: _withinTurnFraction);
@@ -446,10 +539,12 @@ class PodcastPlaybackController extends ChangeNotifier {
       }
     } else {
       _player.unlockAudio();
+      _player.startKeepAlive();
       final startingFromBeginning =
           _currentTurnIndex == 0 && _withinTurnFraction < 0.05;
       _isPlaying = true;
       _isPaused = false;
+      _syncMediaSession();
       notifyListeners();
       _playCurrentTurn(
         withIntroJingle: startingFromBeginning,
@@ -688,28 +783,49 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    SizedBox(
-                      width: 40,
-                      height: 40,
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0F2942), Color(0xFF1E3A5F)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: const Color(0xFFFBBF24),
+                          width: 2.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF0F2942).withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F2942),
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           foregroundColor: const Color(0xFFFBBF24),
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(11),
+                            borderRadius: BorderRadius.circular(13),
                           ),
                         ),
                         onPressed: _controller.togglePlayPause,
                         child: _controller.isLoadingAudio
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
+                                  strokeWidth: 2.6,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     Color(0xFFFBBF24),
                                   ),
@@ -719,7 +835,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                                 isPlayingNow
                                     ? Icons.pause_rounded
                                     : Icons.play_arrow_rounded,
-                                size: 24,
+                                size: 30,
                               ),
                       ),
                     ),
@@ -727,7 +843,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                     Expanded(
                       child: SliderTheme(
                         data: SliderTheme.of(context).copyWith(
-                          trackHeight: 4,
+                          trackHeight: 4.5,
                           activeTrackColor: const Color(0xFF0F2942),
                           inactiveTrackColor: const Color(0xFF0F2942)
                               .withValues(alpha: 0.16),
@@ -735,7 +851,7 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                           overlayColor: const Color(0xFF0F2942)
                               .withValues(alpha: 0.12),
                           thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6.5,
+                            enabledThumbRadius: 7.0,
                           ),
                           overlayShape: const RoundSliderOverlayShape(
                             overlayRadius: 14,
@@ -750,14 +866,34 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                         ),
                       ),
                     ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F2942).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _controller.formattedRemainingTime,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F2942),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     InkWell(
                       borderRadius: BorderRadius.circular(10),
                       onTap: _controller.cycleSpeed,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 6,
+                          horizontal: 8,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color:
@@ -773,10 +909,10 @@ class _TopStoriesPodcastCardState extends State<TopStoriesPodcastCard>
                           children: [
                             const Icon(
                               Icons.speed_rounded,
-                              size: 13.5,
+                              size: 13,
                               color: Color(0xFF0F2942),
                             ),
-                            const SizedBox(width: 3.5),
+                            const SizedBox(width: 3),
                             Text(
                               '${_controller.playbackRate}x',
                               style: const TextStyle(

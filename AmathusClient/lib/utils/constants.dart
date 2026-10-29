@@ -305,10 +305,19 @@ final RegExp _topicPoliticsRegex = RegExp(
   caseSensitive: false,
 );
 
-final RegExp _topicWorldRegex = RegExp(
-  r'(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|ukraine|russia|moscow|gaza|palestin|west\s+bank|israel|france|paris|spain|britain|london|\busa\b)',
+final RegExp _cyprusGeoRegex = RegExp(
+  r'(κύπρ|κυπριακ|λευκωσί|λεμεσ|λάρνακ|πάφο|αμμόχωστ|κερύνει|μόρφου|πύλα|παραλίμν|αγία\s+νάπα|τρόοδος|ακάμα|χριστοδουλίδ|ερχιουρμάν|τατάρ|αναστασιάδ|ακελ|δησυ|δηκο|ελαμ|εδεκ|δηπα|προεδρικό|κατεχόμεν|ψευδοκράτ|νεκρή\s+ζώνη|οδόφραγμ|οδοφράγματ|δικοινοτικ|τουρκοκύπρι|ελληνοκύπρι|γεσυ|οκυπυ|κεβε|οεβ|ποεδ|οελμεκ|kıbrıs|kibris|kktc|lefkoşa|lefkosa|girne|mağusa|magusa|gazimağusa|güzelyurt|iskele|lefke|mesarya|dipkarpaz|karpaz|maraş|pile|limasol|larnaka|\bbaf\b|güney\s+kıbrıs|kuzey\s+kıbrıs|\brum\b|rumlar|erhürman|erhurman|\btatar\b|üstel|hristodulidis|\bubp\b|\bctp\b|\bydp\b|\btdp\b|ara\s+bölge|sınır\s+kapısı|iki\s+toplumlu|kıb-tek|ktto|ktams|ktoeös|ktös|ercan\s+havalimanı|cyprus|cypriot|nicosia|limassol|larnaca|paphos|famagusta|kyrenia|morphou|\bpyla\b|buffer\s+zone|green\s+line|unficyp|trnc|bicommunal|christodoulides|troodos|akamas|ayia\s+napa|protaras|karpass)',
   caseSensitive: false,
 );
+
+final RegExp _topicWorldRegex = RegExp(
+  r'(ουκραν|ρωσ|μόσχα|κρεμλίν|ζελένσκι|πούτιν|γάζα|παλαιστιν|δυτική\s+όχθη|χαμάς|χεζμπολάχ|τεχεράν|πεντάγων|τραμπ|μπάιντεν|μακρόν|ισραήλ|ιράν|γαλλία|παρίσι|ισπανία|βρετανία|λονδίνο|\bηπα\b|ουάσιγκτον|κίνα|πεκίνο|γερμανί|βερολίνο|ιταλί|ρώμη|λιβάν|βυρητ|συρία|δαμασκ|αιγυπτ|κάιρο|ευρωπαϊκή\s+ένωση|βρυξέλλες|\bνατο\b|ελλάδ|αθήνα|θεσσαλονίκ|μητσοτάκ|τουρκί|άγκυρα|κωνσταντινούπολ|ερντογάν|ukrayna|rusya|moskova|kremlin|zelenski|putin|gazze|filistin|batı\s+şeria|hamas|hizbullah|tahran|pentagon|beyaz\s+saray|trump|biden|macron|israil|\biran\b|fransa|ispanya|ingiltere|londra|\babd\b|vaşington|washington|\bçin\b|pekin|almanya|berlin|italya|roma|lübnan|beyrut|suriye|şam|mısır|kahire|avrupa\s+birliği|brüksel|\bnato\b|yunanistan|atina|selanik|miçotakis|türkiye|ankara|istanbul|erdoğan|erdogan|ukraine|russia|moscow|zelensky|gaza|palestin|west\s+bank|israel|tehran|lebanon|beirut|syria|damascus|egypt|cairo|france|paris|spain|britain|united\s+kingdom|london|\busa\b|united\s+states|white\s+house|china|beijing|germany|berlin|italy|rome|brussels|\bnato\b|greece|athens|mitsotakis|turkey|ankara|istanbul|world|international|global)',
+  caseSensitive: false,
+);
+
+bool isCyprusFocusedText(String text) {
+  return _cyprusGeoRegex.hasMatch(text);
+}
 
 String resolveTopic(
   String? explicitTopic, {
@@ -317,15 +326,31 @@ String resolveTopic(
   String? detail,
   String? url,
 }) {
-  final direct = normalizeTopic(explicitTopic);
-  if (direct != null) return direct;
-
   final safeTitle = title ?? '';
   final safeSummary = summary ?? '';
   final safeDetail = (detail != null && detail.length > 600)
       ? detail.substring(0, 600)
       : (detail ?? '');
   final safeUrl = url ?? '';
+  final combined = '$safeTitle $safeSummary $safeDetail $safeUrl';
+  final hasCyprus = _cyprusGeoRegex.hasMatch(combined);
+  final hasWorld = _topicWorldRegex.hasMatch(combined);
+
+  final direct = normalizeTopic(explicitTopic);
+  if (direct != null) {
+    if (direct == 'world') return 'world';
+    // If an article/story has no Cyprus reference at all and strongly matches
+    // international/world actors or countries (while not being sports/culture),
+    // classify it as 'world' even if it was generically tagged 'politics' or 'society'.
+    if ((direct == 'politics' || direct == 'society') &&
+        !hasCyprus &&
+        hasWorld &&
+        !_topicSportsRegex.hasMatch(safeTitle) &&
+        !_topicCultureRegex.hasMatch(safeTitle)) {
+      return 'world';
+    }
+    return direct;
+  }
 
   int scoreFor(RegExp rx) =>
       rx.allMatches(safeTitle).length * 3 +
@@ -333,13 +358,20 @@ String resolveTopic(
       rx.allMatches(safeDetail).length +
       rx.allMatches(safeUrl).length * 2;
 
+  var worldScore = scoreFor(_topicWorldRegex);
+  if (!hasCyprus && worldScore > 0) {
+    worldScore += 6;
+  } else if (hasCyprus && worldScore > 0) {
+    worldScore = (worldScore - 4).clamp(0, 999);
+  }
+
   final candidates = <(String, int)>[
     ('sports', scoreFor(_topicSportsRegex)),
     ('economy', scoreFor(_topicEconomyRegex)),
     ('culture', scoreFor(_topicCultureRegex)),
     ('society', scoreFor(_topicSocietyRegex)),
     ('politics', scoreFor(_topicPoliticsRegex)),
-    ('world', scoreFor(_topicWorldRegex)),
+    ('world', worldScore),
   ];
 
   var bestTopic = 'society';

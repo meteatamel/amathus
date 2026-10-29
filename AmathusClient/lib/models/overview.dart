@@ -43,6 +43,55 @@ class NewsOverview {
     return currentCyprusEdition();
   }
 
+  List<OverviewStory> get podcastStories {
+    if (stories.isEmpty) return const [];
+    if (id == 'latest_columnists') {
+      return stories.take(8).toList();
+    }
+    final cyprusStories =
+        stories.where((s) => s.effectiveTopic != 'world').toList();
+    final worldStories =
+        stories.where((s) => s.effectiveTopic == 'world').toList();
+    if (worldStories.isEmpty) {
+      return stories.take(8).toList();
+    }
+    final selected = <OverviewStory>[];
+    selected.addAll(cyprusStories.take(6));
+    final worldTarget = (8 - selected.length).clamp(2, 8);
+    selected.addAll(worldStories.take(worldTarget));
+    if (selected.length < 8) {
+      for (final s in stories) {
+        if (selected.length >= 8) break;
+        if (!selected.contains(s)) {
+          selected.add(s);
+        }
+      }
+    }
+    return selected.take(8).toList();
+  }
+
+  void orderCyprusFirstThenWorld({
+    int topCyprusCount = 15,
+    int topWorldCount = 5,
+  }) {
+    if (id == 'latest_columnists' || stories.length <= 4) return;
+    final cyprus = stories.where((s) => s.effectiveTopic != 'world').toList();
+    final world = stories.where((s) => s.effectiveTopic == 'world').toList();
+    if (world.isEmpty || cyprus.isEmpty) return;
+
+    final reordered = <OverviewStory>[];
+    final firstCyprus = cyprus.take(topCyprusCount).toList();
+    final firstWorld = world.take(topWorldCount).toList();
+    reordered.addAll(firstCyprus);
+    reordered.addAll(firstWorld);
+    reordered.addAll(cyprus.skip(firstCyprus.length));
+    reordered.addAll(world.skip(firstWorld.length));
+
+    stories
+      ..clear()
+      ..addAll(reordered);
+  }
+
   List<PodcastDialogueTurn> turnsForEdition([String? requestedEdition]) {
     final targetEdition =
         (requestedEdition != null && requestedEdition.trim().isNotEmpty)
@@ -53,6 +102,23 @@ class NewsOverview {
         podcastTurns.length > 2 &&
         (podcastTurns[2].storyId ?? '').isNotEmpty &&
         !PodcastDialogueTurn.hasMixedOrUntranslatedTurns(podcastTurns)) {
+      final targetStories = podcastStories;
+      final targetWorldStories =
+          targetStories.where((s) => s.effectiveTopic == 'world').toList();
+      if (targetWorldStories.isNotEmpty && id != 'latest_columnists') {
+        final worldIds = targetWorldStories.map((s) => s.id).toSet();
+        final hasWorldTurnInServerScript =
+            podcastTurns.any((t) => t.storyId != null && worldIds.contains(t.storyId));
+        if (!hasWorldTurnInServerScript && podcastTurns.length >= 16) {
+          final merged = PodcastDialogueTurn.mergeServerCyprusWithWorldStories(
+            podcastTurns,
+            targetWorldStories.take(2).toList(),
+          );
+          if (!PodcastDialogueTurn.hasMixedOrUntranslatedTurns(merged)) {
+            return merged;
+          }
+        }
+      }
       return podcastTurns;
     }
     return PodcastDialogueTurn.buildClientTurns(this, targetEdition);
@@ -72,7 +138,7 @@ class NewsOverview {
   factory NewsOverview.fromJson(Map<String, dynamic> json) {
     final rawStories = (json['Stories'] as List<dynamic>?) ?? const [];
     final rawTurns = (json['PodcastTurns'] as List<dynamic>?) ?? const [];
-    return NewsOverview(
+    final overview = NewsOverview(
       id: (json['Id'] as String?) ?? 'latest',
       generatedAt: DateTime.tryParse((json['GeneratedAt'] as String?) ?? '') ??
           DateTime.now(),
@@ -90,6 +156,8 @@ class NewsOverview {
           .map((e) => PodcastDialogueTurn.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
+    overview.orderCyprusFirstThenWorld();
+    return overview;
   }
 
   Map<String, dynamic> toJson() => {
@@ -223,11 +291,133 @@ class PodcastDialogueTurn {
         'TextEn': textEn,
       };
 
+  static List<PodcastDialogueTurn> mergeServerCyprusWithWorldStories(
+    List<PodcastDialogueTurn> serverTurns,
+    List<OverviewStory> worldStories,
+  ) {
+    if (worldStories.isEmpty || serverTurns.length < 16) return serverTurns;
+    final worldCount = worldStories.length.clamp(1, 2);
+    final cyprusStoryTurnsToKeep = (8 - worldCount) * 2;
+    if (2 + cyprusStoryTurnsToKeep >= serverTurns.length - 2) {
+      return serverTurns;
+    }
+
+    final result = <PodcastDialogueTurn>[];
+    var idx = 0;
+
+    // Opening turns (0 and 1) + first (8 - worldCount) Cyprus story turn-pairs
+    for (var i = 0; i < 2 + cyprusStoryTurnsToKeep; i++) {
+      final t = serverTurns[i];
+      result.add(PodcastDialogueTurn(
+        index: idx++,
+        speaker: t.speaker,
+        storyId: t.storyId,
+        speakerNameEl: t.speakerNameEl,
+        speakerNameTr: t.speakerNameTr,
+        speakerNameEn: t.speakerNameEn,
+        textEl: t.textEl,
+        textTr: t.textTr,
+        textEn: t.textEn,
+      ));
+    }
+
+    const worldLeadTransitionsEl = [
+      'Περνώντας τώρα στη διεθνή επικαιρότητα, ας δούμε μια εξέλιξη που ξεχωρίζει στον κόσμο σήμερα.',
+      'Και μένοντας στα διεθνή νέα, υπάρχει ένα ακόμη θέμα που συγκεντρώνει το παγκόσμιο ενδιαφέρον.',
+    ];
+    const worldLeadTransitionsTr = [
+      'Şimdi de Kıbrıs gündeminin ardından dünyada öne çıkan gelişmelere göz atalım.',
+      'Dünya gündeminde dikkat çeken bir diğer önemli başlığa da değinelim.',
+    ];
+    const worldLeadTransitionsEn = [
+      'Turning now from Cyprus to international news making headlines around the world today.',
+      'And staying with global developments, here is another international story drawing attention today.',
+    ];
+
+    const worldReactionsEl = [
+      'Είναι μια εξέλιξη με ευρύτερες διεθνείς προεκτάσεις που παρακολουθείται στενά.',
+      'Πράγματι, οι εξελίξεις σε διεθνές επίπεδο διαμορφώνουν ένα ιδιαίτερα κρίσιμο σκηνικό.',
+    ];
+    const worldReactionsTr = [
+      'Uluslararası arenada yakından takip edilen bu gelişmenin yankıları sürüyor.',
+      'Kesinlikle, küresel ölçekte dengeleri etkileyen önemli bir süreçten geçiliyor.',
+    ];
+    const worldReactionsEn = [
+      'It is a major international development with wider implications being closely watched worldwide.',
+      'Indeed, and the global reaction shows just how significant this moment is on the world stage.',
+    ];
+
+    for (var w = 0; w < worldCount; w++) {
+      final s = worldStories[w];
+      final storyNumber = (8 - worldCount) + w;
+      final hostALeads = storyNumber.isEven;
+      final splitEl = _splitNarrativeSentences(s.narrativeFor('el'));
+      final splitTr = _splitNarrativeSentences(s.narrativeFor('tr'));
+      final splitEn = _splitNarrativeSentences(s.narrativeFor('en'));
+
+      final leadEl = splitEl.$1.isNotEmpty ? splitEl.$1 : s.titleFor('el');
+      final leadTr = splitTr.$1.isNotEmpty ? splitTr.$1 : s.titleFor('tr');
+      final leadEn = splitEn.$1.isNotEmpty ? splitEn.$1 : s.titleFor('en');
+
+      result.add(PodcastDialogueTurn(
+        index: idx++,
+        speaker: hostALeads ? 'A' : 'B',
+        storyId: s.id,
+        speakerNameEl: '',
+        speakerNameTr: '',
+        speakerNameEn: '',
+        textEl: '${worldLeadTransitionsEl[w % worldLeadTransitionsEl.length]} $leadEl',
+        textTr: '${worldLeadTransitionsTr[w % worldLeadTransitionsTr.length]} $leadTr',
+        textEn: '${worldLeadTransitionsEn[w % worldLeadTransitionsEn.length]} $leadEn',
+      ));
+
+      final followEl = splitEl.$2.isNotEmpty
+          ? '${worldReactionsEl[w % worldReactionsEl.length]} ${splitEl.$2}'
+          : worldReactionsEl[w % worldReactionsEl.length];
+      final followTr = splitTr.$2.isNotEmpty
+          ? '${worldReactionsTr[w % worldReactionsTr.length]} ${splitTr.$2}'
+          : worldReactionsTr[w % worldReactionsTr.length];
+      final followEn = splitEn.$2.isNotEmpty
+          ? '${worldReactionsEn[w % worldReactionsEn.length]} ${splitEn.$2}'
+          : worldReactionsEn[w % worldReactionsEn.length];
+
+      result.add(PodcastDialogueTurn(
+        index: idx++,
+        speaker: hostALeads ? 'B' : 'A',
+        storyId: s.id,
+        speakerNameEl: '',
+        speakerNameTr: '',
+        speakerNameEn: '',
+        textEl: followEl,
+        textTr: followTr,
+        textEn: followEn,
+      ));
+    }
+
+    // Closing turns (last 2 turns)
+    for (var i = serverTurns.length - 2; i < serverTurns.length; i++) {
+      final t = serverTurns[i];
+      result.add(PodcastDialogueTurn(
+        index: idx++,
+        speaker: t.speaker,
+        storyId: null,
+        speakerNameEl: t.speakerNameEl,
+        speakerNameTr: t.speakerNameTr,
+        speakerNameEn: t.speakerNameEn,
+        textEl: t.textEl,
+        textTr: t.textTr,
+        textEn: t.textEn,
+      ));
+    }
+
+    return result;
+  }
+
   static List<PodcastDialogueTurn> buildClientTurns(
     NewsOverview overview,
     String edition,
   ) {
-    final topStories = overview.stories.take(8).toList();
+    final topStories = overview.podcastStories;
     if (topStories.isEmpty) return const [];
 
     final turns = <PodcastDialogueTurn>[];
@@ -350,6 +540,8 @@ class PodcastDialogueTurn {
     for (var i = 0; i < topStories.length; i++) {
       final s = topStories[i];
       final hostALeads = i.isEven;
+      final isFirstWorldStory = s.effectiveTopic == 'world' &&
+          (i == 0 || topStories[i - 1].effectiveTopic != 'world');
       final splitEl = _splitNarrativeSentences(s.narrativeFor('el'));
       final splitTr = _splitNarrativeSentences(s.narrativeFor('tr'));
       final splitEn = _splitNarrativeSentences(s.narrativeFor('en'));
@@ -358,6 +550,16 @@ class PodcastDialogueTurn {
       final leadTr = splitTr.$1.isNotEmpty ? splitTr.$1 : s.titleFor('tr');
       final leadEn = splitEn.$1.isNotEmpty ? splitEn.$1 : s.titleFor('en');
 
+      final transitionEl = isFirstWorldStory
+          ? 'Περνώντας τώρα στη διεθνή επικαιρότητα, ας δούμε μια εξέλιξη που ξεχωρίζει στον κόσμο σήμερα.'
+          : leadTransitionsEl[i % leadTransitionsEl.length];
+      final transitionTr = isFirstWorldStory
+          ? 'Şimdi de Kıbrıs gündeminin ardından dünyada öne çıkan gelişmelere göz atalım.'
+          : leadTransitionsTr[i % leadTransitionsTr.length];
+      final transitionEn = isFirstWorldStory
+          ? 'Turning now from Cyprus to international news making headlines around the world today.'
+          : leadTransitionsEn[i % leadTransitionsEn.length];
+
       turns.add(PodcastDialogueTurn(
         index: idx++,
         speaker: hostALeads ? 'A' : 'B',
@@ -365,9 +567,9 @@ class PodcastDialogueTurn {
         speakerNameEl: '',
         speakerNameTr: '',
         speakerNameEn: '',
-        textEl: '${leadTransitionsEl[i % leadTransitionsEl.length]} $leadEl',
-        textTr: '${leadTransitionsTr[i % leadTransitionsTr.length]} $leadTr',
-        textEn: '${leadTransitionsEn[i % leadTransitionsEn.length]} $leadEn',
+        textEl: '$transitionEl $leadEl',
+        textTr: '$transitionTr $leadTr',
+        textEn: '$transitionEn $leadEn',
       ));
 
       final followEl = splitEl.$2.isNotEmpty

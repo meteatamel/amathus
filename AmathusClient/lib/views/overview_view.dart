@@ -62,6 +62,9 @@ class _OverviewViewState extends State<OverviewView> {
     ConnectivityController.instance.addReconnectListener(_onReconnected);
     ConnectivityController.instance.syncBrowserStatus();
     _loadLatestCachedData();
+    if (widget.loadServerCallback == null) {
+      _loadLatestData();
+    }
     _loadInitial();
   }
 
@@ -83,23 +86,125 @@ class _OverviewViewState extends State<OverviewView> {
     _translateVisibleStoriesIfNeeded();
   }
 
+  void _ensureWorldStoriesIncluded() {
+    final ov = _overview;
+    if (ov == null || ov.stories.length <= 4) return;
+
+    final existingWorldCount =
+        ov.stories.where((s) => s.effectiveTopic == 'world').length;
+    final latestItems = _latestItemsNotifier.value;
+    if (existingWorldCount < 5 && latestItems.isNotEmpty) {
+      final existingUrls = <String>{};
+      for (final s in ov.stories) {
+        for (final src in s.sources) {
+          final u = (src.article.url ?? '').trim();
+          if (u.isNotEmpty) existingUrls.add(u);
+        }
+      }
+
+      final worldCandidates = latestItems.where((item) {
+        final url = (item.url ?? '').trim();
+        if (url.isNotEmpty && existingUrls.contains(url)) return false;
+        if (item.feed == null) return false;
+        if (item.effectiveTopic != 'world') return false;
+        final combined = '${item.title} ${item.summary ?? ''}';
+        return !Constants.isCyprusFocusedText(combined);
+      }).toList();
+
+      worldCandidates.sort((a, b) {
+        final aHasImg = (a.imageUrl ?? '').trim().isNotEmpty ? 1 : 0;
+        final bHasImg = (b.imageUrl ?? '').trim().isNotEmpty ? 1 : 0;
+        if (aHasImg != bHasImg) return bHasImg.compareTo(aHasImg);
+        return b.publishDate.compareTo(a.publishDate);
+      });
+
+      final needed = 5 - existingWorldCount;
+      final addedFeeds = <String>{};
+      var added = 0;
+
+      for (var pass = 0; pass < 2 && added < needed; pass++) {
+        for (final item in worldCandidates) {
+          if (added >= needed) break;
+          final url = (item.url ?? '').trim();
+          if (url.isNotEmpty && existingUrls.contains(url)) continue;
+          final feed = item.feed!;
+          if (pass == 0 && addedFeeds.contains(feed.id)) continue;
+
+          if (url.isNotEmpty) existingUrls.add(url);
+          addedFeeds.add(feed.id);
+
+          final narrative = (item.summary ?? '').trim().isNotEmpty
+              ? item.summary!.trim()
+              : (item.detail ?? item.title).trim();
+          final source = OverviewStorySource(
+            feedId: feed.id,
+            feedTitle: feed.title,
+            feedLanguage:
+                Constants.resolveFeedLanguage(feed.id, feed.language),
+            feedImageUrl: feed.imageUrl,
+            feedUrl: feed.url,
+            article: item,
+          );
+          ov.stories.add(
+            OverviewStory(
+              id: 'world-extra-${ov.stories.length + 1}',
+              titleEn: item.title,
+              titleTr: item.title,
+              titleEl: item.title,
+              narrativeEn: narrative,
+              narrativeTr: narrative,
+              narrativeEl: narrative,
+              imageUrl: item.imageUrl,
+              publishDate: item.publishDate,
+              topic: 'world',
+              sources: [source],
+            ),
+          );
+          added++;
+        }
+      }
+    }
+
+    ov.orderCyprusFirstThenWorld(topCyprusCount: 15, topWorldCount: 5);
+  }
+
   void _translateVisibleStoriesIfNeeded() {
     if (ConnectivityController.instance.isOffline) return;
     final ov = _overview;
+    if (ov == null || ov.stories.isEmpty) return;
     final targetLang = Constants.overviewTranslateLanguageNotifier.value;
-    if (ov == null || ov.stories.isEmpty || targetLang == null) return;
     final visibleSlice = ov.stories.take(_maxVisibleTopStories).toList();
-    TranslateController.ensureOverviewStoriesTranslated(
-      visibleSlice,
-      targetLang,
-      onUpdated: () {
-        if (mounted) {
-          setState(() {});
-        }
-      },
-    ).then((_) {
-      PodcastPlaybackController.instance.onStoriesUpdated();
-    });
+    if (targetLang != null) {
+      TranslateController.ensureOverviewStoriesTranslated(
+        visibleSlice,
+        targetLang,
+        onUpdated: () {
+          if (mounted) {
+            setState(() {});
+          }
+        },
+      ).then((_) {
+        PodcastPlaybackController.instance.onStoriesUpdated();
+      });
+    }
+
+    // Also ensure the 8 podcast stories (6 Cyprus + 2 World) are translated for
+    // the current UI language so the podcast script can speak them immediately.
+    final podcastLang = Constants.currentLanguage;
+    final podcastSlice = ov.podcastStories;
+    if (podcastSlice.any((s) => s.needsTranslationFor(podcastLang))) {
+      TranslateController.ensureOverviewStoriesTranslated(
+        podcastSlice,
+        podcastLang,
+        onUpdated: () {
+          if (mounted) {
+            setState(() {});
+          }
+        },
+      ).then((_) {
+        PodcastPlaybackController.instance.onStoriesUpdated();
+      });
+    }
   }
 
   Future<void> _loadInitial() async {
@@ -108,6 +213,7 @@ class _OverviewViewState extends State<OverviewView> {
     if (cached != null && cached.stories.isNotEmpty && mounted) {
       setState(() {
         _overview = cached;
+        _ensureWorldStoriesIncluded();
         _isLoading = false;
       });
       _translateVisibleStoriesIfNeeded();
@@ -133,6 +239,7 @@ class _OverviewViewState extends State<OverviewView> {
     setState(() {
       if (fresh != null && fresh.stories.isNotEmpty) {
         _overview = fresh;
+        _ensureWorldStoriesIncluded();
       }
       _isLoading = false;
       _isRefreshing = false;
@@ -354,6 +461,12 @@ class _OverviewViewState extends State<OverviewView> {
     final items = _extractSortedLatestItems(feeds);
     if (items != null && items.isNotEmpty) {
       _latestItemsNotifier.value = items;
+      if (_overview != null && mounted) {
+        setState(() {
+          _ensureWorldStoriesIncluded();
+        });
+        _translateVisibleStoriesIfNeeded();
+      }
     }
     return items;
   }
@@ -363,6 +476,12 @@ class _OverviewViewState extends State<OverviewView> {
     final items = _extractSortedLatestItems(feeds);
     if (items != null) {
       _latestItemsNotifier.value = items;
+      if (_overview != null && mounted) {
+        setState(() {
+          _ensureWorldStoriesIncluded();
+        });
+        _translateVisibleStoriesIfNeeded();
+      }
     }
     return items;
   }

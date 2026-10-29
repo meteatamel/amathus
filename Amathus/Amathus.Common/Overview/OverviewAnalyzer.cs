@@ -255,15 +255,28 @@ namespace Amathus.Common.Overview
                     .OrderByDescending(item => item.PublishDate)
                     .ToList();
 
-                var recent = filtered
+                var recentFiltered = filtered
                     .Where(i => EnsureUtc(i.PublishDate) >= cutoff)
-                    .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 ? 1 : 0)
-                    .ThenByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
-                    .ThenByDescending(i => i.PublishDate)
-                    .Take(10)
                     .ToList();
 
-                foreach (var item in recent)
+                var recentCyprus = recentFiltered
+                    .Where(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) >= 3 &&
+                                TextUtil.ClassifyTopic(i.Title, i.Summary, i.Detail, i.Url?.AbsoluteUri) != "world")
+                    .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
+                    .ThenByDescending(i => i.PublishDate)
+                    .Take(9)
+                    .ToList();
+
+                var recentWorld = recentFiltered
+                    .Except(recentCyprus)
+                    .Where(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail) < 3 ||
+                                TextUtil.ClassifyTopic(i.Title, i.Summary, i.Detail, i.Url?.AbsoluteUri) == "world")
+                    .OrderByDescending(i => i.ImageUrl != null)
+                    .ThenByDescending(i => i.PublishDate)
+                    .Take(3)
+                    .ToList();
+
+                foreach (var item in recentCyprus.Concat(recentWorld))
                 {
                     result.Add(new CandidateArticle
                     {
@@ -301,11 +314,22 @@ namespace Amathus.Common.Overview
                 }
             }
 
-            result = result
-                .OrderByDescending(c => c.GeoTier >= 3 ? 3 : c.GeoTier)
+            var cyprusPool = result
+                .Where(c => c.GeoTier >= 3 &&
+                            TextUtil.ClassifyTopic(c.Item.Title, c.Item.Summary, c.Item.Detail, c.Item.Url?.AbsoluteUri) != "world")
+                .OrderByDescending(c => c.GeoTier)
                 .ThenByDescending(c => c.Item.PublishDate)
-                .Take(240)
+                .Take(195)
                 .ToList();
+
+            var worldPool = result
+                .Except(cyprusPool)
+                .OrderByDescending(c => c.Item.ImageUrl != null)
+                .ThenByDescending(c => c.Item.PublishDate)
+                .Take(45)
+                .ToList();
+
+            result = cyprusPool.Concat(worldPool).Take(240).ToList();
 
             for (int i = 0; i < result.Count; i++)
             {
@@ -505,11 +529,16 @@ namespace Amathus.Common.Overview
                 }
             }
 
+            if (!columnistsOnly)
+            {
+                stories = OrderCyprusFirstThenWorld(stories);
+            }
+
             var currentEdition = PodcastScriptBuilder.ResolveEdition(DateTime.UtcNow);
             var podcastTurns = new List<PodcastDialogueTurn>();
             if (parsed.PodcastTurns != null && parsed.PodcastTurns.Count >= 6)
             {
-                var topPodcastStories = stories.Take(8).ToList();
+                var topPodcastStories = PodcastScriptBuilder.SelectPodcastStories(stories, columnistsOnly);
                 int idx = 0;
                 foreach (var pt in parsed.PodcastTurns)
                 {
@@ -658,12 +687,10 @@ namespace Amathus.Common.Overview
                 sb.AppendLine("Analyze all articles and identify all major top stories of the day covered across newspapers (aim for 18 to 22 top stories; include at least 18 distinct stories).");
             }
             sb.AppendLine("RECENCY PRIORITY: Prioritize breaking and recent stories published within the last 12–18 hours over older stories from yesterday.");
-            sb.AppendLine("GEOGRAPHIC PRIORITY (STRICT): You MUST prioritize and order stories/columns in this exact geographic hierarchy:");
-            sb.AppendLine("  1st Priority: CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, legal, social, and cultural developments).");
-            sb.AppendLine("  2nd Priority: GREECE (especially developments in Greece relevant to Cyprus or the Eastern Mediterranean).");
-            sb.AppendLine("  3rd Priority: TURKEY (especially developments in Turkey relevant to Cyprus or the Eastern Mediterranean).");
-            sb.AppendLine("  4th Priority: WORLD (general international news).");
-            sb.AppendLine("The selected list and the 5-minute podcast MUST be predominantly about Cyprus-related topics (at least 85-90% Cyprus topics). Only include topics exclusively about Greece or Turkey after all major Cyprus topics are covered, and avoid unrelated general world topics unless no Cyprus, Greece, or Turkey topics remain. Always order the 'stories' array and 'podcastTurns' discussion with Cyprus topics first, followed by Greece, then Turkey, and World last.");
+            sb.AppendLine("GEOGRAPHIC PRIORITY & WORLD NEWS INCLUSION (STRICT): You MUST prioritize and order stories/columns as follows:");
+            sb.AppendLine("  1st Priority (First 14 to 16 stories): CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, legal, social, and cultural developments).");
+            sb.AppendLine("  2nd Priority (Next 4 to 6 stories, right after Cyprus): WORLD & REGIONAL NEWS (topic: \"world\" — major international, Middle East, European, US, global, Greece, and Turkey developments covered in the newspapers).");
+            sb.AppendLine("The selected Top Stories list MUST include 14 to 16 major Cyprus stories first, followed immediately by 4 to 6 major World/international stories (labeled with topic: \"world\"). Similarly, the 5-minute podcast (8 stories total) MUST cover the top 6 Cyprus stories first (Turns 2–13), followed by the top 2 World/international stories (Turns 14–17) before the closing wrap-up.");
             sb.AppendLine("Within Cyprus topics, prioritize themes covered across different language communities in Cyprus and major island-wide developments, ensuring a balanced selection across Turkish, Greek, and English sources.");
             sb.AppendLine("COMMUNITY & GEOGRAPHIC QUALIFICATION (CRITICAL FOR BOTH STORIES AND PODCAST):");
             sb.AppendLine("- Because listeners and readers come from both Greek Cypriot and Turkish Cypriot communities, ALWAYS explicitly qualify events, municipalities, institutions, political parties, ministries, and officials in the north so there is never any ambiguity (for example, never refer to an event in the northern part of Nicosia simply as 'in Nicosia' or 'Municipality of Nicosia', and never drop an acronym like 'LTB' without explaining that it is the Nicosia Turkish Municipality).");
@@ -689,7 +716,7 @@ namespace Amathus.Common.Overview
             sb.AppendLine("- NATURAL CONVERSATION (DO NOT READ HEADLINES): Never simply read or list news titles/headlines out loud — neither in the opening intro (Turns 0 and 1) nor when introducing each story (Turns 2–17). Instead, talk through the themes and stories naturally in complete, flowing spoken sentences, as two smart, approachable co-hosts having an authentic conversation.");
             sb.AppendLine("- Turn 0 (speaker \"A\") MUST warmly welcome listeners to \"" + editionEn + "\" (in Turkish: \"" + editionTr + "\", in Greek: \"" + editionEl + "\") with a time-appropriate greeting and naturally talk through a couple of the biggest themes shaping today's news without reciting headline titles.");
             sb.AppendLine("- Turn 1 (speaker \"B\") MUST build on that naturally, mention one or two other interesting angles coming up in conversational phrasing (not headline lists), and transition smoothly into the first story.");
-            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across the top 8 Cyprus-focused topics): the first speaker introduces what is happening in the story in a natural, conversational way (never reading a headline title), and the second speaker reacts naturally and adds context, why it matters, and cross-community perspective without repeating the first speaker.");
+            sb.AppendLine("- Subsequent turns MUST alternate between speaker \"A\" and speaker \"B\" (2 turns per topic across 8 stories: first the top 6 Cyprus stories in Turns 2–13, and then the top 2 World/international stories in Turns 14–17): the first speaker introduces what is happening in the story in a natural, conversational way (never reading a headline title), and the second speaker reacts naturally and adds context, why it matters, and cross-community or international perspective without repeating the first speaker.");
             sb.AppendLine("- AVOID REPETITIVE FILLERS: Do NOT overuse phrases like \"Yeah, totally\", \"Totally\", \"across the island\", \"island-wide\", or \"Definitely a story we'll be watching closely\". Vary reactions, openings, and transitions on every turn so no two turns sound templated or start the same way.");
             sb.AppendLine($"- The final 2 turns (\"A\" then \"B\") MUST warmly wrap up this edition (\"{editionEn}\") and invite listeners to join again for the next edition (the \"{nextEditionEn}\" edition in English, \"{nextEditionTr}\" bülteni in Turkish, and \"{nextEditionEl}\" έκδοση in Greek).");
             sb.AppendLine("- STRICT PODCAST RULES: Do NOT use any personal names for the two podcast hosts. Do NOT mention the number of stories/columns, the number of newspapers/news sources, or the number of articles analyzed.");
@@ -880,6 +907,8 @@ namespace Amathus.Common.Overview
                 rank++;
             }
 
+            stories = OrderCyprusFirstThenWorld(stories);
+
             return new NewsOverview
             {
                 Id = "latest",
@@ -891,6 +920,57 @@ namespace Amathus.Common.Overview
                 SummaryEl = "Οι σημαντικότερες ειδήσεις από τουρκοκυπριακές, ελληνοκυπριακές και αγγλόφωνες εφημερίδες της Κύπρου.",
                 Stories = stories
             };
+        }
+
+        public static List<OverviewStory> OrderCyprusFirstThenWorld(
+            List<OverviewStory> stories,
+            int topCyprusCount = 15,
+            int topWorldCount = 5)
+        {
+            if (stories == null || stories.Count <= 4)
+            {
+                return stories ?? new List<OverviewStory>();
+            }
+
+            bool IsWorldStory(OverviewStory s)
+            {
+                var normTopic = TextUtil.NormalizeTopic(s?.Topic);
+                if (normTopic == "world") return true;
+                var tier = TextUtil.GetGeoRelevanceTier(
+                    $"{s?.TitleEn} {s?.TitleTr} {s?.TitleEl}",
+                    $"{s?.NarrativeEn} {s?.NarrativeTr} {s?.NarrativeEl}");
+                return tier < 3;
+            }
+
+            var cyprusStories = stories.Where(s => !IsWorldStory(s)).ToList();
+            var worldStories = stories.Where(IsWorldStory).ToList();
+            if (cyprusStories.Count == 0 || worldStories.Count == 0)
+            {
+                return stories;
+            }
+
+            foreach (var ws in worldStories)
+            {
+                if (string.IsNullOrWhiteSpace(ws.Topic) || ws.Topic == "politics" || ws.Topic == "society")
+                {
+                    ws.Topic = "world";
+                }
+            }
+
+            var reordered = new List<OverviewStory>();
+            var firstCyprus = cyprusStories.Take(topCyprusCount).ToList();
+            var firstWorld = worldStories.Take(topWorldCount).ToList();
+            reordered.AddRange(firstCyprus);
+            reordered.AddRange(firstWorld);
+            reordered.AddRange(cyprusStories.Skip(firstCyprus.Count));
+            reordered.AddRange(worldStories.Skip(firstWorld.Count));
+
+            for (int i = 0; i < reordered.Count; i++)
+            {
+                reordered[i].Id = $"story-{i + 1}";
+            }
+
+            return reordered;
         }
 
         private static List<List<CandidateArticle>> BuildStoryClusters(List<CandidateArticle> candidates, int minStories, int maxStories)
@@ -965,7 +1045,23 @@ namespace Amathus.Common.Overview
                 .ToList();
 
             var selected = new List<List<CandidateArticle>>();
-            selected.AddRange(multiSource.Take(maxStories));
+            var worldClusters = rawClusters
+                .Where(c => ClusterGeoBucket(c) < 3)
+                .OrderByDescending(c => c.Count)
+                .ThenByDescending(c => c.Any(a => a.Item.ImageUrl != null))
+                .ThenByDescending(c => c.Max(a => a.Item.PublishDate))
+                .Take(Math.Min(6, Math.Max(2, maxStories / 4)))
+                .ToList();
+
+            int cyprusCap = Math.Max(1, maxStories - worldClusters.Count);
+            selected.AddRange(multiSource.Where(c => !worldClusters.Contains(c)).Take(cyprusCap));
+            foreach (var wc in worldClusters)
+            {
+                if (selected.Count < maxStories && !selected.Contains(wc))
+                {
+                    selected.Add(wc);
+                }
+            }
 
             if (selected.Count < minStories)
             {
