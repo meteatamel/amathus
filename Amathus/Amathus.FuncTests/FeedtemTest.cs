@@ -377,7 +377,8 @@ namespace Amathus.FunctionalTests
             var converter = new FeedConverter(_sources);
             var feed = converter.Convert(source.Id, rawFeed);
 
-            return feed.Items.First();
+            return feed.Items.FirstOrDefault(i => !string.IsNullOrEmpty(i.Summary) && i.ImageUrl != null)
+                ?? feed.Items.First();
         }
     }
 }

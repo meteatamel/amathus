@@ -6,6 +6,8 @@
         "Title": "AlphaNews.Live",
         "Language": "el",
         "Url": "https://www.alphanews.live/feed/",
+        "TechUrl": "https://www.alphanews.live/tag/technologia/feed/",
+        "SecondaryTechUrl": "https://www.alphanews.live/tag/techniti-noimosyni/feed/",
         "LogoUrl": "https://www.alphanews.live/wp-content/themes/alphanews/assets/images/logo.png"
       },
       {
@@ -15,6 +17,7 @@
         "Url": "https://www.bagimsiz.com/rss",
         "ColumnistUrl": "https://www.bagimsiz.com/rss/makaleler",
         "ColumnistAuthorsUrl": "https://www.bagimsiz.com/yazarlar",
+        "TechUrl": "https://www.bagimsiz.com/rss/teknoloji",
         "LogoUrl": "https://bagimsizcom.teimg.com/bagimsiz-com/uploads/2026/01/bagimsizlogo2026-1.png"
       },
       {
@@ -30,6 +33,8 @@
         "Language": "en",
         "Url": "https://cyprus-mail.com/feed/",
         "ColumnistUrl": "https://cyprus-mail.com/category/opinion/feed/",
+        "TechUrl": "https://cyprus-mail.com/category/technology/feed/",
+        "SecondaryTechUrl": "https://cyprus-mail.com/tag/startups/feed/",
         "LogoUrl": "https://cyprus-mail.com/apple-touch-icon-180x180.png"
       },
       {
@@ -66,6 +71,8 @@
         "Language": "en",
         "Url": "https://www.financialmirror.com/feed/",
         "ColumnistUrl": "https://www.financialmirror.com/category/comment/feed/",
+        "TechUrl": "https://www.financialmirror.com/tag/technology/feed/",
+        "SecondaryTechUrl": "https://www.financialmirror.com/tag/startups/feed/",
         "LogoUrl": "https://www.financialmirror.com/wp-content/uploads/2019/11/logo.png"
       },
       {
@@ -90,6 +97,7 @@
         "Url": "https://www.gundemkibris.com/rss",
         "ColumnistUrl": "https://www.gundemkibris.com/rss/makaleler",
         "ColumnistAuthorsUrl": "https://www.gundemkibris.com/yazarlar",
+        "TechUrl": "https://www.gundemkibris.com/rss/teknoloji",
         "LogoUrl": "https://gundemkibriscom.teimg.com/gundemkibris-com/images/banner/analogo.png"
       },
       {
@@ -113,6 +121,7 @@
         "Url": "https://www.halkinsesikibris.com/rss",
         "ColumnistUrl": "https://www.halkinsesikibris.com/rss/makaleler",
         "ColumnistAuthorsUrl": "https://www.halkinsesikibris.com/yazarlar",
+        "TechUrl": "https://www.halkinsesikibris.com/rss/teknoloji",
         "LogoUrl": "https://halkinsesikibriscom.teimg.com/halkinsesikibris-com/images/banner/HALKIN_SESI_CMYK_1_1.jpg"
       },
       {
@@ -120,6 +129,7 @@
         "Title": "Havadis",
         "Language": "tr",
         "Url": "https://www.havadiskibris.com/feed/",
+        "TechUrl": "https://www.havadiskibris.com/category/teknoloji/feed/",
         "LogoUrl": "https://www.havadiskibris.com/wp-content/uploads/2018/12/logonew.jpg"
       },
       {
@@ -128,6 +138,7 @@
         "Language": "tr",
         "Url": "https://kibrisgazetesi.com/feed/",
         "ColumnistUrl": "https://kibrisgazetesi.com/yazar/feed/",
+        "TechUrl": "https://kibrisgazetesi.com/category/teknoloji/feed/",
         "LogoUrl": "https://kibrisgazetesi.com/wp-content/uploads/2023/09/site-logo.png"
       },
       {
@@ -146,6 +157,7 @@
         "Url": "https://www.kibrisgercek.com/rss",
         "ColumnistUrl": "https://www.kibrisgercek.com/rss/makaleler",
         "ColumnistAuthorsUrl": "https://www.kibrisgercek.com/yazarlar",
+        "TechUrl": "https://www.kibrisgercek.com/rss/teknoloji",
         "LogoUrl": "https://kibrisgercekcom.teimg.com/kibrisgercek-com/uploads/2026/03/gercek-yeni-logo-beyaz.png"
       },
       {
@@ -198,6 +210,7 @@
         "Language": "el",
         "Url": "https://www.philenews.com/feed/",
         "ColumnistUrl": "https://www.philenews.com/apopsis/feed/",
+        "TechUrl": "https://www.philenews.com/oikonomia/epicheiriseis/feed/",
         "LogoUrl": "https://www.philenews.com/wp-content/themes/philenews/assets/images/favicons/transparent/apple-icon-152x152.png"
       },
       {
@@ -243,6 +256,7 @@
         "Url": "https://www.arti392.com/rss",
         "ColumnistUrl": "https://www.arti392.com/rss/makaleler",
         "ColumnistAuthorsUrl": "https://www.arti392.com/yazarlar",
+        "TechUrl": "https://www.arti392.com/rss/teknoloji",
         "LogoUrl": "https://arti392com.teimg.com/arti392-com/images/banner/arti392_1.png"
       },
       {

@@ -59,6 +59,7 @@ class _OverviewViewState extends State<OverviewView> {
     }
     Constants.overviewTranslateLanguageNotifier
         .addListener(_onTranslateLanguageChanged);
+    Constants.selectedTopicNotifier.addListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.addReconnectListener(_onReconnected);
     ConnectivityController.instance.syncBrowserStatus();
     _loadLatestCachedData();
@@ -72,6 +73,7 @@ class _OverviewViewState extends State<OverviewView> {
   void dispose() {
     Constants.overviewTranslateLanguageNotifier
         .removeListener(_onTranslateLanguageChanged);
+    Constants.selectedTopicNotifier.removeListener(_onTranslateLanguageChanged);
     ConnectivityController.instance.removeReconnectListener(_onReconnected);
     _latestItemsNotifier.dispose();
     super.dispose();
@@ -165,6 +167,91 @@ class _OverviewViewState extends State<OverviewView> {
       }
     }
 
+    if (latestItems.isNotEmpty) {
+      final existingUrls = <String>{};
+      for (final s in ov.stories) {
+        for (final src in s.sources) {
+          final u = (src.article.url ?? '').trim();
+          if (u.isNotEmpty) existingUrls.add(u);
+        }
+      }
+
+      for (final targetTopic in const ['economy', 'tech', 'sports', 'culture']) {
+        final existingTopicCount =
+            ov.stories.where((s) => s.effectiveTopic == targetTopic).length;
+        if (existingTopicCount >= 2) continue;
+
+        final candidates = latestItems.where((item) {
+          final url = (item.url ?? '').trim();
+          if (url.isNotEmpty && existingUrls.contains(url)) return false;
+          if (item.feed == null) return false;
+          return item.effectiveTopic == targetTopic;
+        }).toList();
+
+        candidates.sort((a, b) {
+          final aCyprus = Constants.isCyprusFocusedText(
+                  '${a.title} ${a.summary ?? ''}')
+              ? 1
+              : 0;
+          final bCyprus = Constants.isCyprusFocusedText(
+                  '${b.title} ${b.summary ?? ''}')
+              ? 1
+              : 0;
+          if (aCyprus != bCyprus) return bCyprus.compareTo(aCyprus);
+          final aHasImg = (a.imageUrl ?? '').trim().isNotEmpty ? 1 : 0;
+          final bHasImg = (b.imageUrl ?? '').trim().isNotEmpty ? 1 : 0;
+          if (aHasImg != bHasImg) return bHasImg.compareTo(aHasImg);
+          return b.publishDate.compareTo(a.publishDate);
+        });
+
+        final neededCount = 2 - existingTopicCount;
+        final addedFeeds = <String>{};
+        var addedCount = 0;
+
+        for (var pass = 0; pass < 2 && addedCount < neededCount; pass++) {
+          for (final item in candidates) {
+            if (addedCount >= neededCount) break;
+            final url = (item.url ?? '').trim();
+            if (url.isNotEmpty && existingUrls.contains(url)) continue;
+            final feed = item.feed!;
+            if (pass == 0 && addedFeeds.contains(feed.id)) continue;
+
+            if (url.isNotEmpty) existingUrls.add(url);
+            addedFeeds.add(feed.id);
+
+            final narrative = (item.summary ?? '').trim().isNotEmpty
+                ? item.summary!.trim()
+                : (item.detail ?? item.title).trim();
+            final source = OverviewStorySource(
+              feedId: feed.id,
+              feedTitle: feed.title,
+              feedLanguage:
+                  Constants.resolveFeedLanguage(feed.id, feed.language),
+              feedImageUrl: feed.imageUrl,
+              feedUrl: feed.url,
+              article: item,
+            );
+            ov.stories.add(
+              OverviewStory(
+                id: '$targetTopic-extra-${ov.stories.length + 1}',
+                titleEn: item.title,
+                titleTr: item.title,
+                titleEl: item.title,
+                narrativeEn: narrative,
+                narrativeTr: narrative,
+                narrativeEl: narrative,
+                imageUrl: item.imageUrl,
+                publishDate: item.publishDate,
+                topic: targetTopic,
+                sources: [source],
+              ),
+            );
+            addedCount++;
+          }
+        }
+      }
+    }
+
     ov.orderCyprusFirstThenWorld(topCyprusCount: 15, topWorldCount: 5);
   }
 
@@ -173,7 +260,12 @@ class _OverviewViewState extends State<OverviewView> {
     final ov = _overview;
     if (ov == null || ov.stories.isEmpty) return;
     final targetLang = Constants.overviewTranslateLanguageNotifier.value;
-    final visibleSlice = ov.stories.take(_maxVisibleTopStories).toList();
+    final activeTopic = Constants.selectedTopicNotifier.value;
+    final visibleSlice = activeTopic == 'all'
+        ? ov.stories.take(_maxVisibleTopStories).toList()
+        : ov.stories
+            .where((s) => s.effectiveTopic == activeTopic)
+            .toList();
     if (targetLang != null) {
       TranslateController.ensureOverviewStoriesTranslated(
         visibleSlice,
@@ -323,7 +415,7 @@ class _OverviewViewState extends State<OverviewView> {
       final ov = _overview;
       if (ov == null || ov.stories.isEmpty) return null;
       var total = 0;
-      for (final story in ov.stories.take(_maxVisibleTopStories)) {
+      for (final story in ov.stories) {
         if (_visibleSourcesFor(story).isEmpty) continue;
         final t = story.effectiveTopic;
         counts[t] = (counts[t] ?? 0) + 1;
@@ -679,7 +771,11 @@ class _OverviewViewState extends State<OverviewView> {
         final bannerLang = Constants.currentLanguage;
         final visibleStories = <(OverviewStory, List<OverviewStorySource>)>[];
 
-        for (final story in overview.stories.take(_maxVisibleTopStories)) {
+        final candidateStories =
+            Constants.selectedTopicNotifier.value == 'all'
+                ? overview.stories.take(_maxVisibleTopStories)
+                : overview.stories;
+        for (final story in candidateStories) {
           final sources = _visibleSourcesFor(story);
           if (sources.isNotEmpty &&
               Constants.matchesSelectedTopic(story.effectiveTopic)) {

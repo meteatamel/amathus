@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Amathus.Common.Feeds;
@@ -36,18 +37,38 @@ namespace Amathus.Common.Picker
 
             var numberOfItemsPerSource = limit / feedsWithItems.Count;
             var remainingItems = limit % feedsWithItems.Count;
+            var recentTechCutoff = DateTime.UtcNow.AddDays(-7);
 
             foreach (var feed in feedsWithItems)
             {
+                var takeCount = numberOfItemsPerSource + (remainingItems > 0 ? 1 : 0);
                 if (remainingItems > 0)
                 {
-                    feed.Items = feed.Items.Take(numberOfItemsPerSource + 1).ToList();
                     remainingItems--;
                 }
-                else
+
+                var allItems = feed.Items;
+                var picked = allItems.Take(takeCount).ToList();
+
+                if (picked.Count >= 2 &&
+                    allItems.Count > picked.Count &&
+                    !picked.Any(i => string.Equals(i?.Topic, "tech", StringComparison.OrdinalIgnoreCase)))
                 {
-                    feed.Items = feed.Items.Take(numberOfItemsPerSource).ToList();
+                    var recentTechItem = allItems
+                        .Skip(picked.Count)
+                        .FirstOrDefault(i =>
+                            i != null &&
+                            !i.IsColumnist &&
+                            string.Equals(i.Topic, "tech", StringComparison.OrdinalIgnoreCase) &&
+                            i.PublishDate >= recentTechCutoff);
+
+                    if (recentTechItem != null)
+                    {
+                        picked[picked.Count - 1] = recentTechItem;
+                    }
                 }
+
+                feed.Items = picked;
             }
 
             return feedsWithItems.Where(feed => feed.Items != null && feed.Items.Count != 0).ToList();

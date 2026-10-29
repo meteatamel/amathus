@@ -276,7 +276,19 @@ namespace Amathus.Common.Overview
                     .Take(3)
                     .ToList();
 
-                foreach (var item in recentCyprus.Concat(recentWorld))
+                var techCutoff = DateTime.UtcNow.AddDays(-7);
+                var recentTech = filtered
+                    .Except(recentCyprus)
+                    .Except(recentWorld)
+                    .Where(i => EnsureUtc(i.PublishDate) >= techCutoff &&
+                                (string.Equals(i.Topic, "tech", StringComparison.OrdinalIgnoreCase) ||
+                                 TextUtil.ClassifyTopic(i.Title, i.Summary, i.Detail, i.Url?.AbsoluteUri) == "tech"))
+                    .OrderByDescending(i => TextUtil.GetGeoRelevanceTier(i.Title, i.Summary, i.Detail))
+                    .ThenByDescending(i => i.PublishDate)
+                    .Take(2)
+                    .ToList();
+
+                foreach (var item in recentCyprus.Concat(recentWorld).Concat(recentTech))
                 {
                     result.Add(new CandidateArticle
                     {
@@ -688,7 +700,7 @@ namespace Amathus.Common.Overview
             }
             sb.AppendLine("RECENCY PRIORITY: Prioritize breaking and recent stories published within the last 12–18 hours over older stories from yesterday.");
             sb.AppendLine("GEOGRAPHIC PRIORITY & WORLD NEWS INCLUSION (STRICT): You MUST prioritize and order stories/columns as follows:");
-            sb.AppendLine("  1st Priority (First 14 to 16 stories): CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, legal, social, and cultural developments).");
+            sb.AppendLine("  1st Priority (First 14 to 16 stories): CYPRUS (island-wide, Greek Cypriot, Turkish Cypriot, and bicommunal political, economic, tech/startup, legal, social, and cultural developments — including 1 to 2 notable technology, AI, cybersecurity, digital transformation, or startup stories with topic: \"tech\" when present).");
             sb.AppendLine("  2nd Priority (Next 4 to 6 stories, right after Cyprus): WORLD & REGIONAL NEWS (topic: \"world\" — major international, Middle East, European, US, global, Greece, and Turkey developments covered in the newspapers).");
             sb.AppendLine("The selected Top Stories list MUST include 14 to 16 major Cyprus stories first, followed immediately by 4 to 6 major World/international stories (labeled with topic: \"world\"). Similarly, the 5-minute podcast (8 stories total) MUST cover the top 6 Cyprus stories first (Turns 2–13), followed by the top 2 World/international stories (Turns 14–17) before the closing wrap-up.");
             sb.AppendLine("Within Cyprus topics, prioritize themes covered across different language communities in Cyprus and major island-wide developments, ensuring a balanced selection across Turkish, Greek, and English sources.");
@@ -701,7 +713,7 @@ namespace Amathus.Common.Overview
             sb.AppendLine("1. For each top story/column:");
             sb.AppendLine("- Write a clear, journalistic headline in English (titleEn), Turkish (titleTr), and Greek (titleEl).");
             sb.AppendLine("- Write a rich 2-4 sentence narrative synthesis in English (narrativeEn), Turkish (narrativeTr), and Greek (narrativeEl) explaining the key arguments/developments and how the newspapers/columnists cover it.");
-            sb.AppendLine("- Provide topic: one of \"politics\", \"society\", \"economy\", \"sports\", \"culture\", or \"world\".");
+            sb.AppendLine("- Provide topic: one of \"politics\", \"society\", \"economy\", \"tech\", \"sports\", \"culture\", or \"world\".");
             sb.AppendLine("- Provide articleIndices: the array of integer indices of all articles/columns from the list below that cover or relate to this topic (include at least 1 and up to 6 matching items from different newspapers).");
             sb.AppendLine("2. Also provide a 1-2 sentence daily overview summary in English (summaryEn), Turkish (summaryTr), and Greek (summaryEl) focusing on the top Cyprus developments.");
             var editionToneHint = edition switch

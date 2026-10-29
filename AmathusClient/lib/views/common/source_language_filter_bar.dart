@@ -1280,6 +1280,8 @@ IconData topicIconFor(String topicCode, {bool selected = false}) {
       return selected ? Icons.groups_rounded : Icons.groups_outlined;
     case 'economy':
       return Icons.trending_up_rounded;
+    case 'tech':
+      return selected ? Icons.memory_rounded : Icons.memory_outlined;
     case 'sports':
       return selected
           ? Icons.sports_soccer_rounded
@@ -1314,6 +1316,12 @@ IconData topicIconFor(String topicCode, {bool selected = false}) {
         const Color(0xFFECFDF5),
         const Color(0xFF065F46),
         const Color(0xFFA7F3D0),
+      );
+    case 'tech':
+      return (
+        const Color(0xFFF0F9FF),
+        const Color(0xFF0369A1),
+        const Color(0xFFBAE6FD),
       );
     case 'sports':
       return (
@@ -1666,15 +1674,7 @@ class UnifiedNewsFilterBar extends StatelessWidget {
       ]),
       builder: (context, _) {
         final selectedTopic = Constants.selectedTopicNotifier.value;
-        final counts = countsByTopic;
-        final visibleCodes = <String>[
-          for (final code in Constants.TOPIC_CODES)
-            if (code == 'all' ||
-                selectedTopic == code ||
-                counts == null ||
-                (counts[code] ?? 0) > 0)
-              code,
-        ];
+        const visibleCodes = Constants.TOPIC_CODES;
 
         return Container(
           width: double.infinity,
@@ -2364,26 +2364,22 @@ class _SourcesFilterBottomSheet extends StatelessWidget {
                                 runSpacing: 7,
                                 children: [
                                   for (final code in Constants.TOPIC_CODES)
-                                    if (code == 'all' ||
-                                        selectedTopic == code ||
-                                        countsByTopic == null ||
-                                        (countsByTopic![code] ?? 0) > 0)
-                                      _TopicChipButton(
-                                        topicCode: code,
-                                        selected: selectedTopic == code,
-                                        count: countsByTopic != null
-                                            ? countsByTopic![code]
-                                            : null,
-                                        showLabel: true,
-                                        onTap: () {
-                                          if (selectedTopic == code &&
-                                              code != 'all') {
-                                            Constants.setSelectedTopic('all');
-                                          } else {
-                                            Constants.setSelectedTopic(code);
-                                          }
-                                        },
-                                      ),
+                                    _TopicChipButton(
+                                      topicCode: code,
+                                      selected: selectedTopic == code,
+                                      count: countsByTopic != null
+                                          ? countsByTopic![code]
+                                          : null,
+                                      showLabel: true,
+                                      onTap: () {
+                                        if (selectedTopic == code &&
+                                            code != 'all') {
+                                          Constants.setSelectedTopic('all');
+                                        } else {
+                                          Constants.setSelectedTopic(code);
+                                        }
+                                      },
+                                    ),
                                 ],
                               ),
                             ],

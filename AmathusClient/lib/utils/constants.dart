@@ -215,6 +215,7 @@ const List<String> TOPIC_CODES = <String>[
   'politics',
   'society',
   'economy',
+  'tech',
   'sports',
   'culture',
   'world',
@@ -254,6 +255,22 @@ String? normalizeTopic(String? raw) {
     case 'οικονομία':
     case 'οικονομια':
       return 'economy';
+    case 'tech':
+    case 'technology':
+    case 'tech & startups':
+    case 'startups':
+    case 'startup':
+    case 'innovation':
+    case 'teknoloji':
+    case 'teknoloji & girişim':
+    case 'bilişim':
+    case 'girişimcilik':
+    case 'τεχνολογία':
+    case 'τεχνολογια':
+    case 'καινοτομία':
+    case 'καινοτομια':
+    case 'τεχνητή νοημοσύνη':
+      return 'tech';
     case 'sports':
     case 'sport':
     case 'spor':
@@ -292,6 +309,11 @@ final RegExp _topicCultureRegex = RegExp(
 
 final RegExp _topicEconomyRegex = RegExp(
   r'(οικονομ|τράπεζ|πληθωρισμ|επιτόκι|φορολογ|\bφπα\b|επενδ|εμπόρι|ενέργει|ηλεκτρ|ηλεκτροκίνησ|φωτοβολταϊκ|τουρισμ|ξενοδοχ|εταιρ|επιχειρήσ|ακίνητ|ενοίκι|προϋπολογισμ|μισθ|σύνταξ|ανεργί|χρηματιστήρι|κεβε|οεβ|ekonom|banka|tcmb|\bfaiz|enflasyon|vergi|\bkdv\b|yatırım|ticaret|enerji|elektrik|kıb-tek|turizm|\botel|şirket|iş\s+dünyası|gayrimenkul|emlak|konut|\bkira\b|bütçe|maaş|asgari\s+ücret|emekli|işsizlik|borsa|döviz|sterlin|ihale|ktto|econom|eurostat|gini|\bbank|inflation|\btax|invest|trade|energy|solar|electricity|tourism|hotel|business|company|property|real\s+estate|budget|salary|wage|pension)',
+  caseSensitive: false,
+);
+
+final RegExp _topicTechRegex = RegExp(
+  r'(τεχνολογ|τεχνητ[ήη]\s+νοημοσύν|καινοτομ|νεοφυ|ψηφιακ[ήηοό]\s+(μετάβασ|μετασχηματισμ|πολιτικ|δίδυμ|ταυτότητ|πολίτ|εποχ)|κυβερνοασφάλει|κυβερνοεπίθεσ|λογισμικ|ρομποτικ|ημιαγωγ|μικροτσίπ|κρυπτονομ|τηλεπικοινων|teknoloji|yapay\s+zeka|bilişim|yazılım|siber\s+güvenlik|siber\s+saldırı|dijital\s+dönüşüm|dijitalleşme|girişimcilik|\bstart-?up|kripto\s+para|blokzincir|robotik|veri\s+merkezi|fiber\s+internet|mobil\s+uygulama|\btech\b|technolog|startup|start-up|\bai\b|artificial\s+intelligence|openai|chatgpt|deepseek|cybersecur|cyber\s+attack|ransomware|software|semiconductor|microchip|\bnvidia\b|fintech|blockchain|bitcoin|digital\s+transformation|digital\s+twin|robotics|venture\s+capital|\b5g\b|\b6g\b)',
   caseSensitive: false,
 );
 
@@ -338,9 +360,16 @@ String resolveTopic(
 
   final direct = normalizeTopic(explicitTopic);
   if (direct != null) {
+    if (direct == 'tech') return 'tech';
+    if (direct != 'sports' &&
+        direct != 'culture' &&
+        (_topicTechRegex.hasMatch(safeTitle) ||
+            _topicTechRegex.hasMatch(safeUrl))) {
+      return 'tech';
+    }
     if (direct == 'world') return 'world';
     // If an article/story has no Cyprus reference at all and strongly matches
-    // international/world actors or countries (while not being sports/culture),
+    // international/world actors or countries (while not being sports/culture/tech),
     // classify it as 'world' even if it was generically tagged 'politics' or 'society'.
     if ((direct == 'politics' || direct == 'society') &&
         !hasCyprus &&
@@ -365,7 +394,13 @@ String resolveTopic(
     worldScore = (worldScore - 4).clamp(0, 999);
   }
 
+  var techScore = scoreFor(_topicTechRegex);
+  if (techScore > 0 && _topicTechRegex.hasMatch(safeTitle)) {
+    techScore += 2;
+  }
+
   final candidates = <(String, int)>[
+    ('tech', techScore),
     ('sports', scoreFor(_topicSportsRegex)),
     ('economy', scoreFor(_topicEconomyRegex)),
     ('culture', scoreFor(_topicCultureRegex)),
@@ -399,6 +434,12 @@ String topicLabelFor(String topicCode) {
       return _trElEn("Toplum", "Κοινωνία", "Society");
     case 'economy':
       return _trElEn("Ekonomi", "Οικονομία", "Economy");
+    case 'tech':
+      return _trElEn(
+        "Teknoloji & Girişim",
+        "Τεχνολογία & Startups",
+        "Tech & Startups",
+      );
     case 'sports':
       return _trElEn("Spor", "Αθλητισμός", "Sports");
     case 'culture':
@@ -418,6 +459,8 @@ String topicShortLabelFor(String topicCode) {
       return _trElEn("Toplum", "Κοινωνία", "Society");
     case 'economy':
       return _trElEn("Ekonomi", "Οικονομία", "Economy");
+    case 'tech':
+      return _trElEn("Teknoloji", "Τεχνολογία", "Tech");
     case 'sports':
       return _trElEn("Spor", "Αθλητικά", "Sports");
     case 'culture':

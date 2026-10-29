@@ -235,6 +235,27 @@ namespace Amathus.Common.Util
             @"(οικονομ|τράπεζ|πληθωρισμ|επιτόκι|φορολογ|\bφπα\b|επενδ|εμπόρι|ενέργει|ηλεκτρ|ηλεκτροκίνησ|φωτοβολταϊκ|τουρισμ|ξενοδοχ|εταιρ|επιχειρήσ|ακίνητ|ενοίκι|προϋπολογισμ|μισθ|σύνταξ|ανεργί|χρηματιστήρι|κεβε|οεβ|ekonom|banka|tcmb|\bfaiz|enflasyon|vergi|\bkdv\b|yatırım|ticaret|enerji|elektrik|kıb-tek|turizm|\botel|şirket|iş\s+dünyası|gayrimenkul|emlak|konut|\bkira\b|bütçe|maaş|asgari\s+ücret|emekli|işsizlik|borsa|döviz|sterlin|ihale|ktto|econom|eurostat|gini|\bbank|inflation|\btax|invest|trade|energy|solar|electricity|tourism|hotel|business|company|property|real\s+estate|budget|salary|wage|pension)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        private static readonly Regex TopicTechRegex = new Regex(
+            @"(τεχνολογ|τεχνητ[ήη]\s+νοημοσύν|καινοτομ|νεοφυ|ψηφιακ[ήηοό]\s+(μετάβασ|μετασχηματισμ|πολιτικ|δίδυμ|ταυτότητ|πολίτ|εποχ)|κυβερνοασφάλει|κυβερνοεπίθεσ|λογισμικ|ρομποτικ|ημιαγωγ|μικροτσίπ|κρυπτονομ|τηλεπικοινων|teknoloji|yapay\s+zeka|bilişim|yazılım|siber\s+güvenlik|siber\s+saldırı|dijital\s+dönüşüm|dijitalleşme|girişimcilik|\bstart-?up|kripto\s+para|blokzincir|robotik|veri\s+merkezi|fiber\s+internet|mobil\s+uygulama|\btech\b|technolog|startup|start-up|\bai\b|artificial\s+intelligence|openai|chatgpt|deepseek|cybersecur|cyber\s+attack|ransomware|software|semiconductor|microchip|\bnvidia\b|fintech|blockchain|bitcoin|digital\s+transformation|digital\s+twin|robotics|venture\s+capital|\b5g\b|\b6g\b)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        public static bool IsTechOrStartupContent(string title, string summary = null, string detail = null, IEnumerable<string> categories = null)
+        {
+            if (categories != null)
+            {
+                foreach (var cat in categories)
+                {
+                    if (!string.IsNullOrWhiteSpace(cat) && (NormalizeTopic(cat) == "tech" || TopicTechRegex.IsMatch(cat)))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            var combined = $"{title} {summary} {detail}";
+            return !string.IsNullOrWhiteSpace(combined) && TopicTechRegex.IsMatch(combined);
+        }
+
         private static readonly Regex TopicSocietyRegex = new Regex(
             @"(αστυνομ|δικαστ|κακουργιοδικ|ισόβι|ποιν|φυλακ|δολοφον|φόνο|ληστεί|κλοπ|χειροπέδες|σύλληψ|καταζητ|ναρκωτικ|κάνναβ|τελωνεί|τροχαίο|ατύχημ|δυστύχημ|πυρκαγι|πυροσβεστικ|νοσοκομ|υγεία|γιατρ|ασθεν|γεσυ|οκυπυ|σχολ|μαθητ|εκπαιδευτικ|δάσκαλ|καθηγητ|πανεπιστήμι|παιδεί|απεργία|συνδικαλ|ποεδ|οελμεκ|\bπεο\b|δήμο|δήμαρχ|αφαλάτωσ|αποχέτευσ|ανακύκλωσ|περιβάλλον|δασ|αγριν|φώκια|καιρ|κακοκαιρί|σεισμ|ναυάγι|polis|mahkeme|yüksek\s+mahkeme|ağır\s+ceza|yargıç|\bdava\b|hapis|cezaevi|cinayet|katil|soygun|hırsız|tutukl|zanlı|uyuşturucu|kaza|trafik|yangın|itfaiye|hastane|sağlık|doktor|hemşire|hasta|okul|öğrenci|öğretmen|üniversite|eğitim|grev|sendika|ktös|ktoeös|ktams|belediye|arıtma|çevre|orman|yağmur|fırtına|deprem|gemi\s+kazası|kayıp|soruşturma|police|court|murder|arrest|prison|cannabis|drug|hospital|health|school|education|strike|traffic|accident|fire|wildlife|seal|mouflon|municipality|water|desalination|shipwreck)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -260,6 +281,7 @@ namespace Amathus.Common.Util
                 "politics" or "siyaset" or "politika" or "πολιτική" or "πολιτικη" => "politics",
                 "society" or "toplum" or "asayiş" or "asayis" or "κοινωνία" or "κοινωνια" or "local" => "society",
                 "economy" or "ekonomi" or "business" or "finance" or "οικονομία" or "οικονομια" => "economy",
+                "tech" or "technology" or "tech & startups" or "startups" or "startup" or "innovation" or "teknoloji" or "teknoloji & girişim" or "bilişim" or "girişimcilik" or "τεχνολογία" or "τεχνολογια" or "καινοτομία" or "καινοτομια" or "τεχνητή νοημοσύνη" => "tech",
                 "sports" or "sport" or "spor" or "αθλητισμός" or "αθλητισμος" or "αθλητικά" => "sports",
                 "culture" or "culture & life" or "lifestyle" or "kültür" or "yaşam" or "πολιτισμός" => "culture",
                 "world" or "dünya" or "dunya" or "international" or "κόσμος" or "διεθνή" => "world",
@@ -282,12 +304,25 @@ namespace Amathus.Common.Util
                     {
                         continue;
                     }
+                    if (NormalizeTopic(cat) == "tech" || TopicTechRegex.IsMatch(cat))
+                    {
+                        return "tech";
+                    }
+                }
+
+                foreach (var cat in categories)
+                {
+                    if (string.IsNullOrWhiteSpace(cat))
+                    {
+                        continue;
+                    }
                     var direct = NormalizeTopic(cat);
                     if (direct != null)
                     {
                         return direct;
                     }
                     if (TopicSportsRegex.IsMatch(cat)) return "sports";
+                    if (TopicTechRegex.IsMatch(cat)) return "tech";
                     if (TopicEconomyRegex.IsMatch(cat)) return "economy";
                     if (TopicCultureRegex.IsMatch(cat)) return "culture";
                     if (TopicWorldRegex.IsMatch(cat)) return "world";
@@ -321,8 +356,15 @@ namespace Amathus.Common.Util
                 worldScore = Math.Max(0, worldScore - 4);
             }
 
+            int techScore = Score(TopicTechRegex);
+            if (techScore > 0 && TopicTechRegex.IsMatch(safeTitle))
+            {
+                techScore += 2;
+            }
+
             var scores = new (string topic, int score)[]
             {
+                ("tech", techScore),
                 ("sports", Score(TopicSportsRegex)),
                 ("economy", Score(TopicEconomyRegex)),
                 ("culture", Score(TopicCultureRegex)),

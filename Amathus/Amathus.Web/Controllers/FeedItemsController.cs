@@ -139,7 +139,9 @@ namespace Amathus.Web.Controllers
 
             foreach (var item in feed.Items)
             {
-                if (string.IsNullOrWhiteSpace(item.Topic))
+                if (string.IsNullOrWhiteSpace(item.Topic) ||
+                    (!string.Equals(item.Topic, "tech", System.StringComparison.OrdinalIgnoreCase) &&
+                     TextUtil.IsTechOrStartupContent(item.Title, item.Summary, item.Detail)))
                 {
                     item.Topic = TextUtil.ClassifyTopic(item.Title, item.Summary, item.Detail, item.Url?.AbsoluteUri);
                 }

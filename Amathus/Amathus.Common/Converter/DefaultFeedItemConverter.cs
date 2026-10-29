@@ -52,7 +52,7 @@ namespace Amathus.Common.Converter
                 imageUrl = overrideImageUrl;
             }
 
-            if (isColumnist && string.IsNullOrWhiteSpace(summary) && !string.IsNullOrWhiteSpace(detail))
+            if (string.IsNullOrWhiteSpace(summary) && !string.IsNullOrWhiteSpace(detail))
             {
                 summary = BuildSummaryExcerpt(detail);
             }

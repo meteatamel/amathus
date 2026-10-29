@@ -79,12 +79,45 @@ class NewsOverview {
     final world = stories.where((s) => s.effectiveTopic == 'world').toList();
     if (world.isEmpty || cyprus.isEmpty) return;
 
-    final reordered = <OverviewStory>[];
     final firstCyprus = cyprus.take(topCyprusCount).toList();
+    final restCyprus = cyprus.skip(firstCyprus.length).toList();
+
+    for (final targetTopic in const ['economy', 'tech', 'sports', 'culture']) {
+      final countInFirst =
+          firstCyprus.where((s) => s.effectiveTopic == targetTopic).length;
+      if (countInFirst == 0 && firstCyprus.length >= 6) {
+        final matching =
+            restCyprus.where((s) => s.effectiveTopic == targetTopic).toList();
+        final candidate = matching.isNotEmpty ? matching.first : null;
+        if (candidate != null) {
+          // Find the last index in firstCyprus whose topic appears at least 3 times
+          var replaceIdx = -1;
+          for (var i = firstCyprus.length - 1; i >= 0; i--) {
+            final t = firstCyprus[i].effectiveTopic;
+            final tCount =
+                firstCyprus.where((s) => s.effectiveTopic == t).length;
+            if (tCount >= 3) {
+              replaceIdx = i;
+              break;
+            }
+          }
+          if (replaceIdx >= 0) {
+            final displaced = firstCyprus[replaceIdx];
+            firstCyprus[replaceIdx] = candidate;
+            final restIdx = restCyprus.indexOf(candidate);
+            if (restIdx >= 0) {
+              restCyprus[restIdx] = displaced;
+            }
+          }
+        }
+      }
+    }
+
+    final reordered = <OverviewStory>[];
     final firstWorld = world.take(topWorldCount).toList();
     reordered.addAll(firstCyprus);
     reordered.addAll(firstWorld);
-    reordered.addAll(cyprus.skip(firstCyprus.length));
+    reordered.addAll(restCyprus);
     reordered.addAll(world.skip(firstWorld.length));
 
     stories

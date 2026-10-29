@@ -96,12 +96,96 @@ namespace Amathus.Common.Reader
                     MergeColumnistFeed(source, feed);
                 }
 
+                if (source.TechUrl != null)
+                {
+                    MergeTechFeed(source, source.TechUrl, feed);
+                }
+
+                if (source.SecondaryTechUrl != null)
+                {
+                    MergeTechFeed(source, source.SecondaryTechUrl, feed);
+                }
+
                 return feed;
             }
             catch (Exception ex)
             {
                 _logger?.LogError($"Reading failed for feed: {source.Id} - {ex.Message}", ex);
                 return null;
+            }
+        }
+
+        private void MergeTechFeed(Source source, Uri techUrl, SyndicationFeed mainFeed)
+        {
+            try
+            {
+                var techFeed = LoadFeed(techUrl);
+                if (techFeed?.Items == null)
+                {
+                    return;
+                }
+
+                bool isBroadBusinessFeed = techUrl.AbsoluteUri.IndexOf("epicheiriseis", StringComparison.OrdinalIgnoreCase) >= 0;
+                var existingLinks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var currentItems = mainFeed.Items?.ToList() ?? new List<SyndicationItem>();
+
+                foreach (var existing in currentItems)
+                {
+                    var link = existing.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
+                        ?? existing.Links.FirstOrDefault(l => l.RelationshipType != "enclosure")?.Uri
+                        ?? existing.Links.FirstOrDefault()?.Uri;
+                    if (link != null)
+                    {
+                        existingLinks.Add(link.AbsoluteUri);
+                    }
+                }
+
+                var techItemsToAppend = new List<SyndicationItem>();
+                foreach (var item in techFeed.Items)
+                {
+                    if (isBroadBusinessFeed)
+                    {
+                        var cats = item.Categories?.Select(c => c?.Name).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+                        var title = item.Title?.Text ?? string.Empty;
+                        var summary = item.Summary?.Text ?? string.Empty;
+                        if (!TextUtil.IsTechOrStartupContent(title, summary, null, cats))
+                        {
+                            continue;
+                        }
+                    }
+
+                    item.Categories.Add(new SyndicationCategory("tech"));
+
+                    var itemLink = item.Links.FirstOrDefault(l => l.RelationshipType == "alternate")?.Uri
+                        ?? item.Links.FirstOrDefault(l => l.RelationshipType != "enclosure")?.Uri
+                        ?? item.Links.FirstOrDefault()?.Uri;
+
+                    if (itemLink != null && !existingLinks.Add(itemLink.AbsoluteUri))
+                    {
+                        // If the article already exists in the main feed, tag the existing item as tech too
+                        var match = currentItems.FirstOrDefault(m =>
+                        {
+                            var l = m.Links.FirstOrDefault(x => x.RelationshipType == "alternate")?.Uri
+                                ?? m.Links.FirstOrDefault(x => x.RelationshipType != "enclosure")?.Uri
+                                ?? m.Links.FirstOrDefault()?.Uri;
+                            return l != null && string.Equals(l.AbsoluteUri, itemLink.AbsoluteUri, StringComparison.OrdinalIgnoreCase);
+                        });
+                        match?.Categories.Add(new SyndicationCategory("tech"));
+                        continue;
+                    }
+
+                    techItemsToAppend.Add(item);
+                }
+
+                if (techItemsToAppend.Count > 0)
+                {
+                    currentItems.AddRange(techItemsToAppend);
+                    mainFeed.Items = currentItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning($"Reading tech feed ({techUrl}) failed for {source.Id}: {ex.Message}");
             }
         }
 

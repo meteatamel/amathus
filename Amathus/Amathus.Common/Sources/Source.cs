@@ -65,5 +65,9 @@ namespace Amathus.Common.Sources
         public Uri ColumnistUrl { get; set; }
 
         public Uri ColumnistAuthorsUrl { get; set; }
+
+        public Uri TechUrl { get; set; }
+
+        public Uri SecondaryTechUrl { get; set; }
     }
 }
