@@ -32,8 +32,7 @@ namespace Amathus.Common.Overview
             }
 
             var utc = utcNow ?? DateTime.UtcNow;
-            // Cyprus time is UTC+2 in winter / UTC+3 in summer (EET/EEST)
-            var cyprusHour = utc.AddHours(3).Hour;
+            var cyprusHour = GetCyprusLocalTime(utc).Hour;
             if (cyprusHour >= 5 && cyprusHour < 12)
             {
                 return "morning";
@@ -43,6 +42,20 @@ namespace Amathus.Common.Overview
                 return "midday";
             }
             return "evening";
+        }
+
+        private static DateTime GetCyprusLocalTime(DateTime utc)
+        {
+            var normalizedUtc = utc.Kind == DateTimeKind.Utc ? utc : DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Nicosia");
+                return TimeZoneInfo.ConvertTimeFromUtc(normalizedUtc, tz);
+            }
+            catch
+            {
+                return normalizedUtc.AddHours(2);
+            }
         }
 
         private static readonly Regex GreekScriptRegex = new(@"[\u0370-\u03FF\u1F00-\u1FFF]", RegexOptions.Compiled);

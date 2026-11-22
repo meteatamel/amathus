@@ -92,8 +92,12 @@ namespace Amathus.Web
                 // Firestore backend. It assumes that the backend is already populated.
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
-                        new FirestoreFeedStore(
-                            Configuration["Amathus:ProjectId"]));
+                    {
+                        var store = new FirestoreFeedStore(Configuration["Amathus:ProjectId"]);
+                        OverviewAnalyzer.ConfigureTranslationStore(store);
+                        PodcastTtsService.ConfigureStorageCache(Configuration["Amathus:BucketId"]);
+                        return store;
+                    });
                     break;
                 default:
                     throw new ArgumentException("Backend cannot be initialized");

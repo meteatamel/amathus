@@ -18,11 +18,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
+using Amathus.Common.FeedStore;
 using Amathus.Common.Util;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Translation.V2;
@@ -53,6 +55,12 @@ namespace Amathus.Common.Overview
         private static TranslationClient _translationClient;
         private static bool _clientInitAttempted;
         private static readonly object ClientLock = new();
+        private static IFeedStore _translationStore;
+
+        public static void ConfigureTranslationStore(IFeedStore store)
+        {
+            _translationStore = store;
+        }
 
         private static TranslationClient GetTranslationClient()
         {
@@ -331,17 +339,17 @@ namespace Amathus.Common.Overview
                             TextUtil.ClassifyTopic(c.Item.Title, c.Item.Summary, c.Item.Detail, c.Item.Url?.AbsoluteUri) != "world")
                 .OrderByDescending(c => c.GeoTier)
                 .ThenByDescending(c => c.Item.PublishDate)
-                .Take(195)
+                .Take(110)
                 .ToList();
 
             var worldPool = result
                 .Except(cyprusPool)
                 .OrderByDescending(c => c.Item.ImageUrl != null)
                 .ThenByDescending(c => c.Item.PublishDate)
-                .Take(45)
+                .Take(30)
                 .ToList();
 
-            result = cyprusPool.Concat(worldPool).Take(240).ToList();
+            result = cyprusPool.Concat(worldPool).Take(140).ToList();
 
             for (int i = 0; i < result.Count; i++)
             {
@@ -382,13 +390,11 @@ namespace Amathus.Common.Overview
                 {
                     var modelsToTry = new[]
                     {
-                        (_location, "gemini-2.5-flash"),
-                        ("us-central1", "gemini-2.5-flash"),
-                        ("global", "gemini-3-flash-preview"),
-                        ("global", "gemini-3.1-pro-preview")
+                        ("global", "gemini-3-flash-preview", "MINIMAL"),
+                        ("global", "gemini-3.1-pro-preview", "LOW")
                     };
 
-                    foreach (var (loc, model) in modelsToTry)
+                    foreach (var (loc, model, thinkingLevel) in modelsToTry)
                     {
                         try
                         {
@@ -396,7 +402,7 @@ namespace Amathus.Common.Overview
                                 ? "aiplatform.googleapis.com"
                                 : $"{loc}-aiplatform.googleapis.com";
                             var url = $"https://{host}/v1/projects/{_projectId}/locations/{loc}/publishers/google/models/{model}:generateContent";
-                            var responseText = await CallGeminiEndpointAsync(url, token, prompt);
+                            var responseText = await CallGeminiEndpointAsync(url, token, prompt, thinkingLevel);
                             if (!string.IsNullOrWhiteSpace(responseText))
                             {
                                 var candidateParsed = JsonConvert.DeserializeObject<GeminiOverviewResult>(CleanJsonFence(responseText));
@@ -613,7 +619,7 @@ namespace Amathus.Common.Overview
             return overview;
         }
 
-        private async Task<string> CallGeminiEndpointAsync(string url, string bearerToken, string prompt)
+        private async Task<string> CallGeminiEndpointAsync(string url, string bearerToken, string prompt, string thinkingLevel = "LOW")
         {
             var payload = new
             {
@@ -629,7 +635,11 @@ namespace Amathus.Common.Overview
                 {
                     temperature = 0.2,
                     maxOutputTokens = 32768,
-                    responseMimeType = "application/json"
+                    responseMimeType = "application/json",
+                    thinkingConfig = new
+                    {
+                        thinkingLevel
+                    }
                 }
             };
 
@@ -1353,6 +1363,29 @@ namespace Amathus.Common.Overview
                 return cached;
             }
 
+            string persistentKey = null;
+            if (_translationStore != null)
+            {
+                persistentKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"str|{cacheKey}")));
+                try
+                {
+                    var persisted = await _translationStore.ReadTranslationAsync(persistentKey);
+                    if (persisted != null && !string.IsNullOrEmpty(persisted.Title))
+                    {
+                        if (TranslationCache.Count > 10000)
+                        {
+                            TranslationCache.Clear();
+                        }
+                        TranslationCache[cacheKey] = persisted.Title;
+                        return persisted.Title;
+                    }
+                }
+                catch
+                {
+                    // Best-effort L2 cache read
+                }
+            }
+
             var client = GetTranslationClient();
             if (client != null)
             {
@@ -1363,11 +1396,30 @@ namespace Amathus.Common.Overview
                     var cloudTranslated = WebUtility.HtmlDecode(res?.TranslatedText ?? string.Empty).Trim();
                     if (!string.IsNullOrEmpty(cloudTranslated))
                     {
-                        if (TranslationCache.Count > 3000)
+                        if (TranslationCache.Count > 10000)
                         {
                             TranslationCache.Clear();
                         }
                         TranslationCache[cacheKey] = cloudTranslated;
+                        if (_translationStore != null && persistentKey != null)
+                        {
+                            try
+                            {
+                                await _translationStore.SaveTranslationAsync(new CachedTranslation
+                                {
+                                    Id = persistentKey,
+                                    Title = cloudTranslated,
+                                    SourceLanguage = sl,
+                                    TargetLanguage = tl,
+                                    CreatedAt = DateTime.UtcNow,
+                                    ExpiresAt = DateTime.UtcNow.AddDays(7)
+                                });
+                            }
+                            catch
+                            {
+                                // Best-effort L2 cache write
+                            }
+                        }
                         return cloudTranslated;
                     }
                 }

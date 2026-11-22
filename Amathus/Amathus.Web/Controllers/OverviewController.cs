@@ -45,15 +45,30 @@ namespace Amathus.Web.Controllers
 
         [HttpGet]
         public async Task<IActionResult> Get(
-            [FromQuery] bool refresh = false,
             [FromQuery] string edition = null,
             [FromQuery] bool columnists = false)
         {
             var overviewId = columnists ? "latest_columnists" : "latest";
 
-            if (!refresh)
+            var existing = await _feedStore.ReadOverviewAsync(overviewId);
+            if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
             {
-                var existing = await _feedStore.ReadOverviewAsync(overviewId);
+                var copy = existing.Copy();
+                EnsureStoryTopicsPopulated(copy);
+                bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
+                bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
+                if (storiesRepaired || podcastRebuilt)
+                {
+                    _ = _feedStore.SaveOverviewAsync(copy);
+                }
+                _ = WarmupInitialPodcastTurnsAsync(copy);
+                return Ok(copy);
+            }
+
+            await GenerationLock.WaitAsync();
+            try
+            {
+                existing = await _feedStore.ReadOverviewAsync(overviewId);
                 if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
                 {
                     var copy = existing.Copy();
@@ -66,28 +81,6 @@ namespace Amathus.Web.Controllers
                     }
                     _ = WarmupInitialPodcastTurnsAsync(copy);
                     return Ok(copy);
-                }
-            }
-
-            await GenerationLock.WaitAsync();
-            try
-            {
-                if (!refresh)
-                {
-                    var existing = await _feedStore.ReadOverviewAsync(overviewId);
-                    if (existing != null && existing.Stories != null && existing.Stories.Count > 0)
-                    {
-                        var copy = existing.Copy();
-                        EnsureStoryTopicsPopulated(copy);
-                        bool storiesRepaired = await OverviewAnalyzer.EnsureStoriesTranslatedAsync(copy);
-                        bool podcastRebuilt = PodcastScriptBuilder.EnsurePodcastPopulated(copy, edition);
-                        if (storiesRepaired || podcastRebuilt)
-                        {
-                            _ = _feedStore.SaveOverviewAsync(copy);
-                        }
-                        _ = WarmupInitialPodcastTurnsAsync(copy);
-                        return Ok(copy);
-                    }
                 }
 
                 var feeds = await _feedStore.ReadAllAsync();

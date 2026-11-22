@@ -13,13 +13,16 @@
 // limitations under the License.
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -37,8 +40,57 @@ namespace Amathus.Common.Overview
 
         private static readonly SemaphoreSlim CredentialLock = new(1, 1);
         private static readonly ConcurrentDictionary<string, byte[]> AudioCache = new();
+        private static readonly ConcurrentDictionary<string, Task<byte[]>> InFlight = new();
 
         private static GoogleCredential _cachedCredential;
+        private static string _storageBucketId;
+        private static StorageClient _storageClient;
+        private static bool _storageInitAttempted;
+        private static readonly object StorageLock = new();
+
+        public static void ConfigureStorageCache(string bucketId)
+        {
+            if (!string.IsNullOrWhiteSpace(bucketId))
+            {
+                _storageBucketId = bucketId.Trim();
+            }
+        }
+
+        private static StorageClient GetStorageClient()
+        {
+            if (string.IsNullOrWhiteSpace(_storageBucketId))
+            {
+                return null;
+            }
+
+            if (_storageInitAttempted)
+            {
+                return _storageClient;
+            }
+
+            lock (StorageLock)
+            {
+                if (_storageInitAttempted)
+                {
+                    return _storageClient;
+                }
+
+                try
+                {
+                    _storageClient = StorageClient.Create();
+                }
+                catch
+                {
+                    _storageClient = null;
+                }
+                finally
+                {
+                    _storageInitAttempted = true;
+                }
+
+                return _storageClient;
+            }
+        }
 
         public static (string LanguageCode, string PersonaName, string CloudTtsVoiceName, string StylePrompt) ResolveGoogleVoice(
             string language,
@@ -180,41 +232,106 @@ namespace Amathus.Common.Overview
                 return cached;
             }
 
-            var gemini38Bytes = await TrySynthesizeGemini38TtsAsync(
+            var task = InFlight.GetOrAdd(cacheKey, _ => SynthesizeWithPersistentCacheAsync(
+                cacheKey,
                 ttsText,
                 lang,
                 speaker,
                 normalizedPreset,
-                cancellationToken);
+                cancellationToken));
 
-            if (gemini38Bytes != null && gemini38Bytes.Length > 0)
+            try
             {
-                if (AudioCache.Count > 600)
+                return await task;
+            }
+            finally
+            {
+                InFlight.TryRemove(cacheKey, out _);
+            }
+        }
+
+        private static async Task<byte[]> SynthesizeWithPersistentCacheAsync(
+            string cacheKey,
+            string ttsText,
+            string lang,
+            string speaker,
+            string normalizedPreset,
+            CancellationToken cancellationToken)
+        {
+            var objectName = $"tts-cache/{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheKey)))}.bin";
+            var storageClient = GetStorageClient();
+
+            if (storageClient != null)
+            {
+                try
                 {
-                    AudioCache.Clear();
+                    using var ms = new MemoryStream();
+                    await storageClient.DownloadObjectAsync(_storageBucketId, objectName, ms, cancellationToken: cancellationToken);
+                    var fromStorage = ms.ToArray();
+                    if (fromStorage.Length > 0)
+                    {
+                        StoreInMemoryAudioCache(cacheKey, fromStorage);
+                        return fromStorage;
+                    }
                 }
-                AudioCache[cacheKey] = gemini38Bytes;
-                return gemini38Bytes;
+                catch
+                {
+                    // Cache miss or transient GCS error; fall through to synthesize
+                }
             }
 
-            var gcpBytes = await TrySynthesizeGoogleCloudTtsAsync(
+            var audioBytes = await TrySynthesizeGemini38TtsAsync(
                 ttsText,
                 lang,
                 speaker,
                 normalizedPreset,
                 cancellationToken);
 
-            if (gcpBytes != null && gcpBytes.Length > 0)
+            if (audioBytes == null || audioBytes.Length == 0)
             {
-                if (AudioCache.Count > 600)
+                audioBytes = await TrySynthesizeGoogleCloudTtsAsync(
+                    ttsText,
+                    lang,
+                    speaker,
+                    normalizedPreset,
+                    cancellationToken);
+            }
+
+            if (audioBytes != null && audioBytes.Length > 0)
+            {
+                StoreInMemoryAudioCache(cacheKey, audioBytes);
+
+                if (storageClient != null)
                 {
-                    AudioCache.Clear();
+                    try
+                    {
+                        using var uploadStream = new MemoryStream(audioBytes);
+                        await storageClient.UploadObjectAsync(
+                            _storageBucketId,
+                            objectName,
+                            "application/octet-stream",
+                            uploadStream,
+                            cancellationToken: cancellationToken);
+                    }
+                    catch
+                    {
+                        // Best-effort L2 cache write
+                    }
                 }
-                AudioCache[cacheKey] = gcpBytes;
-                return gcpBytes;
+
+                return audioBytes;
             }
 
             return Array.Empty<byte>();
+        }
+
+        private static void StoreInMemoryAudioCache(string cacheKey, byte[] audioBytes)
+        {
+            if (AudioCache.Count > 600)
+            {
+                AudioCache.Clear();
+            }
+            AudioCache[cacheKey] = audioBytes;
         }
 
         private static string PrepareTextForTts(string text, string lang)

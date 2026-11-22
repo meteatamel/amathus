@@ -29,5 +29,9 @@ namespace Amathus.Common.FeedStore
         Task SaveOverviewAsync(NewsOverview overview);
 
         Task<NewsOverview> ReadOverviewAsync(string id = "latest");
+
+        Task<CachedTranslation> ReadTranslationAsync(string cacheKey);
+
+        Task SaveTranslationAsync(CachedTranslation translation);
     }
 }

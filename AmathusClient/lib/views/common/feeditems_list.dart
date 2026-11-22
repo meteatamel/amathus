@@ -249,9 +249,17 @@ class _FeedItemsListState extends State<FeedItemsList> {
                       );
                     }
                     final itemIndex = hasBanner ? index - 1 : index;
+                    final feedItem = filteredItems[itemIndex];
+                    final activeTargetLang = Constants.effectiveTranslateLanguage;
+                    if (activeTargetLang != null) {
+                      TranslateController.ensureItemTranslated(
+                        feedItem,
+                        activeTargetLang,
+                      );
+                    }
                     return widget.wideTile
-                        ? FeedItemListTileWide(item: filteredItems[itemIndex])
-                        : FeedItemListTile(item: filteredItems[itemIndex]);
+                        ? FeedItemListTileWide(item: feedItem)
+                        : FeedItemListTile(item: feedItem);
                   },
                 ),
               ),

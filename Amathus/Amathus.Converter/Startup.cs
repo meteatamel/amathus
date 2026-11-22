@@ -70,8 +70,11 @@ namespace Amathus.Converter
             {
                 case FeedStoreBackend.Firestore:
                     services.AddSingleton<IFeedStore>(provider =>
-                        new FirestoreFeedStore(
-                            Configuration["Amathus:ProjectId"]));
+                    {
+                        var store = new FirestoreFeedStore(Configuration["Amathus:ProjectId"]);
+                        OverviewAnalyzer.ConfigureTranslationStore(store);
+                        return store;
+                    });
                     break;
                 default:
                     throw new ArgumentException("Backend cannot be initialized");

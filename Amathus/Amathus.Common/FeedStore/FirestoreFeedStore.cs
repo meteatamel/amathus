@@ -26,6 +26,7 @@ namespace Amathus.Common.FeedStore
         private readonly FirestoreDb _firestore;
         private readonly CollectionReference _feeds;
         private readonly CollectionReference _overviews;
+        private readonly CollectionReference _translations;
 
         public FirestoreFeedStore(string projectId)
         {
@@ -43,6 +44,7 @@ namespace Amathus.Common.FeedStore
             }
             _feeds = _firestore.Collection("feeds");
             _overviews = _firestore.Collection("overviews");
+            _translations = _firestore.Collection("translations");
         }
 
         public async Task InsertAsync(Feed feed)
@@ -104,6 +106,48 @@ namespace Amathus.Common.FeedStore
             }
 
             return snapshot.ConvertTo<NewsOverview>();
+        }
+
+        public async Task<CachedTranslation> ReadTranslationAsync(string cacheKey)
+        {
+            if (string.IsNullOrWhiteSpace(cacheKey))
+            {
+                return null;
+            }
+
+            var snapshot = await _translations.Document(cacheKey).GetSnapshotAsync();
+            if (!snapshot.Exists)
+            {
+                return null;
+            }
+
+            var cached = snapshot.ConvertTo<CachedTranslation>();
+            if (cached != null && cached.ExpiresAt != default && cached.ExpiresAt.ToUniversalTime() < DateTime.UtcNow)
+            {
+                return null;
+            }
+
+            return cached;
+        }
+
+        public async Task SaveTranslationAsync(CachedTranslation translation)
+        {
+            if (translation == null || string.IsNullOrWhiteSpace(translation.Id))
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            if (translation.CreatedAt == default)
+            {
+                translation.CreatedAt = now;
+            }
+            if (translation.ExpiresAt == default)
+            {
+                translation.ExpiresAt = now.AddDays(7);
+            }
+
+            await _translations.Document(translation.Id).SetAsync(translation, SetOptions.Overwrite);
         }
     }
 }

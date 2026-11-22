@@ -22,6 +22,7 @@ namespace Amathus.Common.FeedStore
     {
         private readonly Dictionary<string, Feed> _feeds;
         private readonly Dictionary<string, NewsOverview> _overviews = new();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, CachedTranslation> _translations = new();
     
         public InMemoryFeedStore()
         {
@@ -70,6 +71,26 @@ namespace Amathus.Common.FeedStore
             var docId = string.IsNullOrWhiteSpace(id) ? "latest" : id;
             var overview = _overviews.ContainsKey(docId) ? _overviews[docId].Copy() : null;
             return Task.FromResult(overview);
+        }
+
+        public Task<CachedTranslation> ReadTranslationAsync(string cacheKey)
+        {
+            if (string.IsNullOrWhiteSpace(cacheKey))
+            {
+                return Task.FromResult<CachedTranslation>(null);
+            }
+
+            _translations.TryGetValue(cacheKey, out var cached);
+            return Task.FromResult(cached);
+        }
+
+        public Task SaveTranslationAsync(CachedTranslation translation)
+        {
+            if (translation != null && !string.IsNullOrWhiteSpace(translation.Id))
+            {
+                _translations[translation.Id] = translation;
+            }
+            return Task.CompletedTask;
         }
     }
 }

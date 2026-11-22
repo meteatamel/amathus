@@ -74,6 +74,11 @@ namespace Amathus.Converter.Controllers
                     stopWatch.Start();
 
                     var feedId = (string)attributes.objectId;
+                    if (string.IsNullOrWhiteSpace(feedId) || feedId.Contains('/'))
+                    {
+                        _logger.LogInformation($"Ignoring non-feed object: {feedId}");
+                        return Ok();
+                    }
                     _logger.LogInformation($"Reading raw feed: {feedId}");
                     var rawFeed = await _syndStore.ReadAsync(feedId);
 
@@ -85,8 +90,6 @@ namespace Amathus.Converter.Controllers
 
                     stopWatch.Stop();
                     _logger?.LogInformation($"Converting feed finished in {stopWatch.Elapsed.Seconds} seconds.");
-
-                    await RefreshOverviewIfStaleAsync();
                 }
                 catch (Exception e)
                 {
@@ -97,50 +100,63 @@ namespace Amathus.Converter.Controllers
             return Ok();
         }
 
-        private async Task RefreshOverviewIfStaleAsync()
+        [HttpGet("refresh-overview")]
+        [HttpPost("refresh-overview")]
+        public async Task<IActionResult> RefreshOverview([FromQuery] bool force = false)
         {
             if (_overviewAnalyzer == null)
             {
-                return;
-            }
-
-            if ((DateTime.UtcNow - _lastOverviewCheckUtc) < TimeSpan.FromMinutes(45))
-            {
-                return;
+                return StatusCode(500, "Overview analyzer is not configured.");
             }
 
             if (!await OverviewRefreshLock.WaitAsync(0))
             {
-                return;
+                _logger?.LogInformation("Overview refresh already in progress on this instance; skipping duplicate trigger.");
+                return Ok(new { status = "already_running" });
             }
 
             try
             {
-                var currentOverview = await _store.ReadOverviewAsync();
-                if (currentOverview != null && (DateTime.UtcNow - currentOverview.GeneratedAt.ToUniversalTime()) < TimeSpan.FromMinutes(45))
+                if (!force)
                 {
-                    _lastOverviewCheckUtc = DateTime.UtcNow;
-                    return;
+                    var currentOverview = await _store.ReadOverviewAsync();
+                    if (currentOverview != null && (DateTime.UtcNow - currentOverview.GeneratedAt.ToUniversalTime()) < TimeSpan.FromMinutes(30))
+                    {
+                        _lastOverviewCheckUtc = DateTime.UtcNow;
+                        _logger?.LogInformation("Skipping overview refresh; latest overview is less than 30 minutes old.");
+                        return Ok(new { status = "fresh", generatedAt = currentOverview.GeneratedAt });
+                    }
                 }
 
                 var allFeeds = await _store.ReadAllAsync();
-                if (allFeeds != null && allFeeds.Count >= 5)
+                if (allFeeds == null || allFeeds.Count < 5)
                 {
-                    _logger?.LogInformation("Refreshing daily overview in Firestore after feed conversion batch...");
-                    var overview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: false);
-                    overview.Id = "latest";
-                    await _store.SaveOverviewAsync(overview);
-
-                    var columnistsOverview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: true);
-                    columnistsOverview.Id = "latest_columnists";
-                    await _store.SaveOverviewAsync(columnistsOverview);
-
-                    _lastOverviewCheckUtc = DateTime.UtcNow;
+                    return Ok(new { status = "insufficient_feeds", feedCount = allFeeds?.Count ?? 0 });
                 }
+
+                _logger?.LogInformation("Refreshing daily overview and columnists overview in Firestore...");
+                var overview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: false);
+                overview.Id = "latest";
+                await _store.SaveOverviewAsync(overview);
+
+                var columnistsOverview = await _overviewAnalyzer.AnalyzeAsync(allFeeds, columnistsOnly: true);
+                columnistsOverview.Id = "latest_columnists";
+                await _store.SaveOverviewAsync(columnistsOverview);
+
+                _lastOverviewCheckUtc = DateTime.UtcNow;
+                return Ok(new
+                {
+                    status = "refreshed",
+                    edition = overview.Edition,
+                    stories = overview.Stories?.Count ?? 0,
+                    columnistStories = columnistsOverview.Stories?.Count ?? 0,
+                    generatedAt = overview.GeneratedAt
+                });
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning($"Could not refresh overview during convert: {ex.Message}");
+                _logger?.LogError(ex, $"Could not refresh overview: {ex.Message}");
+                return StatusCode(500, "Overview refresh failed.");
             }
             finally
             {

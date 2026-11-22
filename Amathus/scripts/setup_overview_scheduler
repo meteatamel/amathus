@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+set_service "converter"
+
+set -v -x
+
+# Reuse the existing converter service account (already granted roles/run.invoker on amathus-converter)
+export SERVICE_ACCOUNT="${SERVICE_NAME}-pubsub-sa"
+
+SERVICE_URL="$(gcloud run services describe "${SERVICE_NAME}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)' --quiet)"
+
+# Schedule 3 daily overview refreshes aligned with Morning (08:05), Lunch (13:05), and Evening (19:05) Cyprus time
+gcloud scheduler jobs delete "amathus-overview-job" --project="${PROJECT_ID}" --location="${REGION}" --quiet 2>/dev/null || true
+
+gcloud scheduler jobs create http "amathus-overview-job" \
+  --project="${PROJECT_ID}" \
+  --location="${REGION}" \
+  --schedule="5 8,13,19 * * *" \
+  --time-zone="Europe/Nicosia" \
+  --http-method=POST \
+  --uri="${SERVICE_URL}/refresh-overview" \
+  --oidc-service-account-email="${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --oidc-token-audience="${SERVICE_URL}" \
+  --attempt-deadline=540s \
+  --quiet

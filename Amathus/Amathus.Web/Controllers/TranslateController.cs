@@ -19,6 +19,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Amathus.Common.FeedStore;
 using Google.Cloud.Translation.V2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -53,7 +54,14 @@ namespace Amathus.Web.Controllers
             "tr", "el", "en"
         };
 
+        private const int MaxTitleChars = 500;
+        private const int MaxSummaryChars = 2500;
+        private const int MaxDetailChars = 15000;
+        private const int MaxRequestsPerIpPerMinute = 120;
+
         private static readonly ConcurrentDictionary<string, TranslateResponse> Cache = new();
+        private static readonly ConcurrentDictionary<string, Task<TranslateResponse>> InFlight = new();
+        private static readonly ConcurrentDictionary<string, (DateTime WindowStart, int Count)> RateLimitBuckets = new();
         private static readonly HttpClient FallbackHttpClient = new()
         {
             Timeout = TimeSpan.FromSeconds(15)
@@ -63,10 +71,12 @@ namespace Amathus.Web.Controllers
         private static bool _clientInitAttempted;
         private static readonly object ClientLock = new();
 
+        private readonly IFeedStore _store;
         private readonly ILogger<TranslateController> _logger;
 
-        public TranslateController(ILogger<TranslateController> logger)
+        public TranslateController(IFeedStore store, ILogger<TranslateController> logger)
         {
+            _store = store;
             _logger = logger;
         }
 
@@ -124,6 +134,13 @@ namespace Amathus.Web.Controllers
                 sourceLang = null;
             }
 
+            if ((request.Title?.Length ?? 0) > MaxTitleChars ||
+                (request.Summary?.Length ?? 0) > MaxSummaryChars ||
+                (request.Detail?.Length ?? 0) > MaxDetailChars)
+            {
+                return BadRequest("Payload exceeds maximum allowed length for translation.");
+            }
+
             if (sourceLang == targetLang)
             {
                 return Ok(new TranslateResponse
@@ -142,21 +159,131 @@ namespace Amathus.Web.Controllers
                 return Ok(cached);
             }
 
+            if (IsRateLimited())
+            {
+                return StatusCode(429, "Too many translation requests. Please slow down.");
+            }
+
             try
             {
-                var response = await TranslateContentAsync(request, sourceLang, targetLang);
-                if (Cache.Count > 2000)
+                var task = InFlight.GetOrAdd(cacheKey, _ => TranslateWithPersistentCacheAsync(cacheKey, request, sourceLang, targetLang));
+                try
                 {
-                    Cache.Clear();
+                    var response = await task;
+                    return Ok(response);
                 }
-                Cache[cacheKey] = response;
-                return Ok(response);
+                finally
+                {
+                    InFlight.TryRemove(cacheKey, out _);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Translation failed for targetLanguage={targetLang}");
                 return StatusCode(500, "Translation failed.");
             }
+        }
+
+        private async Task<TranslateResponse> TranslateWithPersistentCacheAsync(
+            string cacheKey,
+            TranslateRequest request,
+            string sourceLang,
+            string targetLang)
+        {
+            // L2 persistent cache (Firestore) shared across all Cloud Run instances & restarts
+            if (_store != null)
+            {
+                try
+                {
+                    var persisted = await _store.ReadTranslationAsync(cacheKey);
+                    if (persisted != null)
+                    {
+                        var fromStore = new TranslateResponse
+                        {
+                            Title = persisted.Title ?? string.Empty,
+                            Summary = persisted.Summary ?? string.Empty,
+                            Detail = persisted.Detail ?? string.Empty,
+                            SourceLanguage = persisted.SourceLanguage ?? sourceLang ?? "auto",
+                            TargetLanguage = persisted.TargetLanguage ?? targetLang
+                        };
+                        StoreInMemoryCache(cacheKey, fromStore);
+                        return fromStore;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to read translation from persistent cache: {ex.Message}");
+                }
+            }
+
+            var response = await TranslateContentAsync(request, sourceLang, targetLang);
+            StoreInMemoryCache(cacheKey, response);
+
+            if (_store != null)
+            {
+                try
+                {
+                    await _store.SaveTranslationAsync(new CachedTranslation
+                    {
+                        Id = cacheKey,
+                        Title = response.Title,
+                        Summary = response.Summary,
+                        Detail = response.Detail,
+                        SourceLanguage = response.SourceLanguage,
+                        TargetLanguage = response.TargetLanguage,
+                        CreatedAt = DateTime.UtcNow,
+                        ExpiresAt = DateTime.UtcNow.AddDays(7)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to write translation to persistent cache: {ex.Message}");
+                }
+            }
+
+            return response;
+        }
+
+        private static void StoreInMemoryCache(string cacheKey, TranslateResponse response)
+        {
+            if (Cache.Count > 10000)
+            {
+                Cache.Clear();
+            }
+            Cache[cacheKey] = response;
+        }
+
+        private bool IsRateLimited()
+        {
+            var ip = HttpContext?.Request?.Headers["X-Forwarded-For"].ToString();
+            if (!string.IsNullOrWhiteSpace(ip))
+            {
+                var commaIdx = ip.IndexOf(',');
+                if (commaIdx > 0)
+                {
+                    ip = ip.Substring(0, commaIdx);
+                }
+                ip = ip.Trim();
+            }
+            else
+            {
+                ip = HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+            }
+
+            var now = DateTime.UtcNow;
+            if (RateLimitBuckets.Count > 5000)
+            {
+                RateLimitBuckets.Clear();
+            }
+
+            var bucket = RateLimitBuckets.AddOrUpdate(
+                ip,
+                _ => (now, 1),
+                (_, existing) => (now - existing.WindowStart) >= TimeSpan.FromMinutes(1)
+                    ? (now, 1)
+                    : (existing.WindowStart, existing.Count + 1));
+
+            return bucket.Count > MaxRequestsPerIpPerMinute;
         }
 
         private async Task<TranslateResponse> TranslateContentAsync(

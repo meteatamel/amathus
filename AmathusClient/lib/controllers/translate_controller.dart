@@ -23,6 +23,43 @@ class TranslateController {
   static final Map<String, TranslatedFeedItemContent> _cache = {};
   static final Map<String, ValueNotifier<String?>> _activeLangNotifiers = {};
   static final Map<String, ValueNotifier<bool>> _loadingNotifiers = {};
+  static final Set<String> _inFlightItemTranslations = <String>{};
+
+  static void ensureItemTranslated(FeedItem item, String? targetLanguage) {
+    if (targetLanguage == null || targetLanguage.trim().isEmpty) {
+      return;
+    }
+    final normalizedTarget = targetLanguage.trim().toLowerCase();
+    if (normalizedTarget == 'original') {
+      return;
+    }
+    final sourceLang = Constants.resolveFeedLanguage(
+      item.feed?.id,
+      item.feed?.language,
+    );
+    if (normalizedTarget == sourceLang) {
+      return;
+    }
+
+    final existing = getCached(item, normalizedTarget, requireDetail: false);
+    if (existing != null) {
+      if (activeLanguageNotifier(item).value != normalizedTarget) {
+        Future.microtask(() {
+          activeLanguageNotifier(item).value = normalizedTarget;
+        });
+      }
+      return;
+    }
+
+    final flightKey = '${_itemKey(item)}|$normalizedTarget|false';
+    if (_inFlightItemTranslations.contains(flightKey)) {
+      return;
+    }
+
+    Future.microtask(() {
+      translateItem(item, normalizedTarget, includeDetail: false);
+    });
+  }
 
   static String _itemKey(FeedItem item) {
     final url = (item.url ?? '').trim();
@@ -82,6 +119,11 @@ class TranslateController {
       return existing;
     }
 
+    final flightKey = '${_itemKey(item)}|$normalizedTarget|$includeDetail';
+    if (!_inFlightItemTranslations.add(flightKey)) {
+      return null;
+    }
+
     final isLoading = loadingNotifier(item);
     isLoading.value = true;
     try {
@@ -129,6 +171,7 @@ class TranslateController {
       debugPrint('Failed to translate feed item: $e');
       return null;
     } finally {
+      _inFlightItemTranslations.remove(flightKey);
       isLoading.value = false;
     }
   }
@@ -359,15 +402,22 @@ class BulkTranslateController {
       return;
     }
 
+    // Only eagerly translate the first viewport batch; remaining items translate
+    // lazily as the user scrolls them into view to avoid unnecessary API calls.
+    const int maxEagerItems = 10;
+    final eagerPending = pending.length > maxEagerItems
+        ? pending.sublist(0, maxEagerItems)
+        : pending;
+
     loadingNotifier.value = true;
-    const int concurrency = 6;
+    const int concurrency = 4;
     int nextIndex = 0;
 
     Future<void> worker() async {
       while (true) {
         if (_runId != currentRun) return;
-        if (nextIndex >= pending.length) return;
-        final item = pending[nextIndex++];
+        if (nextIndex >= eagerPending.length) return;
+        final item = eagerPending[nextIndex++];
         await TranslateController.translateItem(
           item,
           normalizedTarget,
@@ -378,7 +428,7 @@ class BulkTranslateController {
 
     try {
       final workerCount =
-          pending.length < concurrency ? pending.length : concurrency;
+          eagerPending.length < concurrency ? eagerPending.length : concurrency;
       await Future.wait(List.generate(workerCount, (_) => worker()));
     } finally {
       if (_runId == currentRun) {
