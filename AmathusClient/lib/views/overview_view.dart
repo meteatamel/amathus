@@ -17,7 +17,7 @@ import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
-import 'package:amathus/views/settings_view.dart';
+import 'package:amathus/views/notifications_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -664,7 +664,7 @@ class _OverviewViewState extends State<OverviewView> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const SettingsView(),
+                          builder: (_) => const NotificationsView(),
                         ),
                       );
                     },
@@ -690,6 +690,7 @@ class _OverviewViewState extends State<OverviewView> {
             children: [
               const OfflineBanner(),
               const PwaInstallBanner(),
+              const NotificationsOptInBanner(),
               ListenableBuilder(
                 listenable: Listenable.merge([
                   Constants.sourceLanguageNotifier,

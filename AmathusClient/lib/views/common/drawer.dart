@@ -1,6 +1,7 @@
 import 'package:amathus/views/columnists_view.dart';
 import 'package:amathus/views/common/pwa_install.dart';
 import 'package:amathus/views/contact_view.dart';
+import 'package:amathus/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/overview_view.dart';
@@ -123,6 +124,20 @@ class AppDrawer extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(height: 1),
+                ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.notifications_outlined,
+                  title: Constants.NOTIFICATIONS_PAGE_TITLE,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsView(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   context,

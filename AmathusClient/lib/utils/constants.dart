@@ -1019,6 +1019,26 @@ String get REORDER_HINT => _trElEn(
     );
 
 // notifications settings
+String get NOTIFICATIONS_PAGE_TITLE => _trElEn(
+      "Bildirimler",
+      "Ειδοποιήσεις",
+      "Notifications",
+    );
+String get NOTIFICATIONS_PROMPT_TEXT => _trElEn(
+      "Sabah ve akşam 5 dakikalık Kıbrıs haber özetleri için bildirim ister misiniz?",
+      "Θέλετε ειδοποιήσεις για την πρωινή και βραδινή 5λεπτη σύνοψη ειδήσεων;",
+      "Get Morning & Evening 5-min Cyprus news alerts?",
+    );
+String get NOTIFICATIONS_ENABLE_BUTTON => _trElEn(
+      "Aç",
+      "Ενεργοποίηση",
+      "Enable",
+    );
+String get NOTIFICATIONS_NOT_NOW => _trElEn(
+      "Şimdi değil",
+      "Όχι τώρα",
+      "Not now",
+    );
 String get NOTIFICATIONS_TITLE => _trElEn(
       "5 Dakikada Haber Bildirimleri",
       "Ειδοποιήσεις 5λεπτης Σύνοψης",

@@ -19,11 +19,14 @@ class NotificationsController {
   static const String _enabledPrefKey = 'notifications_enabled_v1';
   static const String _editionsPrefKey = 'notifications_editions_v1';
   static const String _tokenPrefKey = 'notifications_fcm_token_v1';
+  static const String _promptDismissedPrefKey =
+      'notifications_prompt_dismissed_v1';
 
   static const List<String> allEditions = ['morning', 'midday', 'evening'];
   static const Set<String> defaultEditions = {'morning', 'evening'};
 
   final ValueNotifier<bool> enabledNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> promptDismissedNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<Set<String>> editionsNotifier =
       ValueNotifier<Set<String>>(Set<String>.from(defaultEditions));
   final ValueNotifier<bool> syncingNotifier = ValueNotifier<bool>(false);
@@ -47,6 +50,20 @@ class NotificationsController {
       PwaInstallBridge.getPlatformHint() == 'ios' &&
       !PwaInstallBridge.isStandalone();
 
+  bool get shouldShowOptInPrompt =>
+      isSupportedPlatform &&
+      !needsIosHomeScreenInstall &&
+      !enabledNotifier.value &&
+      !promptDismissedNotifier.value;
+
+  Future<void> dismissPrompt() async {
+    promptDismissedNotifier.value = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_promptDismissedPrefKey, true);
+    } catch (_) {}
+  }
+
   void attachScaffoldMessenger(GlobalKey<ScaffoldMessengerState> key) {
     _messengerKey = key;
   }
@@ -58,6 +75,8 @@ class NotificationsController {
     try {
       final prefs = await SharedPreferences.getInstance();
       enabledNotifier.value = prefs.getBool(_enabledPrefKey) ?? false;
+      promptDismissedNotifier.value =
+          prefs.getBool(_promptDismissedPrefKey) ?? false;
       final savedEditions = prefs.getStringList(_editionsPrefKey);
       if (savedEditions != null && savedEditions.isNotEmpty) {
         final valid = savedEditions
