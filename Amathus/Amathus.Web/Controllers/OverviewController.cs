@@ -176,7 +176,6 @@ namespace Amathus.Web.Controllers
         }
 
         [HttpGet("podcast/audio")]
-        [Produces("audio/wav", "audio/mpeg")]
         public async Task<IActionResult> GetPodcastAudio(
             [FromQuery] string lang = "en",
             [FromQuery] string speaker = "A",
@@ -198,6 +197,7 @@ namespace Amathus.Web.Controllers
 
             if (audioBytes == null || audioBytes.Length == 0)
             {
+                _logger.LogWarning("Failed to synthesize podcast audio for lang={Lang}, speaker={Speaker}, voicePreset={VoicePreset}", lang, speaker, voicePreset);
                 return StatusCode(502, "Failed to synthesize podcast audio.");
             }
 

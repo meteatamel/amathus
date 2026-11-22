@@ -78,15 +78,17 @@ namespace Amathus.Common.Overview
 
                 try
                 {
-                    _translationClient = TranslationClient.Create();
+                    var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
+                        ? GoogleCredential.FromComputeCredential()
+                        : null;
+                    _translationClient = credential != null
+                        ? TranslationClient.Create(credential)
+                        : TranslationClient.Create();
+                    _clientInitAttempted = true;
                 }
                 catch
                 {
                     _translationClient = null;
-                }
-                finally
-                {
-                    _clientInitAttempted = true;
                 }
 
                 return _translationClient;
@@ -380,7 +382,9 @@ namespace Amathus.Common.Overview
             }
             else
             {
-                var credential = await GoogleCredential.GetApplicationDefaultAsync();
+                var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
+                    ? GoogleCredential.FromComputeCredential()
+                    : await GoogleCredential.GetApplicationDefaultAsync();
                 if (credential.IsCreateScopedRequired)
                 {
                     credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");

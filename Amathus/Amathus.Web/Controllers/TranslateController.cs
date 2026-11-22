@@ -20,6 +20,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Amathus.Common.FeedStore;
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Translation.V2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -96,16 +97,18 @@ namespace Amathus.Web.Controllers
 
                 try
                 {
-                    _translationClient = TranslationClient.Create();
+                    var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
+                        ? GoogleCredential.FromComputeCredential()
+                        : null;
+                    _translationClient = credential != null
+                        ? TranslationClient.Create(credential)
+                        : TranslationClient.Create();
+                    _clientInitAttempted = true;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning($"Could not initialize Cloud Translation V2 client via ADC, will use Google Translate HTTP endpoint: {ex.Message}");
                     _translationClient = null;
-                }
-                finally
-                {
-                    _clientInitAttempted = true;
                 }
 
                 return _translationClient;
