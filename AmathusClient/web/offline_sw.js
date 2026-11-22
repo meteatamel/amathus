@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amathus-offline-v17';
+const CACHE_NAME = 'amathus-offline-v18';
 
 const ESSENTIAL_SHELL_URLS = [
   '/',
@@ -191,6 +191,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+  if (url.origin === self.location.origin && url.pathname === '/firebase-messaging-sw.js') {
     return;
   }
 

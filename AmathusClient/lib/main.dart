@@ -1,7 +1,11 @@
+import 'package:amathus/controllers/notifications_controller.dart';
 import 'package:amathus/utils/constants.dart' as Constants;
 import 'package:amathus/views/overview_view.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+final GlobalKey<ScaffoldMessengerState> _rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,6 +13,9 @@ Future<void> main() async {
   timeago.setLocaleMessages('el', timeago.GrMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   await Constants.initLanguage();
+  NotificationsController.instance
+      .attachScaffoldMessenger(_rootScaffoldMessengerKey);
+  await NotificationsController.instance.init();
 
   runApp(const AmathusApp());
 }
@@ -25,6 +32,7 @@ class AmathusApp extends StatelessWidget {
       valueListenable: Constants.languageNotifier,
       builder: (context, lang, _) {
         return MaterialApp(
+          scaffoldMessengerKey: _rootScaffoldMessengerKey,
           title: Constants.APP_NAME,
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

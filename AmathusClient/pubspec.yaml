@@ -21,6 +21,8 @@ dependencies:
   shared_preferences: ^2.5.2
   timeago: ^3.7.0
   url_launcher: ^6.3.1
+  firebase_core: ^5.2.0
+  firebase_messaging: ^17.1.0
 
 dev_dependencies:
   flutter_test:

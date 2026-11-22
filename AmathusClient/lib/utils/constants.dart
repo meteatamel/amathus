@@ -14,6 +14,10 @@ const String URL_FEED_ITEMS = "$URL_MAIN/feeditems";
 const String URL_OVERVIEW = "$URL_MAIN/overview";
 const String URL_PODCAST_AUDIO = "$URL_MAIN/overview/podcast/audio";
 const String URL_TRANSLATE = "$URL_MAIN/translate";
+const String URL_NOTIFICATIONS_PREFERENCES =
+    "$URL_MAIN/notifications/preferences";
+const String URL_NOTIFICATIONS_UNSUBSCRIBE =
+    "$URL_MAIN/notifications/unsubscribe";
 const String URL_TWITTER = "https://twitter.com/meteatamel";
 
 // files / storage keys
@@ -1012,6 +1016,53 @@ String get REORDER_HINT => _trElEn(
       "Gazete filtre çubuğundaki sıralamayı değiştirmek için sürükleyin. Gizlenen gazeteler haber listelerinde gösterilmez.",
       "Σύρετε για αλλαγή σειράς στη γραμμή φίλτρου εφημερίδων. Οι κρυμμένες εφημερίδες δεν εμφανίζονται στις ειδήσεις.",
       "Drag to reorder newspapers in the filter bar. Hidden newspapers are excluded from Top Stories and All News.",
+    );
+
+// notifications settings
+String get NOTIFICATIONS_TITLE => _trElEn(
+      "5 Dakikada Haber Bildirimleri",
+      "Ειδοποιήσεις 5λεπτης Σύνοψης",
+      "5-Min News Review Notifications",
+    );
+String get NOTIFICATIONS_SUBTITLE => _trElEn(
+      "Yeni sabah, öğle veya akşam 5 dakikalık Kıbrıs haber özeti hazır olduğunda bildirim alın.",
+      "Λάβετε ειδοποίηση όταν είναι έτοιμη η νέα πρωινή, μεσημεριανή ή βραδινή 5λεπτη σύνοψη ειδήσεων.",
+      "Get notified when a new morning, lunch, or evening 5-minute Cyprus news review is ready.",
+    );
+String get NOTIFICATIONS_MORNING => _trElEn(
+      "Sabah (08:00)",
+      "Πρωί (08:00)",
+      "Morning (08:00)",
+    );
+String get NOTIFICATIONS_MIDDAY => _trElEn(
+      "Öğle (13:00)",
+      "Μεσημέρι (13:00)",
+      "Lunch (13:00)",
+    );
+String get NOTIFICATIONS_EVENING => _trElEn(
+      "Akşam (19:00)",
+      "Βράδυ (19:00)",
+      "Evening (19:00)",
+    );
+String get NOTIFICATIONS_IOS_PWA_HINT => _trElEn(
+      "iPhone'da bildirim almak için önce Paylaş → Ana Ekrana Ekle seçeneğiyle uygulamayı yükleyin.",
+      "Για ειδοποιήσεις σε iPhone, πατήστε πρώτα Κοινοποίηση → Προσθήκη στην Οθόνη Αφετηρίας.",
+      "To enable notifications on iPhone, first tap Share → Add to Home Screen.",
+    );
+String get NOTIFICATIONS_PERMISSION_DENIED => _trElEn(
+      "Bildirim izni reddedildi. Tarayıcı veya cihaz ayarlarından izin verebilirsiniz.",
+      "Η άδεια ειδοποιήσεων απορρίφθηκε. Μπορείτε να την ενεργοποιήσετε από τις ρυθμίσεις.",
+      "Notification permission was denied. You can re-enable it in your browser or device settings.",
+    );
+String get NOTIFICATIONS_UNSUPPORTED => _trElEn(
+      "Bu tarayıcı veya cihazda anlık bildirimler desteklenmiyor.",
+      "Οι ειδοποιήσεις push δεν υποστηρίζονται σε αυτό το πρόγραμμα περιήγησης ή τη συσκευή.",
+      "Push notifications are not supported on this browser or device.",
+    );
+String get NOTIFICATIONS_SYNC_ERROR => _trElEn(
+      "Bildirim tercihleri kaydedilemedi. Lütfen tekrar deneyin.",
+      "Αποτυχία αποθήκευσης προτιμήσεων ειδοποιήσεων. Δοκιμάστε ξανά.",
+      "Could not save notification preferences. Please try again.",
     );
 
 // feeditem_view & lists

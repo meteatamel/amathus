@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using Amathus.Common.Converter;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Notifications;
 using Amathus.Common.Overview;
 using Amathus.Common.Sources;
 using Microsoft.AspNetCore.Builder;
@@ -62,6 +63,14 @@ namespace Amathus.Converter
                 var logger = container.GetRequiredService<ILogger<OverviewAnalyzer>>();
                 var projectId = Configuration["Amathus:ProjectId"] ?? "events-atamel";
                 return new OverviewAnalyzer(projectId, logger);
+            });
+
+            services.AddSingleton<FcmNotificationService>(container =>
+            {
+                var logger = container.GetRequiredService<ILogger<FcmNotificationService>>();
+                var projectId = Configuration["Amathus:ProjectId"] ?? "events-atamel";
+                var clientUrl = Configuration["Amathus:ClientUrl"];
+                return new FcmNotificationService(projectId, logger, clientUrl);
             });
 
             _backend = Enum.Parse<FeedStoreBackend>(Configuration["Amathus:FeedStore"], ignoreCase: true);

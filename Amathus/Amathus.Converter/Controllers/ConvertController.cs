@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Common.Converter;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Notifications;
 using Amathus.Common.Overview;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -36,18 +37,21 @@ namespace Amathus.Converter.Controllers
         private readonly IFeedConverter _converter;
         private readonly IFeedStore _store;
         private readonly IOverviewAnalyzer _overviewAnalyzer;
+        private readonly FcmNotificationService _notificationService;
 
         public ConvertController(
             ISyndFeedStore syndStore,
             IFeedConverter converter,
             IFeedStore store,
             IOverviewAnalyzer overviewAnalyzer,
+            FcmNotificationService notificationService,
             ILogger<ConvertController> logger)
         {
             _syndStore = syndStore;
             _converter = converter;
             _store = store;
             _overviewAnalyzer = overviewAnalyzer;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -102,7 +106,7 @@ namespace Amathus.Converter.Controllers
 
         [HttpGet("refresh-overview")]
         [HttpPost("refresh-overview")]
-        public async Task<IActionResult> RefreshOverview([FromQuery] bool force = false)
+        public async Task<IActionResult> RefreshOverview([FromQuery] bool force = false, [FromQuery] bool notify = true)
         {
             if (_overviewAnalyzer == null)
             {
@@ -144,13 +148,21 @@ namespace Amathus.Converter.Controllers
                 await _store.SaveOverviewAsync(columnistsOverview);
 
                 _lastOverviewCheckUtc = DateTime.UtcNow;
+
+                System.Collections.Generic.Dictionary<string, string> notifications = null;
+                if (notify && _notificationService != null)
+                {
+                    notifications = await _notificationService.SendEditionBriefingAsync(overview);
+                }
+
                 return Ok(new
                 {
                     status = "refreshed",
                     edition = overview.Edition,
                     stories = overview.Stories?.Count ?? 0,
                     columnistStories = columnistsOverview.Stories?.Count ?? 0,
-                    generatedAt = overview.GeneratedAt
+                    generatedAt = overview.GeneratedAt,
+                    notifications
                 });
             }
             catch (Exception ex)

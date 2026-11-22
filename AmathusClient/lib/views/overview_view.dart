@@ -1,4 +1,5 @@
 import 'package:amathus/controllers/feeditems_controller.dart';
+import 'package:amathus/controllers/notifications_controller.dart';
 import 'package:amathus/controllers/overview_controller.dart';
 import 'package:amathus/controllers/translate_controller.dart';
 import 'package:amathus/models/feeditem.dart';
@@ -16,6 +17,7 @@ import 'package:amathus/views/common/source_language_filter_bar.dart';
 import 'package:amathus/views/common/top_stories_podcast_card.dart';
 import 'package:amathus/views/common/translate_iconbutton.dart';
 import 'package:amathus/views/feeditem_view.dart';
+import 'package:amathus/views/settings_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -646,8 +648,31 @@ class _OverviewViewState extends State<OverviewView> {
               ),
             ),
             actions: [
+              ValueListenableBuilder<bool>(
+                valueListenable:
+                    NotificationsController.instance.enabledNotifier,
+                builder: (context, enabled, _) {
+                  return IconButton(
+                    tooltip: Constants.NOTIFICATIONS_TITLE,
+                    icon: Icon(
+                      enabled
+                          ? Icons.notifications_active_rounded
+                          : Icons.notifications_none_rounded,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsView(),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
               Padding(
-                padding: const EdgeInsets.only(left: 8, right: 12),
+                padding: const EdgeInsets.only(left: 2, right: 12),
                 child: Center(
                   child: isTopMode
                       ? const OverviewLanguageSelector(lightOnDark: true)
