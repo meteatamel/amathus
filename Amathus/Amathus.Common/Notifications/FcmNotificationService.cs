@@ -204,14 +204,6 @@ namespace Amathus.Common.Notifications
                         FcmOptions = new WebpushFcmOptions
                         {
                             Link = _clientUrl
-                        },
-                        Notification = new WebpushNotification
-                        {
-                            Title = title,
-                            Body = body,
-                            Icon = $"{_clientUrl.TrimEnd('/')}/icons/Icon-192.png",
-                            Badge = $"{_clientUrl.TrimEnd('/')}/icons/Icon-192.png",
-                            Tag = "amathus-briefing"
                         }
                     },
                     Android = new AndroidConfig
@@ -222,7 +214,6 @@ namespace Amathus.Common.Notifications
                             Title = title,
                             Body = body,
                             ChannelId = "amathus_briefings",
-                            Tag = "amathus-briefing",
                             ClickAction = "FLUTTER_NOTIFICATION_CLICK"
                         }
                     },
