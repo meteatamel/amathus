@@ -201,6 +201,11 @@ namespace Amathus.Common.Notifications
                     },
                     Webpush = new WebpushConfig
                     {
+                        Headers = new Dictionary<string, string>
+                        {
+                            ["Urgency"] = "high",
+                            ["TTL"] = "14400"
+                        },
                         FcmOptions = new WebpushFcmOptions
                         {
                             Link = _clientUrl

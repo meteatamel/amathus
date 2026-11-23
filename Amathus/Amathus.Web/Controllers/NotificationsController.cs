@@ -71,6 +71,11 @@ namespace Amathus.Web.Controllers
                     request.Language,
                     request.Editions);
 
+                _logger.LogInformation(
+                    "Updated notification preferences: subscribed=[{Subscribed}], unsubscribedCount={UnsubscribedCount}",
+                    string.Join(", ", subscribed),
+                    unsubscribed.Count);
+
                 return Ok(new
                 {
                     Status = "ok",
