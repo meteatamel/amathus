@@ -14,17 +14,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Amathus.Common.FeedStore;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Translation.V2;
+using Amathus.Common.Translation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Amathus.Web.Controllers
 {
@@ -60,59 +55,17 @@ namespace Amathus.Web.Controllers
         private const int MaxDetailChars = 15000;
         private const int MaxRequestsPerIpPerMinute = 120;
 
-        private static readonly ConcurrentDictionary<string, TranslateResponse> Cache = new();
-        private static readonly ConcurrentDictionary<string, Task<TranslateResponse>> InFlight = new();
         private static readonly ConcurrentDictionary<string, (DateTime WindowStart, int Count)> RateLimitBuckets = new();
-        private static readonly HttpClient FallbackHttpClient = new()
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
-
-        private static TranslationClient _translationClient;
-        private static bool _clientInitAttempted;
-        private static readonly object ClientLock = new();
 
         private readonly IFeedStore _store;
         private readonly ILogger<TranslateController> _logger;
 
-        public TranslateController(IFeedStore store, ILogger<TranslateController> logger)
+        public TranslateController(IFeedStore store, IConfiguration configuration, ILogger<TranslateController> logger)
         {
             _store = store;
             _logger = logger;
-        }
-
-        private TranslationClient GetTranslationClient()
-        {
-            if (_clientInitAttempted)
-            {
-                return _translationClient;
-            }
-
-            lock (ClientLock)
-            {
-                if (_clientInitAttempted)
-                {
-                    return _translationClient;
-                }
-
-                try
-                {
-                    var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
-                        ? GoogleCredential.FromComputeCredential()
-                        : null;
-                    _translationClient = credential != null
-                        ? TranslationClient.Create(credential)
-                        : TranslationClient.Create();
-                    _clientInitAttempted = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Could not initialize Cloud Translation V2 client via ADC, will use Google Translate HTTP endpoint: {ex.Message}");
-                    _translationClient = null;
-                }
-
-                return _translationClient;
-            }
+            var projectId = configuration?["Amathus:ProjectId"] ?? "events-atamel";
+            GeminiTranslationService.Configure(projectId, store, logger);
         }
 
         [HttpPost]
@@ -156,12 +109,6 @@ namespace Amathus.Web.Controllers
                 });
             }
 
-            var cacheKey = ComputeCacheKey(request, sourceLang, targetLang);
-            if (Cache.TryGetValue(cacheKey, out var cached))
-            {
-                return Ok(cached);
-            }
-
             if (IsRateLimited())
             {
                 return StatusCode(429, "Too many translation requests. Please slow down.");
@@ -169,91 +116,29 @@ namespace Amathus.Web.Controllers
 
             try
             {
-                var task = InFlight.GetOrAdd(cacheKey, _ => TranslateWithPersistentCacheAsync(cacheKey, request, sourceLang, targetLang));
-                try
+                var translated = await GeminiTranslationService.TranslateArticleAsync(
+                    title: request.Title,
+                    summary: request.Summary,
+                    detail: request.Detail,
+                    sourceLang: sourceLang,
+                    targetLang: targetLang,
+                    storeOverride: _store,
+                    loggerOverride: _logger);
+
+                return Ok(new TranslateResponse
                 {
-                    var response = await task;
-                    return Ok(response);
-                }
-                finally
-                {
-                    InFlight.TryRemove(cacheKey, out _);
-                }
+                    Title = translated.Title,
+                    Summary = translated.Summary,
+                    Detail = translated.Detail,
+                    SourceLanguage = translated.SourceLanguage,
+                    TargetLanguage = translated.TargetLanguage
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Translation failed for targetLanguage={targetLang}");
                 return StatusCode(500, "Translation failed.");
             }
-        }
-
-        private async Task<TranslateResponse> TranslateWithPersistentCacheAsync(
-            string cacheKey,
-            TranslateRequest request,
-            string sourceLang,
-            string targetLang)
-        {
-            // L2 persistent cache (Firestore) shared across all Cloud Run instances & restarts
-            if (_store != null)
-            {
-                try
-                {
-                    var persisted = await _store.ReadTranslationAsync(cacheKey);
-                    if (persisted != null)
-                    {
-                        var fromStore = new TranslateResponse
-                        {
-                            Title = persisted.Title ?? string.Empty,
-                            Summary = persisted.Summary ?? string.Empty,
-                            Detail = persisted.Detail ?? string.Empty,
-                            SourceLanguage = persisted.SourceLanguage ?? sourceLang ?? "auto",
-                            TargetLanguage = persisted.TargetLanguage ?? targetLang
-                        };
-                        StoreInMemoryCache(cacheKey, fromStore);
-                        return fromStore;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Failed to read translation from persistent cache: {ex.Message}");
-                }
-            }
-
-            var response = await TranslateContentAsync(request, sourceLang, targetLang);
-            StoreInMemoryCache(cacheKey, response);
-
-            if (_store != null)
-            {
-                try
-                {
-                    await _store.SaveTranslationAsync(new CachedTranslation
-                    {
-                        Id = cacheKey,
-                        Title = response.Title,
-                        Summary = response.Summary,
-                        Detail = response.Detail,
-                        SourceLanguage = response.SourceLanguage,
-                        TargetLanguage = response.TargetLanguage,
-                        CreatedAt = DateTime.UtcNow,
-                        ExpiresAt = DateTime.UtcNow.AddDays(7)
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Failed to write translation to persistent cache: {ex.Message}");
-                }
-            }
-
-            return response;
-        }
-
-        private static void StoreInMemoryCache(string cacheKey, TranslateResponse response)
-        {
-            if (Cache.Count > 10000)
-            {
-                Cache.Clear();
-            }
-            Cache[cacheKey] = response;
         }
 
         private bool IsRateLimited()
@@ -287,111 +172,6 @@ namespace Amathus.Web.Controllers
                     : (existing.WindowStart, existing.Count + 1));
 
             return bucket.Count > MaxRequestsPerIpPerMinute;
-        }
-
-        private async Task<TranslateResponse> TranslateContentAsync(
-            TranslateRequest request,
-            string sourceLang,
-            string targetLang)
-        {
-            var client = GetTranslationClient();
-            if (client != null)
-            {
-                try
-                {
-                    string translatedTitle = string.Empty;
-                    string translatedSummary = string.Empty;
-                    string translatedDetail = string.Empty;
-                    string detectedSource = sourceLang;
-
-                    if (!string.IsNullOrWhiteSpace(request.Title))
-                    {
-                        var res = await client.TranslateTextAsync(request.Title, targetLang, sourceLang);
-                        translatedTitle = WebUtility.HtmlDecode(res.TranslatedText);
-                        detectedSource ??= res.DetectedSourceLanguage;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(request.Summary))
-                    {
-                        var res = await client.TranslateTextAsync(request.Summary, targetLang, sourceLang);
-                        translatedSummary = WebUtility.HtmlDecode(res.TranslatedText);
-                        detectedSource ??= res.DetectedSourceLanguage;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(request.Detail))
-                    {
-                        var res = await client.TranslateHtmlAsync(request.Detail, targetLang, sourceLang);
-                        translatedDetail = res.TranslatedText;
-                        detectedSource ??= res.DetectedSourceLanguage;
-                    }
-
-                    return new TranslateResponse
-                    {
-                        Title = translatedTitle,
-                        Summary = translatedSummary,
-                        Detail = translatedDetail,
-                        SourceLanguage = detectedSource ?? sourceLang ?? "auto",
-                        TargetLanguage = targetLang
-                    };
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Cloud Translation V2 API call failed, falling back to Google Translate GTX endpoint: {ex.Message}");
-                }
-            }
-
-            // Fallback to Google Translate endpoint
-            var fallbackTitle = !string.IsNullOrWhiteSpace(request.Title)
-                ? await TranslateViaGtxAsync(request.Title, sourceLang, targetLang)
-                : string.Empty;
-            var fallbackSummary = !string.IsNullOrWhiteSpace(request.Summary)
-                ? await TranslateViaGtxAsync(request.Summary, sourceLang, targetLang)
-                : string.Empty;
-            var fallbackDetail = !string.IsNullOrWhiteSpace(request.Detail)
-                ? await TranslateViaGtxAsync(request.Detail, sourceLang, targetLang)
-                : string.Empty;
-
-            return new TranslateResponse
-            {
-                Title = fallbackTitle,
-                Summary = fallbackSummary,
-                Detail = fallbackDetail,
-                SourceLanguage = sourceLang ?? "auto",
-                TargetLanguage = targetLang
-            };
-        }
-
-        private static async Task<string> TranslateViaGtxAsync(string text, string sourceLang, string targetLang)
-        {
-            var sl = string.IsNullOrWhiteSpace(sourceLang) ? "auto" : sourceLang;
-            var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={Uri.EscapeDataString(sl)}&tl={Uri.EscapeDataString(targetLang)}&dt=t&q={Uri.EscapeDataString(text)}";
-            using var response = await FallbackHttpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var arr = JArray.Parse(json);
-            var sentences = arr[0] as JArray;
-            if (sentences == null)
-            {
-                return text;
-            }
-
-            var sb = new StringBuilder();
-            foreach (var item in sentences)
-            {
-                var segment = item?[0]?.ToString();
-                if (!string.IsNullOrEmpty(segment))
-                {
-                    sb.Append(segment);
-                }
-            }
-            return sb.ToString();
-        }
-
-        private static string ComputeCacheKey(TranslateRequest req, string sourceLang, string targetLang)
-        {
-            var raw = $"{sourceLang ?? "auto"}->{targetLang}|{req.Title}|{req.Summary}|{req.Detail}";
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
-            return Convert.ToHexString(bytes);
         }
     }
 }

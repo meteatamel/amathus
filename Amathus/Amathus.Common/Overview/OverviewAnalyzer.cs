@@ -25,9 +25,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amathus.Common.Feeds;
 using Amathus.Common.FeedStore;
+using Amathus.Common.Translation;
 using Amathus.Common.Util;
 using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Translation.V2;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -41,58 +41,17 @@ namespace Amathus.Common.Overview
             Timeout = TimeSpan.FromSeconds(180)
         };
 
-        private static readonly HttpClient TranslateHttp = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
-
-        private static readonly ConcurrentDictionary<string, string> TranslationCache = new();
         private static readonly Regex GreekScriptRegex = new(@"[\u0370-\u03FF\u1F00-\u1FFF]", RegexOptions.Compiled);
         private static readonly Regex TurkishSpecificRegex = new(@"[ğĞşŞıİ]", RegexOptions.Compiled);
         private static readonly Regex LegacyReportsPrefixRegex = new(@"(?:^|\s)[^:.]{1,40}\s+reports:\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex LegacyCoveredBySuffixRegex = new(@"\s*Covered by\s+[^.]+\.?\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static TranslationClient _translationClient;
-        private static bool _clientInitAttempted;
-        private static readonly object ClientLock = new();
         private static IFeedStore _translationStore;
 
         public static void ConfigureTranslationStore(IFeedStore store)
         {
             _translationStore = store;
-        }
-
-        private static TranslationClient GetTranslationClient()
-        {
-            if (_clientInitAttempted)
-            {
-                return _translationClient;
-            }
-
-            lock (ClientLock)
-            {
-                if (_clientInitAttempted)
-                {
-                    return _translationClient;
-                }
-
-                try
-                {
-                    var credential = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE"))
-                        ? GoogleCredential.FromComputeCredential()
-                        : null;
-                    _translationClient = credential != null
-                        ? TranslationClient.Create(credential)
-                        : TranslationClient.Create();
-                    _clientInitAttempted = true;
-                }
-                catch
-                {
-                    _translationClient = null;
-                }
-
-                return _translationClient;
-            }
+            GeminiTranslationService.Configure(store: store);
         }
 
         private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
@@ -118,6 +77,7 @@ namespace Amathus.Common.Overview
         public OverviewAnalyzer(string projectId = "events-atamel", ILogger logger = null, string location = "europe-west1")
         {
             _projectId = string.IsNullOrWhiteSpace(projectId) ? "events-atamel" : projectId;
+            GeminiTranslationService.Configure(projectId: _projectId, logger: logger);
             _location = string.IsNullOrWhiteSpace(location) ? "europe-west1" : location;
             _logger = logger;
         }
@@ -1347,132 +1307,9 @@ namespace Amathus.Common.Overview
             return modified;
         }
 
-        private static async Task<string> TranslateViaGtxAsync(string text, string sourceLang, string targetLang)
+        private static Task<string> TranslateViaGtxAsync(string text, string sourceLang, string targetLang)
         {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            var sl = string.IsNullOrWhiteSpace(sourceLang) ? "auto" : sourceLang.ToLowerInvariant();
-            var tl = targetLang.ToLowerInvariant();
-            if (sl == tl)
-            {
-                return text;
-            }
-
-            var cacheKey = $"{sl}->{tl}:{text}";
-            if (TranslationCache.TryGetValue(cacheKey, out var cached))
-            {
-                return cached;
-            }
-
-            string persistentKey = null;
-            if (_translationStore != null)
-            {
-                persistentKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"str|{cacheKey}")));
-                try
-                {
-                    var persisted = await _translationStore.ReadTranslationAsync(persistentKey);
-                    if (persisted != null && !string.IsNullOrEmpty(persisted.Title))
-                    {
-                        if (TranslationCache.Count > 10000)
-                        {
-                            TranslationCache.Clear();
-                        }
-                        TranslationCache[cacheKey] = persisted.Title;
-                        return persisted.Title;
-                    }
-                }
-                catch
-                {
-                    // Best-effort L2 cache read
-                }
-            }
-
-            var client = GetTranslationClient();
-            if (client != null)
-            {
-                try
-                {
-                    var cloudSourceLang = sl == "auto" ? null : sl;
-                    var res = await client.TranslateTextAsync(text, tl, cloudSourceLang);
-                    var cloudTranslated = WebUtility.HtmlDecode(res?.TranslatedText ?? string.Empty).Trim();
-                    if (!string.IsNullOrEmpty(cloudTranslated))
-                    {
-                        if (TranslationCache.Count > 10000)
-                        {
-                            TranslationCache.Clear();
-                        }
-                        TranslationCache[cacheKey] = cloudTranslated;
-                        if (_translationStore != null && persistentKey != null)
-                        {
-                            try
-                            {
-                                await _translationStore.SaveTranslationAsync(new CachedTranslation
-                                {
-                                    Id = persistentKey,
-                                    Title = cloudTranslated,
-                                    SourceLanguage = sl,
-                                    TargetLanguage = tl,
-                                    CreatedAt = DateTime.UtcNow,
-                                    ExpiresAt = DateTime.UtcNow.AddDays(7)
-                                });
-                            }
-                            catch
-                            {
-                                // Best-effort L2 cache write
-                            }
-                        }
-                        return cloudTranslated;
-                    }
-                }
-                catch
-                {
-                    // Fall back to Google Translate GTX endpoint if Cloud Translation V2 fails
-                }
-            }
-
-            try
-            {
-                var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={Uri.EscapeDataString(sl)}&tl={Uri.EscapeDataString(tl)}&dt=t&q={Uri.EscapeDataString(text)}";
-                using var resp = await TranslateHttp.GetAsync(url);
-                resp.EnsureSuccessStatusCode();
-                var json = await resp.Content.ReadAsStringAsync();
-                var arr = JArray.Parse(json);
-                var sentences = arr[0] as JArray;
-                if (sentences == null)
-                {
-                    return text;
-                }
-
-                var sb = new StringBuilder();
-                foreach (var item in sentences)
-                {
-                    var seg = item?[0]?.ToString();
-                    if (!string.IsNullOrEmpty(seg))
-                    {
-                        sb.Append(seg);
-                    }
-                }
-
-                var translated = sb.ToString().Trim();
-                if (!string.IsNullOrEmpty(translated))
-                {
-                    if (TranslationCache.Count > 3000)
-                    {
-                        TranslationCache.Clear();
-                    }
-                    TranslationCache[cacheKey] = translated;
-                    return translated;
-                }
-            }
-            catch
-            {
-                // Fall back to original text if translation fails
-            }
-
-            return text;
+            return GeminiTranslationService.TranslateTextAsync(text, sourceLang, targetLang, storeOverride: _translationStore);
         }
 
         private static string CleanSnippet(string raw, int maxLen)
